@@ -1,0 +1,51 @@
+/* Light theme accents QPalette can't express. */
+
+QMainWindow, QDialog {
+    background-color: #f5f5f7;
+}
+
+QListView {
+    border: none;
+    background-color: transparent;
+    outline: 0;
+}
+
+QListView::item {
+    border-radius: 8px;
+    padding: 4px;
+}
+
+QListView::item:hover {
+    background-color: #e9e9eb;
+}
+
+QListView::item:selected {
+    background-color: #d6e9ff;
+}
+
+#CategorySidebar {
+    background-color: #eeeef0;
+    border-right: 1px solid #dcdce0;
+}
+
+#CategorySidebar QListView::item:selected {
+    background-color: #0a84ff;
+    color: white;
+}
+
+QLineEdit#SearchBar {
+    border: 1px solid #d0d0d5;
+    border-radius: 8px;
+    padding: 6px 10px;
+    background-color: #ffffff;
+}
+
+QPushButton {
+    border-radius: 6px;
+    padding: 6px 12px;
+}
+
+QToolBar {
+    border: none;
+    spacing: 6px;
+}

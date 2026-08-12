@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=MyAppsLibrary
+Comment=A personal library for your developer projects
+Exec=MyAppsLibrary %f
+Icon=app
+Terminal=false
+Categories=Development;Utility;
+StartupWMClass=MyAppsLibrary

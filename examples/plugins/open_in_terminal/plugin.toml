@@ -1,0 +1,11 @@
+[plugin]
+id = "open-in-terminal"
+name = "Open in Terminal"
+version = "0.1.0"
+description = "Adds an 'Open in Terminal' action to each project's context menu."
+author = "MyAppsLibrary examples"
+license = "MIT"
+min_app_version = "0.2.0"
+entry_point = "plugin:OpenInTerminalPlugin"
+permissions = ["process"]
+tags = ["utility", "example"]

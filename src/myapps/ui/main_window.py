@@ -1,0 +1,517 @@
+"""QMainWindow: menu bar, splitter (category sidebar + search + project list),
+status bar. Wires the UI widgets to core managers and the theme system."""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+
+from PySide6.QtCore import QByteArray, QItemSelectionModel, Qt
+from PySide6.QtGui import QAction, QActionGroup, QDragEnterEvent, QDropEvent, QKeySequence
+from PySide6.QtWidgets import (
+    QInputDialog,
+    QMainWindow,
+    QMessageBox,
+    QSplitter,
+    QStackedWidget,
+    QStatusBar,
+    QVBoxLayout,
+    QWidget,
+)
+
+from myapps.constants import APP_NAME, DEFAULT_VIEW_MODE, UNCATEGORIZED_ID, VERSION
+from myapps.core.events import event_bus
+from myapps.core.project_manager import ProjectManager
+from myapps.core.settings_manager import SettingsManager
+from myapps.editors.registry import EditorRegistry
+from myapps.plugins.manager import PluginManager
+from myapps.ui.dialogs.add_project_dialog import AddProjectDialog
+from myapps.ui.dialogs.category_manager_dialog import (
+    CategoryManagerDialog,
+    ProjectCategoryPickerDialog,
+)
+from myapps.ui.dialogs.editor_picker_dialog import EditorPickerDialog
+from myapps.ui.dialogs.plugin_manager_dialog import PluginManagerDialog
+from myapps.ui.dialogs.settings_dialog import SettingsDialog
+from myapps.ui.models.project_list_model import ProjectIdRole, ProjectListModel
+from myapps.ui.theme.theme_manager import ThemeManager
+from myapps.ui.views.builtin import register_builtin_views
+from myapps.ui.views.registry import view_registry
+from myapps.ui.widgets.category_sidebar import ALL_ITEM_ID, CategorySidebar
+from myapps.ui.widgets.context_menu import build_project_context_menu
+from myapps.ui.widgets.search_bar import SearchBar
+from myapps.utils.fs_utils import reveal_in_file_manager
+
+logger = logging.getLogger(__name__)
+
+
+class MainWindow(QMainWindow):
+    def __init__(
+        self,
+        project_manager: ProjectManager,
+        settings_manager: SettingsManager,
+        editor_registry: EditorRegistry,
+        theme_manager: ThemeManager,
+        plugin_manager: PluginManager | None = None,
+    ) -> None:
+        super().__init__()
+        self._pm = project_manager
+        self._settings = settings_manager
+        self._editors = editor_registry
+        self._theme = theme_manager
+        self._plugins = plugin_manager
+
+        self.setWindowTitle(APP_NAME)
+        self.resize(1000, 640)
+        self.setAcceptDrops(True)
+
+        self._model = ProjectListModel(self._pm)
+        self._selection_model = QItemSelectionModel(self._model, self)
+        register_builtin_views(view_registry, self._pm)
+        self._plugin_view_mode_ids: set[str] = set()
+        self._register_plugin_views()
+        self._views: dict[str, QWidget] = {}
+
+        self._build_ui()
+        self._build_menu_bar()
+        self._restore_geometry()
+
+        if self._plugins is not None:
+            event_bus.plugins_changed.connect(self._on_plugins_changed)
+
+    def _register_plugin_views(self) -> None:
+        if self._plugins is None:
+            return
+        for info in self._plugins.collect_views():
+            view_registry.register(info.mode_id, info.label, info.factory)
+            self._plugin_view_mode_ids.add(info.mode_id)
+
+    # -- UI construction -------------------------------------------------
+
+    def _build_ui(self) -> None:
+        central = QWidget()
+        self.setCentralWidget(central)
+        root_layout = QVBoxLayout(central)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        root_layout.addWidget(splitter)
+
+        self._sidebar = CategorySidebar(self._pm)
+        self._sidebar.filter_changed.connect(self._on_filter_changed)
+        splitter.addWidget(self._sidebar)
+
+        right_panel = QWidget()
+        right_layout = QVBoxLayout(right_panel)
+        right_layout.setContentsMargins(8, 8, 8, 8)
+        right_layout.setSpacing(6)
+
+        self._search_bar = SearchBar()
+        self._search_bar.search_changed.connect(self._model.set_search_text)
+        right_layout.addWidget(self._search_bar)
+
+        self._view_stack = QStackedWidget()
+        for info in view_registry.list_modes():
+            widget = info.factory(self._model, self._selection_model)
+            widget.open_requested.connect(self._open_project)
+            widget.context_menu_requested.connect(self._show_context_menu)
+            self._views[info.mode_id] = widget
+            self._view_stack.addWidget(widget)
+        right_layout.addWidget(self._view_stack)
+        self._set_active_view_mode(
+            self._settings.settings.view_mode
+            if self._settings.settings.view_mode in self._views
+            else DEFAULT_VIEW_MODE
+        )
+
+        splitter.addWidget(right_panel)
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 1)
+        splitter.setSizes([180, 800])
+        self._sidebar.setVisible(self._settings.settings.sidebar_visible)
+
+        self._status_bar = QStatusBar()
+        self.setStatusBar(self._status_bar)
+        self._update_status_bar()
+        event_bus.project_added.connect(self._update_status_bar)
+        event_bus.project_removed.connect(self._update_status_bar)
+
+    def _build_menu_bar(self) -> None:
+        menu_bar = self.menuBar()
+        menu_bar.setNativeMenuBar(True)
+
+        # File
+        file_menu = menu_bar.addMenu("&File")
+        add_action = QAction("Add Project…", self)
+        add_action.setShortcut(QKeySequence.StandardKey.New)
+        add_action.triggered.connect(self._add_project)
+        file_menu.addAction(add_action)
+        file_menu.addSeparator()
+        prefs_action = QAction("Preferences…", self)
+        prefs_action.setShortcut(QKeySequence.StandardKey.Preferences)
+        prefs_action.triggered.connect(self._open_preferences)
+        file_menu.addAction(prefs_action)
+        file_menu.addSeparator()
+        quit_action = QAction("Quit", self)
+        quit_action.setShortcut(QKeySequence.StandardKey.Quit)
+        quit_action.triggered.connect(self.close)
+        file_menu.addAction(quit_action)
+
+        # Project
+        project_menu = menu_bar.addMenu("&Project")
+        open_action = QAction("Open in Editor", self)
+        open_action.triggered.connect(lambda: self._open_project(self._current_project_id()))
+        project_menu.addAction(open_action)
+        open_with_action = QAction("Open With…", self)
+        open_with_action.triggered.connect(
+            lambda: self._open_with(self._current_project_id())
+        )
+        project_menu.addAction(open_with_action)
+        reveal_action = QAction("Show in Finder/Explorer", self)
+        reveal_action.triggered.connect(lambda: self._reveal(self._current_project_id()))
+        project_menu.addAction(reveal_action)
+        project_menu.addSeparator()
+        categories_action = QAction("Edit Categories…", self)
+        categories_action.triggered.connect(
+            lambda: self._edit_categories(self._current_project_id())
+        )
+        project_menu.addAction(categories_action)
+        project_menu.addSeparator()
+        manage_categories_action = QAction("Manage Categories…", self)
+        manage_categories_action.triggered.connect(self._manage_categories)
+        project_menu.addAction(manage_categories_action)
+        project_menu.addSeparator()
+        remove_action = QAction("Remove from Library…", self)
+        remove_action.triggered.connect(lambda: self._remove(self._current_project_id()))
+        project_menu.addAction(remove_action)
+
+        # View
+        view_menu = menu_bar.addMenu("&View")
+        sidebar_action = QAction("Show Sidebar", self, checkable=True)
+        sidebar_action.setChecked(self._settings.settings.sidebar_visible)
+        sidebar_action.toggled.connect(self._toggle_sidebar)
+        view_menu.addAction(sidebar_action)
+        view_menu.addSeparator()
+
+        self._view_mode_menu = view_menu.addMenu("Mode")
+        self._populate_view_mode_menu()
+        view_menu.addSeparator()
+
+        theme_menu = view_menu.addMenu("Theme")
+        theme_group = QActionGroup(self)
+        theme_group.setExclusive(True)
+        for label, mode in (("System", "system"), ("Light", "light"), ("Dark", "dark")):
+            action = QAction(label, self, checkable=True)
+            action.setChecked(self._settings.settings.theme_mode == mode)
+            action.triggered.connect(lambda _, m=mode: self._set_theme_mode(m))
+            theme_group.addAction(action)
+            theme_menu.addAction(action)
+
+        # Plugins — always present, even with zero plugins installed, so
+        # "Manage Plugins…" is discoverable regardless.
+        self._plugins_menu = menu_bar.addMenu("Pl&ugins")
+        self._populate_plugins_menu()
+
+        # Help
+        help_menu = menu_bar.addMenu("&Help")
+        about_action = QAction("About MyAppsLibrary", self)
+        about_action.triggered.connect(self._show_about)
+        help_menu.addAction(about_action)
+
+    def _populate_view_mode_menu(self) -> None:
+        self._view_mode_menu.clear()
+        current_mode = (
+            self._settings.settings.view_mode
+            if self._settings.settings.view_mode in self._views
+            else DEFAULT_VIEW_MODE
+        )
+        view_mode_group = QActionGroup(self._view_mode_menu)
+        view_mode_group.setExclusive(True)
+        for info in view_registry.list_modes():
+            action = QAction(info.label, self._view_mode_menu, checkable=True)
+            action.setChecked(info.mode_id == current_mode)
+            action.triggered.connect(lambda _, mid=info.mode_id: self._set_active_view_mode(mid))
+            view_mode_group.addAction(action)
+            self._view_mode_menu.addAction(action)
+
+    def _populate_plugins_menu(self) -> None:
+        self._plugins_menu.clear()
+        manage_action = QAction("Manage Plugins…", self._plugins_menu)
+        manage_action.triggered.connect(self._open_plugin_manager)
+        self._plugins_menu.addAction(manage_action)
+
+        if self._plugins is None:
+            return
+        contributed = self._plugins.collect_menu_actions()
+        if contributed:
+            self._plugins_menu.addSeparator()
+            for plugin_action in contributed:
+                action = QAction(plugin_action.label, self._plugins_menu)
+                action.setEnabled(plugin_action.enabled)
+                action.triggered.connect(plugin_action.callback)
+                self._plugins_menu.addAction(action)
+
+    # -- state helpers -----------------------------------------------------
+
+    def _current_project_id(self) -> str | None:
+        # The selection model is shared across every registered view (see
+        # ui/views/registry.py's contract), so this is mode-agnostic.
+        index = self._selection_model.currentIndex()
+        if not index.isValid():
+            return None
+        return index.data(ProjectIdRole)
+
+    def _update_status_bar(self, *_args) -> None:
+        count = len(self._pm.list_projects())
+        self._status_bar.showMessage(f"{count} project{'s' if count != 1 else ''}")
+
+    # -- actions -------------------------------------------------------
+
+    def _add_project(self) -> None:
+        dialog = AddProjectDialog(self._pm, self)
+        if dialog.exec() == dialog.DialogCode.Accepted:
+            data = dialog.result_data()
+            if data:
+                path, name, categories = data
+                self._pm.add_project(path, name=name, categories=categories)
+
+    def _open_project(self, project_id: str | None) -> None:
+        if not project_id:
+            return
+        project = self._pm.get_project(project_id)
+        if not project:
+            return
+        editor_id = project.preferred_editor_id or self._settings.settings.global_default_editor_id
+        if not editor_id:
+            self._open_with(project_id)
+            return
+        if self._editors.launch(editor_id, project.path):
+            self._pm.mark_opened(project_id, editor_id)
+        else:
+            QMessageBox.warning(
+                self, "Couldn't Open Editor", "Failed to launch the editor. Try 'Open With…'."
+            )
+
+    def _open_with(self, project_id: str | None) -> None:
+        if not project_id:
+            return
+        project = self._pm.get_project(project_id)
+        if not project:
+            return
+        dialog = EditorPickerDialog(self._editors, self)
+        if dialog.exec() == dialog.DialogCode.Accepted:
+            editor_id = dialog.selected_editor_id()
+            if not editor_id:
+                return
+            if dialog.should_set_as_default():
+                self._pm.update_project(project_id, preferred_editor_id=editor_id)
+            if self._editors.launch(editor_id, project.path):
+                self._pm.mark_opened(project_id, editor_id)
+            else:
+                QMessageBox.warning(self, "Couldn't Open Editor", "Failed to launch the editor.")
+
+    def _reveal(self, project_id: str | None) -> None:
+        if not project_id:
+            return
+        project = self._pm.get_project(project_id)
+        if project and not reveal_in_file_manager(project.path):
+            QMessageBox.warning(
+                self, "Couldn't Reveal Folder", "The project folder may have been moved or deleted."
+            )
+
+    def _toggle_pin(self, project_id: str | None) -> None:
+        if not project_id:
+            return
+        project = self._pm.get_project(project_id)
+        if project:
+            self._pm.update_project(project_id, pinned=not project.pinned)
+
+    def _edit_categories(self, project_id: str | None) -> None:
+        if not project_id:
+            return
+        project = self._pm.get_project(project_id)
+        if not project:
+            return
+        dialog = ProjectCategoryPickerDialog(project, self._pm, self)
+        if dialog.exec() == dialog.DialogCode.Accepted:
+            self._pm.set_categories(project_id, dialog.selected_category_ids())
+
+    def _rename(self, project_id: str | None) -> None:
+        if not project_id:
+            return
+        project = self._pm.get_project(project_id)
+        if not project:
+            return
+        new_name, ok = QInputDialog.getText(self, "Rename Project", "Name:", text=project.name)
+        if ok and new_name.strip():
+            self._pm.update_project(project_id, name=new_name.strip())
+
+    def _remove(self, project_id: str | None) -> None:
+        if not project_id:
+            return
+        project = self._pm.get_project(project_id)
+        if not project:
+            return
+        confirm = QMessageBox.question(
+            self,
+            "Remove from Library",
+            f"Remove '{project.name}' from the library?\n\n"
+            "This only removes the reference — the folder on disk is untouched.",
+        )
+        if confirm == QMessageBox.StandardButton.Yes:
+            self._pm.remove_project(project_id)
+
+    def _manage_categories(self) -> None:
+        CategoryManagerDialog(self._pm, self).exec()
+
+    def _open_plugin_manager(self) -> None:
+        if self._plugins is None:
+            QMessageBox.information(self, "Plugins", "The plugin system is not available.")
+            return
+        PluginManagerDialog(self._plugins, self).exec()
+
+    def _show_context_menu(self, project_id: str, global_pos) -> None:
+        project = self._pm.get_project(project_id)
+        if not project:
+            return
+        menu = build_project_context_menu(
+            project,
+            self,
+            on_open=lambda: self._open_project(project_id),
+            on_open_with=lambda: self._open_with(project_id),
+            on_reveal=lambda: self._reveal(project_id),
+            on_toggle_pin=lambda: self._toggle_pin(project_id),
+            on_edit_categories=lambda: self._edit_categories(project_id),
+            on_rename=lambda: self._rename(project_id),
+            on_remove=lambda: self._remove(project_id),
+        )
+        if self._plugins is not None:
+            plugin_actions = self._plugins.collect_project_context_actions(project)
+            if plugin_actions:
+                menu.addSeparator()
+                for plugin_action in plugin_actions:
+                    action = menu.addAction(plugin_action.label, plugin_action.callback)
+                    action.setEnabled(plugin_action.enabled)
+        menu.exec(global_pos)
+
+    def _on_filter_changed(self, filter_id: str) -> None:
+        if filter_id == ALL_ITEM_ID:
+            self._model.clear_filter()
+            self._settings.set(last_selected_category=None)
+        elif filter_id == UNCATEGORIZED_ID:
+            self._model.set_category_filter(None)
+            self._settings.set(last_selected_category=UNCATEGORIZED_ID)
+        else:
+            self._model.set_category_filter(filter_id)
+            self._settings.set(last_selected_category=filter_id)
+
+    def _toggle_sidebar(self, visible: bool) -> None:
+        self._sidebar.setVisible(visible)
+        self._settings.set(sidebar_visible=visible)
+
+    def _set_active_view_mode(self, mode_id: str) -> None:
+        widget = self._views.get(mode_id)
+        if widget is None:
+            logger.warning("Unknown view mode %r, falling back to %r", mode_id, DEFAULT_VIEW_MODE)
+            widget = self._views.get(DEFAULT_VIEW_MODE)
+            mode_id = DEFAULT_VIEW_MODE
+        if widget is not None:
+            self._view_stack.setCurrentWidget(widget)
+        self._settings.set(view_mode=mode_id)
+
+    def _on_plugins_changed(self) -> None:
+        """Rebuilds plugin-derived UI after install/uninstall/enable/disable.
+        Full rebuild rather than diffing — view-mode churn only happens via
+        the Plugin Manager dialog (rare), so correctness-over-cleverness is
+        the right tradeoff here."""
+        for mode_id in self._plugin_view_mode_ids:
+            view_registry.unregister(mode_id)
+        self._plugin_view_mode_ids.clear()
+        self._register_plugin_views()
+        self._sync_view_stack()
+        self._populate_view_mode_menu()
+        self._populate_plugins_menu()
+
+    def _sync_view_stack(self) -> None:
+        active_mode_ids = {info.mode_id for info in view_registry.list_modes()}
+
+        for mode_id in list(self._views):
+            if mode_id not in active_mode_ids:
+                widget = self._views.pop(mode_id)
+                self._view_stack.removeWidget(widget)
+                widget.deleteLater()
+
+        for info in view_registry.list_modes():
+            if info.mode_id in self._views:
+                continue
+            widget = info.factory(self._model, self._selection_model)
+            widget.open_requested.connect(self._open_project)
+            widget.context_menu_requested.connect(self._show_context_menu)
+            self._views[info.mode_id] = widget
+            self._view_stack.addWidget(widget)
+
+        current_mode = self._settings.settings.view_mode
+        if current_mode not in self._views:
+            self._set_active_view_mode(DEFAULT_VIEW_MODE)
+
+    def _set_theme_mode(self, mode: str) -> None:
+        self._settings.set(theme_mode=mode)
+        self._theme.set_mode(mode)
+
+    def _open_preferences(self) -> None:
+        SettingsDialog(self._settings, self._editors, self).exec()
+
+    def _show_about(self) -> None:
+        QMessageBox.about(
+            self,
+            f"About {APP_NAME}",
+            f"{APP_NAME} v{VERSION}\n\nA personal library for your developer projects.",
+        )
+
+    # -- drag & drop ---------------------------------------------------
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:  # noqa: N802
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event: QDragEnterEvent) -> None:  # noqa: N802
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent) -> None:  # noqa: N802
+        folders = [
+            url.toLocalFile()
+            for url in event.mimeData().urls()
+            if url.isLocalFile() and Path(url.toLocalFile()).is_dir()
+        ]
+        if not folders:
+            return
+        event.acceptProposedAction()
+        self._add_projects_from_paths(folders)
+
+    def _add_projects_from_paths(self, paths: list[str]) -> None:
+        added = 0
+        skipped = 0
+        for path in paths:
+            if self._pm.find_by_path(path):
+                skipped += 1
+            else:
+                self._pm.add_project(path)
+                added += 1
+        message = f"Added {added} project{'s' if added != 1 else ''}"
+        if skipped:
+            message += f" ({skipped} already in library)"
+        self._status_bar.showMessage(message, 4000)
+
+    # -- window state ------------------------------------------------------
+
+    def _restore_geometry(self) -> None:
+        geometry_b64 = self._settings.settings.window_geometry
+        if geometry_b64:
+            self.restoreGeometry(QByteArray.fromBase64(geometry_b64.encode("ascii")))
+
+    def closeEvent(self, event) -> None:  # noqa: N802
+        geometry_b64 = bytes(self.saveGeometry().toBase64()).decode("ascii")
+        self._settings.set(window_geometry=geometry_b64)
+        super().closeEvent(event)

@@ -1,0 +1,11 @@
+[plugin]
+id = "recently-opened-logger"
+name = "Recently Opened Logger"
+version = "0.1.0"
+description = "Logs every project you open and lets you view the recent history from the Plugins menu."
+author = "MyAppsLibrary examples"
+license = "MIT"
+min_app_version = "0.2.0"
+entry_point = "plugin:RecentlyOpenedLoggerPlugin"
+permissions = []
+tags = ["utility", "example"]

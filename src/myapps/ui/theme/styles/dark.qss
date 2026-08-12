@@ -1,0 +1,52 @@
+/* Dark theme accents QPalette can't express. */
+
+QMainWindow, QDialog {
+    background-color: #1e1e1e;
+}
+
+QListView {
+    border: none;
+    background-color: transparent;
+    outline: 0;
+}
+
+QListView::item {
+    border-radius: 8px;
+    padding: 4px;
+}
+
+QListView::item:hover {
+    background-color: #2f2f31;
+}
+
+QListView::item:selected {
+    background-color: #163a5c;
+}
+
+#CategorySidebar {
+    background-color: #232324;
+    border-right: 1px solid #333335;
+}
+
+#CategorySidebar QListView::item:selected {
+    background-color: #0a84ff;
+    color: white;
+}
+
+QLineEdit#SearchBar {
+    border: 1px solid #3a3a3d;
+    border-radius: 8px;
+    padding: 6px 10px;
+    background-color: #2a2a2b;
+    color: #f2f2f2;
+}
+
+QPushButton {
+    border-radius: 6px;
+    padding: 6px 12px;
+}
+
+QToolBar {
+    border: none;
+    spacing: 6px;
+}
