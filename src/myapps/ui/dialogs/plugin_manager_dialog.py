@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from myapps.core.events import event_bus
+from myapps.i18n import tr
 from myapps.plugins.manager import (
     LoadedPlugin,
     PluginInstallError,
@@ -33,7 +34,7 @@ from myapps.plugins.sandbox import describe_permissions, trust_disclosure_text
 class PluginManagerDialog(QDialog):
     def __init__(self, plugin_manager: PluginManager, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Manage Plugins")
+        self.setWindowTitle(tr("dialog.plugins.title"))
         self.setMinimumSize(460, 420)
         self._plugins = plugin_manager
 
@@ -44,10 +45,10 @@ class PluginManagerDialog(QDialog):
         self._reload()
 
         btn_row = QHBoxLayout()
-        install_zip_btn = QPushButton("Install from .zip…")
-        install_folder_btn = QPushButton("Install from Folder…")
-        details_btn = QPushButton("Details…")
-        remove_btn = QPushButton("Remove")
+        install_zip_btn = QPushButton(tr("dialog.plugins.install_zip"))
+        install_folder_btn = QPushButton(tr("dialog.plugins.install_folder"))
+        details_btn = QPushButton(tr("dialog.plugins.details"))
+        remove_btn = QPushButton(tr("dialog.plugins.remove"))
         install_zip_btn.clicked.connect(self._install_zip)
         install_folder_btn.clicked.connect(self._install_folder)
         details_btn.clicked.connect(self._show_details)
@@ -78,19 +79,24 @@ class PluginManagerDialog(QDialog):
             )
             item.setData(Qt.ItemDataRole.UserRole, loaded.manifest.id)
             if loaded.state == PluginLoadState.FAILED:
-                item.setToolTip(f"Failed to load: {loaded.error}")
+                item.setToolTip(tr("dialog.plugins.failed_tooltip", error=loaded.error))
             self._list.addItem(item)
         self._list.blockSignals(False)
 
     @staticmethod
     def _row_text(loaded: LoadedPlugin) -> str:
-        status = {
-            PluginLoadState.LOADED: "loaded",
-            PluginLoadState.DISABLED: "disabled",
-            PluginLoadState.FAILED: "failed",
-            PluginLoadState.DISCOVERED: "discovered",
+        status_key = {
+            PluginLoadState.LOADED: "dialog.plugins.status.loaded",
+            PluginLoadState.DISABLED: "dialog.plugins.status.disabled",
+            PluginLoadState.FAILED: "dialog.plugins.status.failed",
+            PluginLoadState.DISCOVERED: "dialog.plugins.status.discovered",
         }[loaded.state]
-        return f"{loaded.manifest.name} ({loaded.manifest.version}) — {status}"
+        return tr(
+            "dialog.plugins.row_format",
+            name=loaded.manifest.name,
+            version=loaded.manifest.version,
+            status=tr(status_key),
+        )
 
     def _selected_plugin_id(self) -> str | None:
         item = self._list.currentItem()
@@ -113,8 +119,8 @@ class PluginManagerDialog(QDialog):
         if wants_enabled:
             confirm = QMessageBox.question(
                 self,
-                "Enable Plugin",
-                trust_disclosure_text() + "\n\nEnable this plugin?",
+                tr("dialog.plugins.enable_title"),
+                trust_disclosure_text() + tr("dialog.plugins.enable_confirm_suffix"),
             )
             if confirm != QMessageBox.StandardButton.Yes:
                 self._list.blockSignals(True)
@@ -127,13 +133,15 @@ class PluginManagerDialog(QDialog):
 
     def _install_zip(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select Plugin .zip", filter="Zip files (*.zip)"
+            self,
+            tr("dialog.plugins.install_zip_title"),
+            filter=tr("dialog.plugins.install_zip_filter"),
         )
         if path:
             self._try_install(path)
 
     def _install_folder(self) -> None:
-        path = QFileDialog.getExistingDirectory(self, "Select Plugin Folder")
+        path = QFileDialog.getExistingDirectory(self, tr("dialog.plugins.install_folder_title"))
         if path:
             self._try_install(path)
 
@@ -141,24 +149,26 @@ class PluginManagerDialog(QDialog):
         try:
             self._plugins.install_from_path(path)
         except PluginInstallError as exc:
-            QMessageBox.warning(self, "Couldn't Install Plugin", str(exc))
+            QMessageBox.warning(self, tr("dialog.plugins.install_error_title"), str(exc))
 
     def _show_details(self) -> None:
         loaded = self._selected_loaded_plugin()
         if not loaded:
             return
         manifest = loaded.manifest
-        permissions = describe_permissions(manifest) or ["(none declared)"]
-        text = (
-            f"{manifest.name}  v{manifest.version}\n"
-            f"ID: {manifest.id}\n"
-            f"Author: {manifest.author or '(unknown)'}\n"
-            f"License: {manifest.license or '(unspecified)'}\n\n"
-            f"{manifest.description}\n\n"
-            f"Permissions:\n- " + "\n- ".join(permissions)
+        permissions = describe_permissions(manifest) or [tr("dialog.plugins.no_permissions")]
+        text = tr(
+            "dialog.plugins.details_body",
+            name=manifest.name,
+            version=manifest.version,
+            id=manifest.id,
+            author=manifest.author or tr("dialog.plugins.unknown_author"),
+            license=manifest.license or tr("dialog.plugins.unspecified_license"),
+            description=manifest.description,
+            permissions="\n- ".join(permissions),
         )
         dialog = QDialog(self)
-        dialog.setWindowTitle("Plugin Details")
+        dialog.setWindowTitle(tr("dialog.plugins.details_title"))
         layout = QVBoxLayout(dialog)
         label = QLabel(text)
         label.setWordWrap(True)
@@ -174,7 +184,9 @@ class PluginManagerDialog(QDialog):
         if not plugin_id:
             return
         confirm = QMessageBox.question(
-            self, "Remove Plugin", f"Remove plugin {plugin_id!r}? This deletes its files."
+            self,
+            tr("dialog.plugins.remove_confirm_title"),
+            tr("dialog.plugins.remove_confirm_body", id=plugin_id),
         )
         if confirm == QMessageBox.StandardButton.Yes:
             self._plugins.uninstall(plugin_id)

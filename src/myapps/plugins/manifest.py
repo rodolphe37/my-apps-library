@@ -38,6 +38,12 @@ class PluginManifest:
     min_app_version: str = "0.0.0"
     permissions: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
+    # Advisory discoverability metadata for a translation plugin — e.g.
+    # ["de"]. Not enforced: the runtime source of truth for what a plugin
+    # actually translates is its loaded contribute_translations() return
+    # value (same advisory relationship `permissions` already has to actual
+    # behavior). Lets the UI show "Provides: German" without loading code.
+    provides_locales: list[str] = field(default_factory=list)
     # Injected by the loader, not part of the TOML itself.
     source_dir: Path | None = None
 
@@ -73,6 +79,7 @@ def parse_manifest(toml_path: Path) -> PluginManifest:
         min_app_version=str(plugin_section.get("min_app_version", "0.0.0")),
         permissions=list(plugin_section.get("permissions", [])),
         tags=list(plugin_section.get("tags", [])),
+        provides_locales=list(plugin_section.get("provides_locales", [])),
         source_dir=toml_path.parent,
     )
 
@@ -96,7 +103,7 @@ def _validate(section: dict) -> list[str]:
     if isinstance(entry_point, str) and entry_point and ":" not in entry_point:
         errors.append("'entry_point' must be of the form 'module:ClassName'")
 
-    for list_field in ("permissions", "tags"):
+    for list_field in ("permissions", "tags", "provides_locales"):
         value = section.get(list_field, [])
         if not isinstance(value, list) or not all(isinstance(v, str) for v in value):
             errors.append(f"'{list_field}' must be a list of strings")

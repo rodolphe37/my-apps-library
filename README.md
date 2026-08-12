@@ -13,7 +13,8 @@ A personal desktop launcher/library for your developer projects — add them onc
 - Right-click → "Show in Finder/Explorer" to reveal a project's folder
 - Light/dark theme with automatic OS detection, plus a manual switch — the whole UI (selection highlights, sidebar, buttons) is themed around the app's blue-to-purple logo gradient (see `src/myapps/ui/theme/brand.py`)
 - Native menu bar with all major actions
-- A VS Code-style **plugin system**: install from a local `.zip` or folder, enable/disable from **Plugins → Manage Plugins…**, with plugins able to contribute context-menu actions, menu actions, and even new view modes. See [`examples/plugins/`](examples/plugins/) for two working examples and [`src/myapps/plugins/api.py`](src/myapps/plugins/api.py) for the API surface.
+- A VS Code-style **plugin system**: install from a local `.zip` or folder, enable/disable from **Plugins → Manage Plugins…**, with plugins able to contribute context-menu actions, menu actions, and even new view modes. See [`examples/plugins/`](examples/plugins/) for working examples and [`src/myapps/plugins/api.py`](src/myapps/plugins/api.py) for the API surface.
+- **Multi-language** (English/French built in), switchable live from **Preferences → Language** with no restart — and extensible by third-party **translation plugins** that add a whole new language (see [`examples/plugins/german_translation/`](examples/plugins/german_translation/)) or patch/override individual strings in an existing one.
 
 Planned next: a plugin marketplace client (browse/install remotely, once the marketplace service exists), code signing/notarization, auto-update.
 
@@ -40,7 +41,7 @@ ruff check src tests examples
 
 ## Project layout
 
-See `src/myapps/` — `core/` (data layer), `editors/` (detection & launch), `plugins/` (plugin system: manifest, loader, manager, API), `ui/` (PySide6 widgets, theming, views), `utils/`. Packaging configs live in `packaging/`. Example plugins live in `examples/plugins/`.
+See `src/myapps/` — `core/` (data layer), `editors/` (detection & launch), `plugins/` (plugin system: manifest, loader, manager, API), `i18n/` (translation catalog, `tr()`, built-in `en`/`fr` locales), `ui/` (PySide6 widgets, theming, views), `utils/`. Packaging configs live in `packaging/`. Example plugins live in `examples/plugins/`.
 
 ## License
 

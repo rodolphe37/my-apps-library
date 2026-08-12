@@ -73,6 +73,7 @@ class Project:
 @dataclass
 class AppSettings:
     theme_mode: str = "system"  # "system" | "light" | "dark"
+    language: str = "system"  # "system" | "en" | "fr" | <plugin-provided locale code>
     view_mode: str = "list"
     global_default_editor_id: str | None = None
     window_geometry: str | None = None  # base64 QByteArray, stored as text
@@ -87,6 +88,7 @@ class AppSettings:
         defaults = cls()
         return cls(
             theme_mode=data.get("theme_mode", defaults.theme_mode),
+            language=data.get("language", defaults.language),
             view_mode=data.get("view_mode", defaults.view_mode),
             global_default_editor_id=data.get("global_default_editor_id"),
             window_geometry=data.get("window_geometry"),

@@ -21,12 +21,13 @@ from PySide6.QtWidgets import (
 )
 
 from myapps.core.project_manager import ProjectManager
+from myapps.i18n import tr
 
 
 class AddProjectDialog(QDialog):
     def __init__(self, project_manager: ProjectManager, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Add Project")
+        self.setWindowTitle(tr("dialog.add_project.title"))
         self.setMinimumWidth(420)
         self._pm = project_manager
         self._selected_path: str | None = None
@@ -36,24 +37,24 @@ class AddProjectDialog(QDialog):
         layout.addLayout(form)
 
         self._path_edit = QLineEdit()
-        self._path_edit.setPlaceholderText("Choose a project folder…")
+        self._path_edit.setPlaceholderText(tr("dialog.add_project.folder_placeholder"))
         self._path_edit.textChanged.connect(self._on_path_changed)
-        form.addRow("Folder:", self._path_edit)
+        form.addRow(tr("dialog.add_project.folder_label"), self._path_edit)
 
         browse_row = QWidget()
         browse_layout = QHBoxLayout(browse_row)
         browse_layout.setContentsMargins(0, 0, 0, 0)
-        browse_button = QPushButton("Browse…")
+        browse_button = QPushButton(tr("dialog.add_project.browse"))
         browse_button.clicked.connect(self._browse)
         browse_layout.addWidget(browse_button)
         browse_layout.addStretch()
         form.addRow("", browse_row)
 
         self._name_edit = QLineEdit()
-        self._name_edit.setPlaceholderText("Defaults to folder name")
-        form.addRow("Display name:", self._name_edit)
+        self._name_edit.setPlaceholderText(tr("dialog.add_project.name_placeholder"))
+        form.addRow(tr("dialog.add_project.name_label"), self._name_edit)
 
-        layout.addWidget(QLabel("Categories:"))
+        layout.addWidget(QLabel(tr("dialog.add_project.categories_label")))
         self._category_list = QListWidget()
         self._category_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
         for category in self._pm.list_categories():
@@ -74,7 +75,7 @@ class AddProjectDialog(QDialog):
         self._ok_button.setEnabled(False)
 
     def _browse(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, "Choose Project Folder")
+        folder = QFileDialog.getExistingDirectory(self, tr("dialog.add_project.browse_title"))
         if folder:
             self._path_edit.setText(folder)
 

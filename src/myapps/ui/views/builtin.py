@@ -11,6 +11,7 @@ from __future__ import annotations
 from PySide6.QtWidgets import QListView
 
 from myapps.core.project_manager import ProjectManager
+from myapps.i18n import tr
 from myapps.ui.delegates.project_item_delegate import ProjectItemDelegate
 from myapps.ui.views.project_list_view import ProjectListView
 from myapps.ui.views.registry import ViewRegistry
@@ -20,11 +21,13 @@ GRID_MODE_ID = "grid"
 
 
 def register_builtin_views(registry: ViewRegistry, project_manager: ProjectManager) -> None:
+    """Re-runnable (called again on language change to re-translate the
+    "List"/"Grid" labels) — registry.register() overwrites by mode_id."""
     registry.register(
-        LIST_MODE_ID, "List", lambda m, s: _make_list_view(m, s, project_manager)
+        LIST_MODE_ID, tr("view_mode.list"), lambda m, s: _make_list_view(m, s, project_manager)
     )
     registry.register(
-        GRID_MODE_ID, "Grid", lambda m, s: _make_grid_view(m, s, project_manager)
+        GRID_MODE_ID, tr("view_mode.grid"), lambda m, s: _make_grid_view(m, s, project_manager)
     )
 
 

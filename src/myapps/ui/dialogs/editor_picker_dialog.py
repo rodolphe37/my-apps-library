@@ -24,12 +24,13 @@ from PySide6.QtWidgets import (
 
 from myapps.editors.catalog import CATALOG_BY_ID, SUGGESTED_OPEN_SOURCE_IDS
 from myapps.editors.registry import EditorRegistry
+from myapps.i18n import tr
 
 
 class EditorPickerDialog(QDialog):
     def __init__(self, registry: EditorRegistry, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Open With…")
+        self.setWindowTitle(tr("dialog.open_with.title"))
         self.setMinimumWidth(360)
         self._registry = registry
 
@@ -38,13 +39,13 @@ class EditorPickerDialog(QDialog):
         self._reload()
         layout.addWidget(self._list)
 
-        self._set_default_checkbox = QCheckBox("Set as default editor for this project")
+        self._set_default_checkbox = QCheckBox(tr("dialog.open_with.set_default"))
         layout.addWidget(self._set_default_checkbox)
 
         btn_row = QHBoxLayout()
-        add_custom_btn = QPushButton("Add Custom Editor…")
-        refresh_btn = QPushButton("Refresh Detection")
-        not_found_btn = QPushButton("Editor Not Listed?")
+        add_custom_btn = QPushButton(tr("dialog.open_with.add_custom"))
+        refresh_btn = QPushButton(tr("dialog.open_with.refresh"))
+        not_found_btn = QPushButton(tr("dialog.open_with.not_listed"))
         add_custom_btn.clicked.connect(self._add_custom)
         refresh_btn.clicked.connect(self._refresh)
         not_found_btn.clicked.connect(self._show_not_found_help)
@@ -68,12 +69,12 @@ class EditorPickerDialog(QDialog):
         self._list.clear()
         editors = self._registry.list_editors()
         if not editors:
-            placeholder = QListWidgetItem("No editors detected — try Refresh or Add Custom")
+            placeholder = QListWidgetItem(tr("dialog.open_with.none_detected"))
             placeholder.setFlags(Qt.ItemFlag.NoItemFlags)
             self._list.addItem(placeholder)
             return
         for editor in editors:
-            suffix = " (manual)" if editor.kind == "manual" else ""
+            suffix = tr("dialog.open_with.manual_suffix") if editor.kind == "manual" else ""
             item = QListWidgetItem(f"{editor.display_name}{suffix}")
             item.setData(Qt.ItemDataRole.UserRole, editor.id)
             self._list.addItem(item)
@@ -83,26 +84,23 @@ class EditorPickerDialog(QDialog):
         self._reload()
 
     def _add_custom(self) -> None:
-        exe_path, _ = QFileDialog.getOpenFileName(self, "Select Editor Executable")
+        exe_path, _ = QFileDialog.getOpenFileName(
+            self, tr("dialog.open_with.select_executable")
+        )
         if not exe_path:
             return
-        name, ok = QInputDialog.getText(self, "Editor Name", "Display name:")
+        name, ok = QInputDialog.getText(
+            self, tr("dialog.open_with.editor_name_title"), tr("dialog.open_with.editor_name_label")
+        )
         if ok and name.strip():
             self._registry.add_manual_editor(name.strip(), exe_path)
             self._reload()
 
     def _show_not_found_help(self) -> None:
         dialog = QDialog(self)
-        dialog.setWindowTitle("Install an Editor")
+        dialog.setWindowTitle(tr("dialog.install_editor.title"))
         layout = QVBoxLayout(dialog)
-        layout.addWidget(
-            QLabel(
-                "MyAppsLibrary doesn't auto-install editors yet.\n"
-                "Pick one below to open its download page, then use "
-                "'Refresh Detection' once it's installed.\n\n"
-                "Suggested open-source editors:"
-            )
-        )
+        layout.addWidget(QLabel(tr("dialog.install_editor.body")))
         for editor_id in SUGGESTED_OPEN_SOURCE_IDS:
             entry = CATALOG_BY_ID.get(editor_id)
             if not entry:

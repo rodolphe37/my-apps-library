@@ -3,6 +3,10 @@
 Core actions live here; Phase 2's PluginManager will append
 `contribute_project_context_actions(project)` results after a separator,
 without this module needing to change.
+
+Rebuilt fresh on every right-click (no stored state), so its `tr()` calls
+always reflect the currently active language with no retranslation plumbing
+needed.
 """
 
 from __future__ import annotations
@@ -12,6 +16,7 @@ from collections.abc import Callable
 from PySide6.QtWidgets import QMenu, QWidget
 
 from myapps.core.models import Project
+from myapps.i18n import tr
 
 
 def build_project_context_menu(
@@ -27,14 +32,16 @@ def build_project_context_menu(
     on_remove: Callable[[], None],
 ) -> QMenu:
     menu = QMenu(parent)
-    menu.addAction("Open in Editor", on_open)
-    menu.addAction("Open With…", on_open_with)
-    menu.addAction("Show in Finder/Explorer", on_reveal)
+    menu.addAction(tr("context_menu.open"), on_open)
+    menu.addAction(tr("context_menu.open_with"), on_open_with)
+    menu.addAction(tr("context_menu.reveal"), on_reveal)
     menu.addSeparator()
-    menu.addAction("Unpin" if project.pinned else "Pin", on_toggle_pin)
-    menu.addAction("Edit Categories…", on_edit_categories)
-    menu.addAction("Rename…", on_rename)
+    menu.addAction(
+        tr("context_menu.unpin") if project.pinned else tr("context_menu.pin"), on_toggle_pin
+    )
+    menu.addAction(tr("context_menu.edit_categories"), on_edit_categories)
+    menu.addAction(tr("context_menu.rename"), on_rename)
     menu.addSeparator()
-    remove_action = menu.addAction("Remove from Library…", on_remove)
-    remove_action.setToolTip("Only removes the reference — your files are untouched")
+    remove_action = menu.addAction(tr("context_menu.remove"), on_remove)
+    remove_action.setToolTip(tr("context_menu.remove_tooltip"))
     return menu

@@ -51,6 +51,16 @@ class PluginBase:
     def contribute_views(self) -> list[ViewModeInfo]:
         return []
 
+    def contribute_translations(self) -> dict[str, dict[str, str]]:
+        """Optional: {locale_code: {key: translated_string}}. A plugin can
+        EITHER patch/add keys onto an existing locale (e.g. adding French
+        strings for its own contributed menu action) OR introduce a wholly
+        new locale code (e.g. 'de') — same dict shape either way. The
+        reserved key 'meta.language_name' inside a new locale's dict is what
+        makes that locale display with a proper name (e.g. 'Deutsch') in the
+        Settings dropdown."""
+        return {}
+
 
 class PluginSettingsStore:
     """Per-plugin settings, persisted to `<storage_dir>/settings.json` via

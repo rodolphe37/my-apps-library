@@ -421,6 +421,24 @@ class PluginManager:
                 views.extend(registrar.views)
         return views
 
+    def collect_translations(self) -> dict[str, dict[str, str]]:
+        """Merges contribute_translations() from every LOADED+enabled
+        plugin, locale-by-locale, key-by-key, in dict-iteration (i.e.
+        load/enable) order. A later plugin's key wins over an earlier
+        plugin's key for the same (locale, key) pair — same 'last writer
+        wins, never crash' spirit as the rest of this module."""
+        merged: dict[str, dict[str, str]] = {}
+        for plugin_id, loaded in self._active_plugins():
+            contributed = self._safe_call(plugin_id, loaded.instance.contribute_translations, {})
+            for locale, entries in contributed.items():
+                if not isinstance(entries, dict):
+                    logger.warning(
+                        "Plugin %r contributed non-dict translations for %r", plugin_id, locale
+                    )
+                    continue
+                merged.setdefault(locale, {}).update(entries)
+        return merged
+
     def _active_plugins(self):
         return [
             (pid, loaded)

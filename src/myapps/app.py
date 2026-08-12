@@ -12,6 +12,7 @@ from myapps.constants import APP_NAME, ORG_NAME
 from myapps.core.project_manager import ProjectManager
 from myapps.core.settings_manager import SettingsManager
 from myapps.editors.registry import EditorRegistry
+from myapps.i18n import LanguageManager
 from myapps.plugins.manager import PluginManager
 from myapps.ui.main_window import MainWindow
 from myapps.ui.resources import app_icon_path
@@ -45,8 +46,17 @@ def main() -> int:
     plugin_manager = PluginManager(project_manager)
     plugin_manager.load_all_enabled()
 
+    language_manager = LanguageManager()
+    language_manager.set_plugin_translations(plugin_manager.collect_translations())
+    language_manager.set_mode(settings_manager.settings.language)
+
     window = MainWindow(
-        project_manager, settings_manager, editor_registry, theme_manager, plugin_manager
+        project_manager,
+        settings_manager,
+        editor_registry,
+        theme_manager,
+        plugin_manager,
+        language_manager,
     )
     window.show()
 

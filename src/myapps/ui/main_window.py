@@ -34,6 +34,7 @@ from myapps.core.events import event_bus
 from myapps.core.project_manager import ProjectManager
 from myapps.core.settings_manager import SettingsManager
 from myapps.editors.registry import EditorRegistry
+from myapps.i18n import LanguageManager, tr
 from myapps.plugins.manager import PluginManager
 from myapps.ui.dialogs.add_project_dialog import AddProjectDialog
 from myapps.ui.dialogs.category_manager_dialog import (
@@ -64,6 +65,7 @@ class MainWindow(QMainWindow):
         editor_registry: EditorRegistry,
         theme_manager: ThemeManager,
         plugin_manager: PluginManager | None = None,
+        language_manager: LanguageManager | None = None,
     ) -> None:
         super().__init__()
         self._pm = project_manager
@@ -71,6 +73,7 @@ class MainWindow(QMainWindow):
         self._editors = editor_registry
         self._theme = theme_manager
         self._plugins = plugin_manager
+        self._language = language_manager
 
         self.setWindowTitle(APP_NAME)
         self.setWindowIcon(QIcon(str(app_icon_path())))
@@ -90,6 +93,8 @@ class MainWindow(QMainWindow):
 
         if self._plugins is not None:
             event_bus.plugins_changed.connect(self._on_plugins_changed)
+        if self._language is not None:
+            self._language.language_changed.connect(self._on_language_changed)
 
     def _register_plugin_views(self) -> None:
         if self._plugins is None:
@@ -186,70 +191,80 @@ class MainWindow(QMainWindow):
         return header
 
     def _build_menu_bar(self) -> None:
+        """Builds the whole menu bar from scratch. Safe to call again — the
+        leading `clear()` makes this idempotent, which is what lets
+        `_on_language_changed()` just re-run this method wholesale instead
+        of maintaining a second, parallel retranslation code path."""
         menu_bar = self.menuBar()
+        menu_bar.clear()
         menu_bar.setNativeMenuBar(True)
 
         # File
-        file_menu = menu_bar.addMenu("&File")
-        add_action = QAction("Add Project…", self)
+        file_menu = menu_bar.addMenu(tr("menu.file"))
+        add_action = QAction(tr("menu.file.add_project"), self)
         add_action.setShortcut(QKeySequence.StandardKey.New)
         add_action.triggered.connect(self._add_project)
         file_menu.addAction(add_action)
         file_menu.addSeparator()
-        prefs_action = QAction("Preferences…", self)
+        prefs_action = QAction(tr("menu.file.preferences"), self)
         prefs_action.setShortcut(QKeySequence.StandardKey.Preferences)
         prefs_action.triggered.connect(self._open_preferences)
         file_menu.addAction(prefs_action)
         file_menu.addSeparator()
-        quit_action = QAction("Quit", self)
+        quit_action = QAction(tr("menu.file.quit"), self)
         quit_action.setShortcut(QKeySequence.StandardKey.Quit)
         quit_action.triggered.connect(self.close)
         file_menu.addAction(quit_action)
 
         # Project
-        project_menu = menu_bar.addMenu("&Project")
-        open_action = QAction("Open in Editor", self)
+        project_menu = menu_bar.addMenu(tr("menu.project"))
+        open_action = QAction(tr("menu.project.open"), self)
         open_action.triggered.connect(lambda: self._open_project(self._current_project_id()))
         project_menu.addAction(open_action)
-        open_with_action = QAction("Open With…", self)
+        open_with_action = QAction(tr("menu.project.open_with"), self)
         open_with_action.triggered.connect(
             lambda: self._open_with(self._current_project_id())
         )
         project_menu.addAction(open_with_action)
-        reveal_action = QAction("Show in Finder/Explorer", self)
+        reveal_action = QAction(tr("menu.project.reveal"), self)
         reveal_action.triggered.connect(lambda: self._reveal(self._current_project_id()))
         project_menu.addAction(reveal_action)
         project_menu.addSeparator()
-        categories_action = QAction("Edit Categories…", self)
+        categories_action = QAction(tr("menu.project.edit_categories"), self)
         categories_action.triggered.connect(
             lambda: self._edit_categories(self._current_project_id())
         )
         project_menu.addAction(categories_action)
         project_menu.addSeparator()
-        manage_categories_action = QAction("Manage Categories…", self)
+        manage_categories_action = QAction(tr("menu.project.manage_categories"), self)
         manage_categories_action.triggered.connect(self._manage_categories)
         project_menu.addAction(manage_categories_action)
         project_menu.addSeparator()
-        remove_action = QAction("Remove from Library…", self)
+        remove_action = QAction(tr("menu.project.remove"), self)
         remove_action.triggered.connect(lambda: self._remove(self._current_project_id()))
         project_menu.addAction(remove_action)
 
         # View
-        view_menu = menu_bar.addMenu("&View")
-        sidebar_action = QAction("Show Sidebar", self, checkable=True)
+        view_menu = menu_bar.addMenu(tr("menu.view"))
+        sidebar_action = QAction(tr("menu.view.show_sidebar"), self, checkable=True)
         sidebar_action.setChecked(self._settings.settings.sidebar_visible)
         sidebar_action.toggled.connect(self._toggle_sidebar)
         view_menu.addAction(sidebar_action)
         view_menu.addSeparator()
 
-        self._view_mode_menu = view_menu.addMenu("Mode")
+        self._view_mode_menu = view_menu.addMenu(tr("menu.view.mode"))
         self._populate_view_mode_menu()
         view_menu.addSeparator()
 
-        theme_menu = view_menu.addMenu("Theme")
+        theme_menu = view_menu.addMenu(tr("menu.view.theme"))
         theme_group = QActionGroup(self)
         theme_group.setExclusive(True)
-        for label, mode in (("System", "system"), ("Light", "light"), ("Dark", "dark")):
+        theme_options = (
+            (tr("menu.view.theme.system"), "system"),
+            (tr("menu.view.theme.light"), "light"),
+            (tr("menu.view.theme.dark"), "dark"),
+        )
+        for label, mode in theme_options:
             action = QAction(label, self, checkable=True)
             action.setChecked(self._settings.settings.theme_mode == mode)
             action.triggered.connect(lambda _, m=mode: self._set_theme_mode(m))
@@ -258,12 +273,12 @@ class MainWindow(QMainWindow):
 
         # Plugins — always present, even with zero plugins installed, so
         # "Manage Plugins…" is discoverable regardless.
-        self._plugins_menu = menu_bar.addMenu("Pl&ugins")
+        self._plugins_menu = menu_bar.addMenu(tr("menu.plugins"))
         self._populate_plugins_menu()
 
         # Help
-        help_menu = menu_bar.addMenu("&Help")
-        about_action = QAction("About MyAppsLibrary", self)
+        help_menu = menu_bar.addMenu(tr("menu.help"))
+        about_action = QAction(tr("menu.help.about", app_name=APP_NAME), self)
         about_action.triggered.connect(self._show_about)
         help_menu.addAction(about_action)
 
@@ -285,7 +300,7 @@ class MainWindow(QMainWindow):
 
     def _populate_plugins_menu(self) -> None:
         self._plugins_menu.clear()
-        manage_action = QAction("Manage Plugins…", self._plugins_menu)
+        manage_action = QAction(tr("menu.plugins.manage"), self._plugins_menu)
         manage_action.triggered.connect(self._open_plugin_manager)
         self._plugins_menu.addAction(manage_action)
 
@@ -312,7 +327,8 @@ class MainWindow(QMainWindow):
 
     def _update_status_bar(self, *_args) -> None:
         count = len(self._pm.list_projects())
-        self._status_bar.showMessage(f"{count} project{'s' if count != 1 else ''}")
+        key = "status.project_count.one" if count == 1 else "status.project_count.other"
+        self._status_bar.showMessage(tr(key, n=count))
 
     # -- actions -------------------------------------------------------
 
@@ -338,7 +354,9 @@ class MainWindow(QMainWindow):
             self._pm.mark_opened(project_id, editor_id)
         else:
             QMessageBox.warning(
-                self, "Couldn't Open Editor", "Failed to launch the editor. Try 'Open With…'."
+                self,
+                tr("msg.couldnt_open_editor.title"),
+                tr("msg.couldnt_open_editor.retry_body"),
             )
 
     def _open_with(self, project_id: str | None) -> None:
@@ -357,7 +375,9 @@ class MainWindow(QMainWindow):
             if self._editors.launch(editor_id, project.path):
                 self._pm.mark_opened(project_id, editor_id)
             else:
-                QMessageBox.warning(self, "Couldn't Open Editor", "Failed to launch the editor.")
+                QMessageBox.warning(
+                    self, tr("msg.couldnt_open_editor.title"), tr("msg.couldnt_open_editor.body")
+                )
 
     def _reveal(self, project_id: str | None) -> None:
         if not project_id:
@@ -365,7 +385,7 @@ class MainWindow(QMainWindow):
         project = self._pm.get_project(project_id)
         if project and not reveal_in_file_manager(project.path):
             QMessageBox.warning(
-                self, "Couldn't Reveal Folder", "The project folder may have been moved or deleted."
+                self, tr("msg.couldnt_reveal.title"), tr("msg.couldnt_reveal.body")
             )
 
     def _toggle_pin(self, project_id: str | None) -> None:
@@ -391,7 +411,10 @@ class MainWindow(QMainWindow):
         project = self._pm.get_project(project_id)
         if not project:
             return
-        new_name, ok = QInputDialog.getText(self, "Rename Project", "Name:", text=project.name)
+        new_name, ok = QInputDialog.getText(
+            self, tr("dialog.rename_project.title"), tr("dialog.rename_project.label"),
+            text=project.name,
+        )
         if ok and new_name.strip():
             self._pm.update_project(project_id, name=new_name.strip())
 
@@ -403,9 +426,8 @@ class MainWindow(QMainWindow):
             return
         confirm = QMessageBox.question(
             self,
-            "Remove from Library",
-            f"Remove '{project.name}' from the library?\n\n"
-            "This only removes the reference — the folder on disk is untouched.",
+            tr("dialog.remove_project.title"),
+            tr("dialog.remove_project.body", name=project.name),
         )
         if confirm == QMessageBox.StandardButton.Yes:
             self._pm.remove_project(project_id)
@@ -415,7 +437,9 @@ class MainWindow(QMainWindow):
 
     def _open_plugin_manager(self) -> None:
         if self._plugins is None:
-            QMessageBox.information(self, "Plugins", "The plugin system is not available.")
+            QMessageBox.information(
+                self, tr("msg.plugins_unavailable.title"), tr("msg.plugins_unavailable.body")
+            )
             return
         PluginManagerDialog(self._plugins, self).exec()
 
@@ -455,7 +479,9 @@ class MainWindow(QMainWindow):
             self._settings.set(last_selected_category=filter_id)
 
     def _on_project_recategorized(self, project_name: str, category_label: str) -> None:
-        self._status_bar.showMessage(f"Moved '{project_name}' to {category_label}", 3000)
+        self._status_bar.showMessage(
+            tr("status.moved_to", name=project_name, category=category_label), 3000
+        )
 
     def _toggle_sidebar(self, visible: bool) -> None:
         self._left_panel.setVisible(visible)
@@ -471,6 +497,17 @@ class MainWindow(QMainWindow):
             self._view_stack.setCurrentWidget(widget)
         self._settings.set(view_mode=mode_id)
 
+    def _on_language_changed(self, _locale: str) -> None:
+        """Rebuilds every piece of persistent, always-visible UI that carries
+        translated text. Dialogs need no entry here — they're all freshly
+        instantiated on each open, so a `tr()` call at construction time is
+        always current (see i18n design notes)."""
+        register_builtin_views(view_registry, self._pm)  # retranslate "List"/"Grid" labels
+        self._build_menu_bar()  # idempotent full rebuild, see its own docstring
+        self._sidebar._refresh()  # "All"/"Uncategorized" labels; category names are user data
+        self._search_bar.retranslate()
+        self._update_status_bar()
+
     def _on_plugins_changed(self) -> None:
         """Rebuilds plugin-derived UI after install/uninstall/enable/disable.
         Full rebuild rather than diffing — view-mode churn only happens via
@@ -483,6 +520,10 @@ class MainWindow(QMainWindow):
         self._sync_view_stack()
         self._populate_view_mode_menu()
         self._populate_plugins_menu()
+        if self._language is not None and self._plugins is not None:
+            # A plugin enable/disable can add or remove a translation-plugin
+            # contributed locale, or patch keys in an existing one.
+            self._language.set_plugin_translations(self._plugins.collect_translations())
 
     def _sync_view_stack(self) -> None:
         active_mode_ids = {info.mode_id for info in view_registry.list_modes()}
@@ -511,12 +552,14 @@ class MainWindow(QMainWindow):
         self._theme.set_mode(mode)
 
     def _open_preferences(self) -> None:
-        SettingsDialog(self._settings, self._editors, self).exec()
+        SettingsDialog(
+            self._settings, self._editors, self, language_manager=self._language
+        ).exec()
 
     def _show_about(self) -> None:
         box = QMessageBox(self)
-        box.setWindowTitle(f"About {APP_NAME}")
-        box.setText(f"{APP_NAME} v{VERSION}\n\nA personal library for your developer projects.")
+        box.setWindowTitle(tr("about.title", app_name=APP_NAME))
+        box.setText(tr("about.body", app_name=APP_NAME, version=VERSION))
         pixmap = QPixmap(str(app_icon_path()))
         if not pixmap.isNull():
             box.setIconPixmap(
@@ -558,9 +601,10 @@ class MainWindow(QMainWindow):
             else:
                 self._pm.add_project(path)
                 added += 1
-        message = f"Added {added} project{'s' if added != 1 else ''}"
+        key = "status.added_projects.one" if added == 1 else "status.added_projects.other"
+        message = tr(key, n=added)
         if skipped:
-            message += f" ({skipped} already in library)"
+            message += tr("status.already_in_library", n=skipped)
         self._status_bar.showMessage(message, 4000)
 
     # -- window state ------------------------------------------------------

@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 
 from myapps.core.models import Project
 from myapps.core.project_manager import ProjectManager
+from myapps.i18n import tr
 
 
 class CategoryManagerDialog(QDialog):
@@ -26,7 +27,7 @@ class CategoryManagerDialog(QDialog):
 
     def __init__(self, project_manager: ProjectManager, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Manage Categories")
+        self.setWindowTitle(tr("dialog.manage_categories.title"))
         self.setMinimumSize(360, 400)
         self._pm = project_manager
 
@@ -36,9 +37,9 @@ class CategoryManagerDialog(QDialog):
         self._reload()
 
         btn_row = QHBoxLayout()
-        add_btn = QPushButton("Add…")
-        rename_btn = QPushButton("Rename…")
-        delete_btn = QPushButton("Delete")
+        add_btn = QPushButton(tr("dialog.manage_categories.add"))
+        rename_btn = QPushButton(tr("dialog.manage_categories.rename"))
+        delete_btn = QPushButton(tr("dialog.manage_categories.delete"))
         add_btn.clicked.connect(self._add)
         rename_btn.clicked.connect(self._rename)
         delete_btn.clicked.connect(self._delete)
@@ -59,7 +60,9 @@ class CategoryManagerDialog(QDialog):
             self._list.addItem(item)
 
     def _add(self) -> None:
-        name, ok = QInputDialog.getText(self, "New Category", "Category name:")
+        name, ok = QInputDialog.getText(
+            self, tr("dialog.new_category.title"), tr("dialog.new_category.label")
+        )
         if ok and name.strip():
             self._pm.add_category(name.strip())
             self._reload()
@@ -68,7 +71,10 @@ class CategoryManagerDialog(QDialog):
         item = self._list.currentItem()
         if not item:
             return
-        new_name, ok = QInputDialog.getText(self, "Rename Category", "New name:", text=item.text())
+        new_name, ok = QInputDialog.getText(
+            self, tr("dialog.rename_category.title"), tr("dialog.rename_category.label"),
+            text=item.text(),
+        )
         if ok and new_name.strip():
             self._pm.rename_category(item.data(Qt.ItemDataRole.UserRole), new_name.strip())
             self._reload()
@@ -79,8 +85,8 @@ class CategoryManagerDialog(QDialog):
             return
         confirm = QMessageBox.question(
             self,
-            "Delete Category",
-            f"Delete '{item.text()}'? Projects will simply lose this category.",
+            tr("dialog.delete_category.title"),
+            tr("dialog.delete_category.body", name=item.text()),
         )
         if confirm == QMessageBox.StandardButton.Yes:
             self._pm.remove_category(item.data(Qt.ItemDataRole.UserRole))
@@ -94,7 +100,7 @@ class ProjectCategoryPickerDialog(QDialog):
         self, project: Project, project_manager: ProjectManager, parent: QWidget | None = None
     ) -> None:
         super().__init__(parent)
-        self.setWindowTitle(f"Categories — {project.name}")
+        self.setWindowTitle(tr("dialog.project_categories.title", project_name=project.name))
         self._pm = project_manager
         self._project = project
 

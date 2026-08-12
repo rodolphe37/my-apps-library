@@ -1,0 +1,12 @@
+[plugin]
+id = "german-translation"
+name = "German Translation"
+version = "0.1.0"
+description = "Adds German (Deutsch) as a selectable language in Preferences."
+author = "MyAppsLibrary examples"
+license = "MIT"
+min_app_version = "0.3.0"
+entry_point = "plugin:GermanTranslationPlugin"
+permissions = ["translations"]
+tags = ["i18n", "example"]
+provides_locales = ["de"]

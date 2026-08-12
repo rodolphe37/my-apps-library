@@ -20,6 +20,7 @@ from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget
 from myapps.constants import UNCATEGORIZED_ID
 from myapps.core.events import event_bus
 from myapps.core.project_manager import ProjectManager
+from myapps.i18n import tr
 from myapps.ui.models.project_list_model import PROJECT_ID_MIME_TYPE
 
 ALL_ITEM_ID = "__all__"
@@ -51,18 +52,22 @@ class CategorySidebar(QListWidget):
         self.blockSignals(True)
         self.clear()
 
-        all_item = QListWidgetItem(f"All ({len(self._pm.list_projects())})")
+        all_item = QListWidgetItem(tr("sidebar.all", n=len(self._pm.list_projects())))
         all_item.setData(Qt.ItemDataRole.UserRole, ALL_ITEM_ID)
         self.addItem(all_item)
 
         for category in self._pm.list_categories():
+            # category.name is user data, never translated — only the
+            # "{name} ({n})" template is.
             count = len(self._pm.projects_in_category(category.id))
-            item = QListWidgetItem(f"{category.name} ({count})")
+            item = QListWidgetItem(tr("sidebar.category_count", name=category.name, n=count))
             item.setData(Qt.ItemDataRole.UserRole, category.id)
             self.addItem(item)
 
         uncategorized_count = len(self._pm.projects_in_category(None))
-        uncategorized_item = QListWidgetItem(f"Uncategorized ({uncategorized_count})")
+        uncategorized_item = QListWidgetItem(
+            tr("sidebar.uncategorized_count", n=uncategorized_count)
+        )
         uncategorized_item.setData(Qt.ItemDataRole.UserRole, UNCATEGORIZED_ID)
         self.addItem(uncategorized_item)
 
@@ -124,7 +129,7 @@ class CategorySidebar(QListWidget):
 
         if target_id == UNCATEGORIZED_ID:
             self._pm.set_categories(project_id, [])
-            category_label = "Uncategorized"
+            category_label = tr("sidebar.uncategorized")
         else:
             self._pm.set_categories(project_id, [target_id])
             category = self._pm.get_category(target_id)
