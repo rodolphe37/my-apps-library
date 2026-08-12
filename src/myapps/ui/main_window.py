@@ -6,10 +6,20 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from PySide6.QtCore import QByteArray, QItemSelectionModel, Qt
-from PySide6.QtGui import QAction, QActionGroup, QDragEnterEvent, QDropEvent, QKeySequence
+from PySide6.QtCore import QByteArray, QItemSelectionModel, QSize, Qt
+from PySide6.QtGui import (
+    QAction,
+    QActionGroup,
+    QDragEnterEvent,
+    QDropEvent,
+    QIcon,
+    QKeySequence,
+    QPixmap,
+)
 from PySide6.QtWidgets import (
+    QHBoxLayout,
     QInputDialog,
+    QLabel,
     QMainWindow,
     QMessageBox,
     QSplitter,
@@ -34,6 +44,7 @@ from myapps.ui.dialogs.editor_picker_dialog import EditorPickerDialog
 from myapps.ui.dialogs.plugin_manager_dialog import PluginManagerDialog
 from myapps.ui.dialogs.settings_dialog import SettingsDialog
 from myapps.ui.models.project_list_model import ProjectIdRole, ProjectListModel
+from myapps.ui.resources import app_icon_path
 from myapps.ui.theme.theme_manager import ThemeManager
 from myapps.ui.views.builtin import register_builtin_views
 from myapps.ui.views.registry import view_registry
@@ -62,6 +73,7 @@ class MainWindow(QMainWindow):
         self._plugins = plugin_manager
 
         self.setWindowTitle(APP_NAME)
+        self.setWindowIcon(QIcon(str(app_icon_path())))
         self.resize(1000, 640)
         self.setAcceptDrops(True)
 
@@ -98,9 +110,19 @@ class MainWindow(QMainWindow):
         splitter = QSplitter(Qt.Orientation.Horizontal)
         root_layout.addWidget(splitter)
 
+        self._left_panel = QWidget()
+        self._left_panel.setObjectName("SidebarPanel")
+        left_layout = QVBoxLayout(self._left_panel)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(0)
+        left_layout.addWidget(self._build_brand_header())
+
         self._sidebar = CategorySidebar(self._pm)
         self._sidebar.filter_changed.connect(self._on_filter_changed)
-        splitter.addWidget(self._sidebar)
+        self._sidebar.project_recategorized.connect(self._on_project_recategorized)
+        left_layout.addWidget(self._sidebar, stretch=1)
+
+        splitter.addWidget(self._left_panel)
 
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
@@ -129,13 +151,39 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
         splitter.setSizes([180, 800])
-        self._sidebar.setVisible(self._settings.settings.sidebar_visible)
+        self._left_panel.setVisible(self._settings.settings.sidebar_visible)
 
         self._status_bar = QStatusBar()
         self.setStatusBar(self._status_bar)
         self._update_status_bar()
         event_bus.project_added.connect(self._update_status_bar)
         event_bus.project_removed.connect(self._update_status_bar)
+
+    def _build_brand_header(self) -> QWidget:
+        header = QWidget()
+        header.setObjectName("BrandHeader")
+        header.setFixedHeight(52)
+        layout = QHBoxLayout(header)
+        layout.setContentsMargins(14, 8, 14, 8)
+        layout.setSpacing(8)
+
+        logo_label = QLabel()
+        logo_pixmap = QPixmap(str(app_icon_path()))
+        if not logo_pixmap.isNull():
+            logo_label.setPixmap(
+                logo_pixmap.scaled(
+                    QSize(28, 28),
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
+        layout.addWidget(logo_label)
+
+        title_label = QLabel(APP_NAME)
+        title_label.setObjectName("BrandTitle")
+        layout.addWidget(title_label)
+        layout.addStretch()
+        return header
 
     def _build_menu_bar(self) -> None:
         menu_bar = self.menuBar()
@@ -406,8 +454,11 @@ class MainWindow(QMainWindow):
             self._model.set_category_filter(filter_id)
             self._settings.set(last_selected_category=filter_id)
 
+    def _on_project_recategorized(self, project_name: str, category_label: str) -> None:
+        self._status_bar.showMessage(f"Moved '{project_name}' to {category_label}", 3000)
+
     def _toggle_sidebar(self, visible: bool) -> None:
-        self._sidebar.setVisible(visible)
+        self._left_panel.setVisible(visible)
         self._settings.set(sidebar_visible=visible)
 
     def _set_active_view_mode(self, mode_id: str) -> None:
@@ -463,11 +514,19 @@ class MainWindow(QMainWindow):
         SettingsDialog(self._settings, self._editors, self).exec()
 
     def _show_about(self) -> None:
-        QMessageBox.about(
-            self,
-            f"About {APP_NAME}",
-            f"{APP_NAME} v{VERSION}\n\nA personal library for your developer projects.",
-        )
+        box = QMessageBox(self)
+        box.setWindowTitle(f"About {APP_NAME}")
+        box.setText(f"{APP_NAME} v{VERSION}\n\nA personal library for your developer projects.")
+        pixmap = QPixmap(str(app_icon_path()))
+        if not pixmap.isNull():
+            box.setIconPixmap(
+                pixmap.scaled(
+                    QSize(72, 72),
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
+        box.exec()
 
     # -- drag & drop ---------------------------------------------------
 

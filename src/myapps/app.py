@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import sys
 
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from myapps.constants import APP_NAME, ORG_NAME
@@ -13,6 +14,7 @@ from myapps.core.settings_manager import SettingsManager
 from myapps.editors.registry import EditorRegistry
 from myapps.plugins.manager import PluginManager
 from myapps.ui.main_window import MainWindow
+from myapps.ui.resources import app_icon_path
 from myapps.ui.theme.theme_manager import ThemeManager
 from myapps.utils.logging_config import configure_logging
 
@@ -27,6 +29,7 @@ def main() -> int:
     app.setApplicationName(APP_NAME)
     app.setOrganizationName(ORG_NAME)
     app.setQuitOnLastWindowClosed(True)
+    app.setWindowIcon(QIcon(str(app_icon_path())))
 
     project_manager = ProjectManager()
     settings_manager = SettingsManager()

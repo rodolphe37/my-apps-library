@@ -7,7 +7,7 @@ duplicating data access.
 
 from __future__ import annotations
 
-from PySide6.QtCore import QAbstractListModel, QModelIndex, Qt
+from PySide6.QtCore import QAbstractListModel, QMimeData, QModelIndex, Qt
 
 from myapps.core.events import event_bus
 from myapps.core.models import Project
@@ -20,6 +20,11 @@ CategoriesRole = Qt.ItemDataRole.UserRole + 3
 EditorIdRole = Qt.ItemDataRole.UserRole + 4
 PinnedRole = Qt.ItemDataRole.UserRole + 5
 DescriptionRole = Qt.ItemDataRole.UserRole + 6
+
+# Drag payload: a single project id, utf-8 encoded. Used to drag a project
+# from the list/grid view onto a category in the sidebar (see
+# ui/widgets/category_sidebar.py's dropEvent).
+PROJECT_ID_MIME_TYPE = "application/x-myapps-project-id"
 
 
 class ProjectListModel(QAbstractListModel):
@@ -97,6 +102,22 @@ class ProjectListModel(QAbstractListModel):
         if 0 <= row < len(self._projects):
             return self._projects[row]
         return None
+
+    def flags(self, index: QModelIndex) -> Qt.ItemFlag:  # noqa: N802
+        base = super().flags(index)
+        if index.isValid():
+            return base | Qt.ItemFlag.ItemIsDragEnabled
+        return base
+
+    def mimeTypes(self) -> list[str]:  # noqa: N802
+        return [PROJECT_ID_MIME_TYPE]
+
+    def mimeData(self, indexes: list[QModelIndex]) -> QMimeData:  # noqa: N802
+        mime = QMimeData()
+        if indexes:
+            project_id = indexes[0].data(ProjectIdRole) or ""
+            mime.setData(PROJECT_ID_MIME_TYPE, project_id.encode("utf-8"))
+        return mime
 
     # -- internal ------------------------------------------------------
 

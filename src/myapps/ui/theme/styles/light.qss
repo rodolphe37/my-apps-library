@@ -1,7 +1,8 @@
-/* Light theme accents QPalette can't express. */
+/* Light theme accents QPalette can't express.
+   Colors mirror ui/theme/brand.py — keep in sync if you change one. */
 
 QMainWindow, QDialog {
-    background-color: #f5f5f7;
+    background-color: #f4f6fb;
 }
 
 QListView {
@@ -11,41 +12,132 @@ QListView {
 }
 
 QListView::item {
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 4px;
 }
 
 QListView::item:hover {
-    background-color: #e9e9eb;
+    background-color: #eaeefa;
 }
 
 QListView::item:selected {
-    background-color: #d6e9ff;
+    background-color: #e2e8fd;
+}
+
+/* -- Sidebar ---------------------------------------------------------- */
+
+#SidebarPanel {
+    background-color: #ecf0fa;
+    border-right: 1px solid #dee3f0;
+}
+
+#BrandHeader {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee3f0;
+}
+
+#BrandTitle {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    color: #1b2338;
 }
 
 #CategorySidebar {
-    background-color: #eeeef0;
-    border-right: 1px solid #dcdce0;
+    background-color: transparent;
+    border: none;
+    padding: 6px;
 }
 
-#CategorySidebar QListView::item:selected {
-    background-color: #0a84ff;
-    color: white;
-}
-
-QLineEdit#SearchBar {
-    border: 1px solid #d0d0d5;
+#CategorySidebar::item {
     border-radius: 8px;
     padding: 6px 10px;
+    margin: 1px 0;
+    color: #3a4260;
+}
+
+#CategorySidebar::item:hover {
+    background-color: #dfe6fb;
+}
+
+#CategorySidebar::item:selected {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 #1aa3fd, stop:1 #7d31fc);
+    color: white;
+    font-weight: 600;
+}
+
+/* -- Search bar --------------------------------------------------------- */
+
+QLineEdit#SearchBar {
+    border: 1px solid #dee3f0;
+    border-radius: 9px;
+    padding: 7px 12px;
+    background-color: #ffffff;
+    selection-background-color: #4a6afc;
+}
+
+QLineEdit#SearchBar:focus {
+    border: 1px solid #4a6afc;
+}
+
+/* -- Buttons -------------------------------------------------------- */
+
+QPushButton {
+    border: 1px solid #dee3f0;
+    border-radius: 7px;
+    padding: 6px 14px;
     background-color: #ffffff;
 }
 
-QPushButton {
-    border-radius: 6px;
-    padding: 6px 12px;
+QPushButton:hover {
+    background-color: #eef1fb;
+    border-color: #c7d0ea;
+}
+
+QPushButton:pressed {
+    background-color: #e2e8fd;
+}
+
+QPushButton:default {
+    background-color: #4a6afc;
+    border-color: #4a6afc;
+    color: white;
+    font-weight: 600;
+}
+
+QPushButton:default:hover {
+    background-color: #5d7bff;
 }
 
 QToolBar {
     border: none;
     spacing: 6px;
+}
+
+QMenu {
+    border: 1px solid #dee3f0;
+    border-radius: 8px;
+    padding: 4px;
+    background-color: #ffffff;
+}
+
+QMenu::item {
+    border-radius: 6px;
+    padding: 6px 20px;
+}
+
+QMenu::item:selected {
+    background-color: #e2e8fd;
+    color: #1b2338;
+}
+
+QStatusBar {
+    background-color: #ecf0fa;
+    border-top: 1px solid #dee3f0;
+}
+
+QSplitter::handle {
+    background-color: #dee3f0;
+    width: 1px;
 }

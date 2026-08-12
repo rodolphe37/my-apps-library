@@ -1,28 +1,40 @@
 """Left sidebar: All / Uncategorized / each category, for filtering the
 project list. Emits `category_selected(category_id_or_None)`; a sentinel
 string "__all__" is translated to None-with-no-filter by main_window.
+
+Also accepts drops of a project dragged from the list/grid view (see
+ui/models/project_list_model.py's PROJECT_ID_MIME_TYPE and
+ui/views/project_list_view.py's drag-enabled setup): dropping a project onto
+a category here *replaces* its categories with just that one — a "move into
+folder" semantic, distinct from the checkbox-based multi-category assignment
+in Project > Edit Categories…, which is still there for tagging a project
+into several categories at once.
 """
 
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent
 from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget
 
 from myapps.constants import UNCATEGORIZED_ID
 from myapps.core.events import event_bus
 from myapps.core.project_manager import ProjectManager
+from myapps.ui.models.project_list_model import PROJECT_ID_MIME_TYPE
 
 ALL_ITEM_ID = "__all__"
 
 
 class CategorySidebar(QListWidget):
     filter_changed = Signal(str)  # ALL_ITEM_ID | UNCATEGORIZED_ID | category_id
+    project_recategorized = Signal(str, str)  # project_name, category_label (for status bar)
 
     def __init__(self, project_manager: ProjectManager, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setObjectName("CategorySidebar")
         self._pm = project_manager
         self.setFrameShape(QListWidget.Shape.NoFrame)
+        self.setAcceptDrops(True)
 
         self._refresh()
         self.currentItemChanged.connect(self._on_current_changed)
@@ -73,3 +85,50 @@ class CategorySidebar(QListWidget):
     def _on_current_changed(self, current: QListWidgetItem, _previous) -> None:
         if current:
             self.filter_changed.emit(current.data(Qt.ItemDataRole.UserRole))
+
+    # -- drag & drop (project -> category) --------------------------------
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:  # noqa: N802
+        if event.mimeData().hasFormat(PROJECT_ID_MIME_TYPE):
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event: QDragMoveEvent) -> None:  # noqa: N802
+        if event.mimeData().hasFormat(PROJECT_ID_MIME_TYPE):
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent) -> None:  # noqa: N802
+        if not event.mimeData().hasFormat(PROJECT_ID_MIME_TYPE):
+            return
+        target_item = self.itemAt(event.position().toPoint())
+        project_id = bytes(event.mimeData().data(PROJECT_ID_MIME_TYPE)).decode("utf-8")
+        if self._handle_drop(target_item, project_id):
+            event.acceptProposedAction()
+
+    def _handle_drop(self, target_item: QListWidgetItem | None, project_id: str) -> bool:
+        """Applies the drop: replaces `project_id`'s categories with just the
+        target category (or clears them, for "Uncategorized"). Separated from
+        dropEvent() so it can be exercised directly in tests without
+        constructing a real QDropEvent (fragile in PySide6 — event objects
+        built in Python can crash when Qt's C++ side later reads them back).
+        Returns True if the drop was handled.
+        """
+        if target_item is None:
+            return False
+        target_id = target_item.data(Qt.ItemDataRole.UserRole)
+        if target_id == ALL_ITEM_ID:
+            return False  # "All" isn't a real category to move into
+
+        project = self._pm.get_project(project_id)
+        if not project:
+            return False
+
+        if target_id == UNCATEGORIZED_ID:
+            self._pm.set_categories(project_id, [])
+            category_label = "Uncategorized"
+        else:
+            self._pm.set_categories(project_id, [target_id])
+            category = self._pm.get_category(target_id)
+            category_label = category.name if category else target_id
+
+        self.project_recategorized.emit(project.name, category_label)
+        return True

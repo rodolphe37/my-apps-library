@@ -5,13 +5,13 @@ A personal desktop launcher/library for your developer projects — add them onc
 ## Features
 
 - Add/remove projects (folder references only — your files are never touched), including drag-and-drop of one or more folders
-- Organize projects into categories (many-to-many)
+- Fully custom categories — no built-in/generic ones. Create as many as you want (**Project → Manage Categories…**), assign a project to several at once via right-click → **Edit Categories…**, or drag a project onto a category in the sidebar to move it there directly
 - Search and filter by category
 - List and grid/thumbnail views, toggled from the View menu, with selection preserved across the switch
 - Auto-detects installed code editors (VS Code, Cursor, Sublime Text, JetBrains IDEs, Zed, VSCodium, and more) and opens a project directly in one
 - "Open With…" to pick a different editor, or add a custom one
 - Right-click → "Show in Finder/Explorer" to reveal a project's folder
-- Light/dark theme with automatic OS detection, plus a manual switch
+- Light/dark theme with automatic OS detection, plus a manual switch — the whole UI (selection highlights, sidebar, buttons) is themed around the app's blue-to-purple logo gradient (see `src/myapps/ui/theme/brand.py`)
 - Native menu bar with all major actions
 - A VS Code-style **plugin system**: install from a local `.zip` or folder, enable/disable from **Plugins → Manage Plugins…**, with plugins able to contribute context-menu actions, menu actions, and even new view modes. See [`examples/plugins/`](examples/plugins/) for two working examples and [`src/myapps/plugins/api.py`](src/myapps/plugins/api.py) for the API surface.
 

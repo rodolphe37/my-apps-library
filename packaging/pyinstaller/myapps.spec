@@ -20,6 +20,7 @@ ICONS = REPO_ROOT / "packaging" / "icons"
 # entry to end up inside the frozen bundle at src/myapps/ui/theme/styles/.
 datas = [
     (str(SRC / "myapps" / "ui" / "theme" / "styles"), "myapps/ui/theme/styles"),
+    (str(SRC / "myapps" / "ui" / "resources"), "myapps/ui/resources"),
 ]
 
 if sys.platform == "darwin":

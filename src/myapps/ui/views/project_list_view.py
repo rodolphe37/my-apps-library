@@ -37,6 +37,11 @@ class ProjectListView(QListView):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.setMouseTracking(True)  # needed for the grid delegate's hover state
 
+        # Drag-only (not a drop target itself): lets the user drag a project
+        # onto a category in the sidebar. See ProjectListModel.mimeData().
+        self.setDragEnabled(True)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
+
         if view_mode == QListView.ViewMode.IconMode:
             self.setFlow(QListView.Flow.LeftToRight)
             self.setWrapping(True)

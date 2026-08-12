@@ -3,25 +3,45 @@
 `display_mode` ("row" for the list view, "tile" for the Phase 2 grid view) is
 a hook so both views reuse this same delegate class instead of duplicating
 paint logic — see ui/views/builtin.py, which builds one instance per mode.
+
+This delegate paints everything itself (icon, text, selection background),
+which means the QListView::item QSS selectors in theme/styles/*.qss don't
+apply here (a custom delegate.paint() bypasses the style's normal item
+drawing) — the selection/hover colors below are the ones that actually
+render, and are kept visually consistent with the sidebar's QSS-driven
+selection gradient by using the same brand colors.
 """
 
 from __future__ import annotations
 
-from PySide6.QtCore import QRect, QSize, Qt
-from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath
+from PySide6.QtCore import QPointF, QRect, QSize, Qt
+from PySide6.QtGui import QColor, QFontMetrics, QLinearGradient, QPainter, QPainterPath
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
 
 from myapps.core.project_manager import ProjectManager
 from myapps.ui.models.project_list_model import CategoriesRole, PinnedRole, ProjectPathRole
+from myapps.ui.theme import brand
 
-ROW_HEIGHT = 56
-ICON_SIZE = 32
-PADDING = 10
+ROW_HEIGHT = 60
+ICON_SIZE = 34
+PADDING = 12
+ROW_RADIUS = 10
 
-TILE_SIZE = QSize(168, 160)
+TILE_SIZE = QSize(168, 164)
+TILE_RADIUS = 12
 TILE_MAX_CHIPS = 2
-PIN_COLOR = QColor("#f5a623")
-DEFAULT_CHIP_COLOR = QColor("#8e8e93")
+
+PIN_COLOR = QColor(brand.PIN_COLOR)
+DEFAULT_CHIP_COLOR = QColor(brand.ACCENT_BLEND)
+
+
+def _brand_gradient(rect: QRect) -> QLinearGradient:
+    """Diagonal blue -> purple gradient matching the app logo, used for the
+    folder icon glyph and for selection backgrounds."""
+    gradient = QLinearGradient(QPointF(rect.topLeft()), QPointF(rect.bottomRight()))
+    gradient.setColorAt(0.0, QColor(brand.ACCENT_BLUE))
+    gradient.setColorAt(1.0, QColor(brand.ACCENT_PURPLE))
+    return gradient
 
 
 class ProjectItemDelegate(QStyledItemDelegate):
@@ -36,6 +56,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
         return QSize(option.rect.width(), ROW_HEIGHT)
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index) -> None:
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         if self.display_mode == "tile":
             self._paint_tile(painter, option, index)
         else:
@@ -43,12 +64,20 @@ class ProjectItemDelegate(QStyledItemDelegate):
 
     def _paint_row(self, painter: QPainter, option: QStyleOptionViewItem, index) -> None:
         painter.save()
-        rect = option.rect
+        rect = option.rect.adjusted(4, 2, -4, -2)
 
-        if option.state & QStyle.StateFlag.State_Selected:
-            painter.fillRect(rect, option.palette.highlight())
-            text_color = option.palette.highlightedText().color()
-            subtitle_color = text_color
+        selected = bool(option.state & QStyle.StateFlag.State_Selected)
+        hovered = bool(option.state & QStyle.StateFlag.State_MouseOver)
+        bg_path = QPainterPath()
+        bg_path.addRoundedRect(rect, ROW_RADIUS, ROW_RADIUS)
+        if selected:
+            painter.fillPath(bg_path, _brand_gradient(rect))
+            text_color = QColor("#ffffff")
+            subtitle_color = QColor(255, 255, 255, 200)
+        elif hovered:
+            painter.fillPath(bg_path, option.palette.alternateBase())
+            text_color = option.palette.text().color()
+            subtitle_color = option.palette.placeholderText().color()
         else:
             text_color = option.palette.text().color()
             subtitle_color = option.palette.placeholderText().color()
@@ -66,7 +95,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
         path = index.data(ProjectPathRole) or ""
         pinned = bool(index.data(PinnedRole))
 
-        name_rect = QRect(text_left, rect.top() + 6, rect.width() - text_left - PADDING, 20)
+        name_rect = QRect(text_left, rect.top() + 8, rect.width() - text_left - PADDING, 20)
         painter.setPen(text_color)
         font = painter.font()
         font.setBold(True)
@@ -80,7 +109,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
         font.setPointSizeF(font.pointSizeF() * 0.9)
         painter.setFont(font)
         painter.setPen(subtitle_color)
-        path_rect = QRect(text_left, rect.top() + 28, rect.width() - text_left - PADDING, 18)
+        path_rect = QRect(text_left, rect.top() + 30, rect.width() - text_left - PADDING, 18)
         elided_path = QFontMetrics(font).elidedText(
             path, Qt.TextElideMode.ElideMiddle, path_rect.width()
         )
@@ -95,27 +124,22 @@ class ProjectItemDelegate(QStyledItemDelegate):
 
     def _paint_tile(self, painter: QPainter, option: QStyleOptionViewItem, index) -> None:
         painter.save()
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         rect = option.rect.adjusted(6, 6, -6, -6)
 
         selected = bool(option.state & QStyle.StateFlag.State_Selected)
         hovered = bool(option.state & QStyle.StateFlag.State_MouseOver)
+        bg_path = QPainterPath()
+        bg_path.addRoundedRect(rect, TILE_RADIUS, TILE_RADIUS)
         if selected:
-            bg_path = QPainterPath()
-            bg_path.addRoundedRect(rect, 10, 10)
-            painter.fillPath(bg_path, option.palette.highlight())
-            text_color = option.palette.highlightedText().color()
+            painter.fillPath(bg_path, _brand_gradient(rect))
+            text_color = QColor("#ffffff")
         elif hovered:
-            bg_path = QPainterPath()
-            bg_path.addRoundedRect(rect, 10, 10)
-            hover_color = QColor(option.palette.text().color())
-            hover_color.setAlpha(18)
-            painter.fillPath(bg_path, hover_color)
+            painter.fillPath(bg_path, option.palette.alternateBase())
             text_color = option.palette.text().color()
         else:
             text_color = option.palette.text().color()
 
-        icon_rect = QRect(rect.center().x() - 24, rect.top() + 10, 48, 48)
+        icon_rect = QRect(rect.center().x() - 24, rect.top() + 12, 48, 48)
         self._paint_folder_icon(painter, icon_rect)
 
         pinned = bool(index.data(PinnedRole))
@@ -123,7 +147,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
             self._paint_pin_star(painter, QRect(rect.right() - 20, rect.top() + 2, 16, 16))
 
         name = index.data(Qt.ItemDataRole.DisplayRole) or ""
-        name_rect = QRect(rect.left() + 4, rect.top() + 64, rect.width() - 8, 20)
+        name_rect = QRect(rect.left() + 4, rect.top() + 66, rect.width() - 8, 20)
         painter.setPen(text_color)
         font = painter.font()
         font.setBold(True)
@@ -138,13 +162,16 @@ class ProjectItemDelegate(QStyledItemDelegate):
 
         category_ids = index.data(CategoriesRole) or []
         self._paint_category_chips(
-            painter, QRect(rect.left() + 4, rect.top() + 88, rect.width() - 8, 44), category_ids
+            painter,
+            QRect(rect.left() + 4, rect.top() + 90, rect.width() - 8, 44),
+            category_ids,
+            on_gradient=selected,
         )
 
         painter.restore()
 
     def _paint_category_chips(
-        self, painter: QPainter, area: QRect, category_ids: list[str]
+        self, painter: QPainter, area: QRect, category_ids: list[str], on_gradient: bool = False
     ) -> None:
         if not category_ids:
             return
@@ -170,7 +197,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
             if y + row_height > area.bottom():
                 break
             chip_rect = QRect(x, y, chip_width, row_height)
-            self._paint_one_chip(painter, chip_rect, label)
+            self._paint_one_chip(painter, chip_rect, label, on_gradient)
             x += chip_width + 4
 
     def _chip_label(self, category_id: str) -> str:
@@ -178,14 +205,19 @@ class ProjectItemDelegate(QStyledItemDelegate):
         return category.name if category else "?"
 
     @staticmethod
-    def _paint_one_chip(painter: QPainter, rect: QRect, label: str) -> None:
+    def _paint_one_chip(painter: QPainter, rect: QRect, label: str, on_gradient: bool) -> None:
         painter.save()
         path = QPainterPath()
         path.addRoundedRect(rect, rect.height() / 2, rect.height() / 2)
-        chip_bg = QColor(DEFAULT_CHIP_COLOR)
-        chip_bg.setAlpha(60)
+        if on_gradient:
+            chip_bg = QColor(255, 255, 255, 60)
+            text_color = QColor("#ffffff")
+        else:
+            chip_bg = QColor(DEFAULT_CHIP_COLOR)
+            chip_bg.setAlpha(38)
+            text_color = QColor(DEFAULT_CHIP_COLOR)
         painter.fillPath(path, chip_bg)
-        painter.setPen(DEFAULT_CHIP_COLOR)
+        painter.setPen(text_color)
         painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, label)
         painter.restore()
 
@@ -200,7 +232,13 @@ class ProjectItemDelegate(QStyledItemDelegate):
     def _paint_folder_icon(painter: QPainter, rect: QRect) -> None:
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        icon_rect = rect.adjusted(0, 2, 0, 0)
         path = QPainterPath()
-        path.addRoundedRect(rect.adjusted(0, 2, 0, 0), 4, 4)
-        painter.fillPath(path, QColor("#5ac8fa"))
+        path.addRoundedRect(icon_rect, 8, 8)
+        painter.fillPath(path, _brand_gradient(icon_rect))
+        # A thin lighter top edge to suggest a folder tab / subtle depth.
+        highlight = QPainterPath()
+        highlight.addRoundedRect(icon_rect.adjusted(0, 0, 0, -int(icon_rect.height() * 0.7)), 8, 8)
+        tab_color = QColor(255, 255, 255, 50)
+        painter.fillPath(highlight, tab_color)
         painter.restore()
