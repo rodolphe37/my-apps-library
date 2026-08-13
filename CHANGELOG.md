@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The **List/Grid view choice wasn't actually persisted** — it silently
+  reset to List on every single app launch, regardless of what was saved.
+  `MainWindow` wired each view's signals before the full set of views was
+  known, which made a bogus "unknown view mode" fallback fire and
+  immediately re-save "list" over a legitimately-saved "grid", before the
+  window's own (correct) startup-restore logic even ran. The same flawed
+  check existed in the plugin-view-reload path too.
+
 ## [0.5.1] - 2026-08-13
 
 ### Fixed
