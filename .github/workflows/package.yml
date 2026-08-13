@@ -37,9 +37,9 @@ jobs:
         os: [macos-latest, windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
@@ -56,7 +56,7 @@ jobs:
         run: pyinstaller packaging/pyinstaller/myapps.spec --noconfirm
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: MyAppsLibrary-${{ runner.os }}-${{ github.sha }}
           path: dist/
