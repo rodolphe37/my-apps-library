@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Enabled a branch protection ruleset on `main` (`main-protection`): all
+  changes now require a pull request, 3 required status checks must pass,
+  and force pushes / branch deletion are blocked — for everyone, including
+  the repo owner.
+
 ## [0.5.0] - 2026-08-13
 
 ### Added
