@@ -4,18 +4,19 @@
 a hook so both views reuse this same delegate class instead of duplicating
 paint logic — see ui/views/builtin.py, which builds one instance per mode.
 
-This delegate paints everything itself (icon, text, selection background),
+This delegate paints everything itself (icon, text, selection outline),
 which means the QListView::item QSS selectors in theme/styles/*.qss don't
 apply here (a custom delegate.paint() bypasses the style's normal item
 drawing) — the selection/hover colors below are the ones that actually
-render, and are kept visually consistent with the sidebar's QSS-driven
-selection gradient by using the same brand colors.
+render. Selection is an accent-colored border, not a filled background, so
+a row/tile's own colors (icon gradient, category chip tints) stay readable
+when selected instead of being washed out.
 """
 
 from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRect, QSize, Qt
-from PySide6.QtGui import QColor, QFontMetrics, QLinearGradient, QPainter, QPainterPath
+from PySide6.QtGui import QColor, QFontMetrics, QLinearGradient, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
 
 from myapps.core.project_manager import ProjectManager
@@ -33,15 +34,29 @@ TILE_MAX_CHIPS = 2
 
 PIN_COLOR = QColor(brand.PIN_COLOR)
 DEFAULT_CHIP_COLOR = QColor(brand.ACCENT_BLEND)
+SELECTION_BORDER_COLOR = QColor(brand.ACCENT_BLEND)
+SELECTION_BORDER_WIDTH = 2
 
 
 def _brand_gradient(rect: QRect) -> QLinearGradient:
     """Diagonal blue -> purple gradient matching the app logo, used for the
-    folder icon glyph and for selection backgrounds."""
+    folder icon glyph."""
     gradient = QLinearGradient(QPointF(rect.topLeft()), QPointF(rect.bottomRight()))
     gradient.setColorAt(0.0, QColor(brand.ACCENT_BLUE))
     gradient.setColorAt(1.0, QColor(brand.ACCENT_PURPLE))
     return gradient
+
+
+def _paint_selection_border(painter: QPainter, bg_path: QPainterPath) -> None:
+    """Selected rows/tiles get an accent-colored outline, not a filled
+    background — keeps the row's own colors (icon gradient, category chip
+    tints) readable instead of being washed out by a solid fill behind
+    them."""
+    painter.save()
+    pen = QPen(SELECTION_BORDER_COLOR, SELECTION_BORDER_WIDTH)
+    painter.setPen(pen)
+    painter.drawPath(bg_path)
+    painter.restore()
 
 
 class ProjectItemDelegate(QStyledItemDelegate):
@@ -71,9 +86,9 @@ class ProjectItemDelegate(QStyledItemDelegate):
         bg_path = QPainterPath()
         bg_path.addRoundedRect(rect, ROW_RADIUS, ROW_RADIUS)
         if selected:
-            painter.fillPath(bg_path, _brand_gradient(rect))
-            text_color = QColor("#ffffff")
-            subtitle_color = QColor(255, 255, 255, 200)
+            _paint_selection_border(painter, bg_path)
+            text_color = option.palette.text().color()
+            subtitle_color = option.palette.placeholderText().color()
         elif hovered:
             painter.fillPath(bg_path, option.palette.alternateBase())
             text_color = option.palette.text().color()
@@ -131,8 +146,8 @@ class ProjectItemDelegate(QStyledItemDelegate):
         bg_path = QPainterPath()
         bg_path.addRoundedRect(rect, TILE_RADIUS, TILE_RADIUS)
         if selected:
-            painter.fillPath(bg_path, _brand_gradient(rect))
-            text_color = QColor("#ffffff")
+            _paint_selection_border(painter, bg_path)
+            text_color = option.palette.text().color()
         elif hovered:
             painter.fillPath(bg_path, option.palette.alternateBase())
             text_color = option.palette.text().color()
@@ -160,12 +175,14 @@ class ProjectItemDelegate(QStyledItemDelegate):
         font.setBold(False)
         painter.setFont(font)
 
+        # Chips are never painted "on_gradient" style anymore now that
+        # selection is an outline rather than a filled background — always
+        # use the normal translucent brand-tinted chip.
         category_ids = index.data(CategoriesRole) or []
         self._paint_category_chips(
             painter,
             QRect(rect.left() + 4, rect.top() + 90, rect.width() - 8, 44),
             category_ids,
-            on_gradient=selected,
         )
 
         painter.restore()

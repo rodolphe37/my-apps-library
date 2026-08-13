@@ -5,7 +5,8 @@ from a local .zip/folder, view details/permissions, and uninstall. Follows
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -20,6 +21,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from myapps.constants import MARKETPLACE_URL
 from myapps.core.events import event_bus
 from myapps.i18n import tr
 from myapps.plugins.manager import (
@@ -45,15 +47,23 @@ class PluginManagerDialog(QDialog):
         self._reload()
 
         btn_row = QHBoxLayout()
+        browse_marketplace_btn = QPushButton(tr("dialog.plugins.browse_marketplace"))
         install_zip_btn = QPushButton(tr("dialog.plugins.install_zip"))
         install_folder_btn = QPushButton(tr("dialog.plugins.install_folder"))
         details_btn = QPushButton(tr("dialog.plugins.details"))
         remove_btn = QPushButton(tr("dialog.plugins.remove"))
+        browse_marketplace_btn.clicked.connect(self._browse_marketplace)
         install_zip_btn.clicked.connect(self._install_zip)
         install_folder_btn.clicked.connect(self._install_folder)
         details_btn.clicked.connect(self._show_details)
         remove_btn.clicked.connect(self._remove_selected)
-        for b in (install_zip_btn, install_folder_btn, details_btn, remove_btn):
+        for b in (
+            browse_marketplace_btn,
+            install_zip_btn,
+            install_folder_btn,
+            details_btn,
+            remove_btn,
+        ):
             btn_row.addWidget(b)
         layout.addLayout(btn_row)
 
@@ -130,6 +140,9 @@ class PluginManagerDialog(QDialog):
             self._plugins.enable(plugin_id)
         else:
             self._plugins.disable(plugin_id)
+
+    def _browse_marketplace(self) -> None:
+        QDesktopServices.openUrl(QUrl(MARKETPLACE_URL))
 
     def _install_zip(self) -> None:
         path, _ = QFileDialog.getOpenFileName(

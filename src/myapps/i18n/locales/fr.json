@@ -30,6 +30,7 @@
 
   "menu.plugins": "Plu&gins",
   "menu.plugins.manage": "Gérer les plugins…",
+  "menu.plugins.browseMarketplace": "Parcourir la Marketplace…",
 
   "menu.help": "Ai&de",
   "menu.help.about": "À propos de {app_name}",
@@ -136,6 +137,7 @@
   "dialog.settings.language_system": "Système",
 
   "dialog.plugins.title": "Gérer les plugins",
+  "dialog.plugins.browse_marketplace": "Parcourir la Marketplace…",
   "dialog.plugins.install_zip": "Installer depuis un .zip…",
   "dialog.plugins.install_folder": "Installer depuis un dossier…",
   "dialog.plugins.details": "Détails…",

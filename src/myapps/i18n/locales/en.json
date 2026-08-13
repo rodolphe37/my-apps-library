@@ -30,6 +30,7 @@
 
   "menu.plugins": "Pl&ugins",
   "menu.plugins.manage": "Manage Plugins…",
+  "menu.plugins.browseMarketplace": "Browse Marketplace…",
 
   "menu.help": "&Help",
   "menu.help.about": "About {app_name}",
@@ -136,6 +137,7 @@
   "dialog.settings.language_system": "System",
 
   "dialog.plugins.title": "Manage Plugins",
+  "dialog.plugins.browse_marketplace": "Browse Marketplace…",
   "dialog.plugins.install_zip": "Install from .zip…",
   "dialog.plugins.install_folder": "Install from Folder…",
   "dialog.plugins.details": "Details…",

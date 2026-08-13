@@ -13,12 +13,16 @@ A personal desktop launcher/library for your developer projects — add them onc
 - Auto-detects installed code editors (VS Code, Cursor, Sublime Text, JetBrains IDEs, Zed, VSCodium, and more) and opens a project directly in one
 - "Open With…" to pick a different editor, or add a custom one
 - Right-click → "Show in Finder/Explorer" to reveal a project's folder
-- Light/dark theme with automatic OS detection, plus a manual switch — the whole UI (selection highlights, sidebar, buttons) is themed around the app's blue-to-purple logo gradient (see `src/myapps/ui/theme/brand.py`)
+- Light/dark theme with automatic OS detection, plus a manual switch — the whole UI (selection outline, sidebar, buttons) is themed around the app's blue-to-purple logo gradient (see `src/myapps/ui/theme/brand.py`); a selected project is shown with an accent-colored border rather than a filled background, so its own icon/chip colors stay readable
 - Native menu bar with all major actions
-- A VS Code-style **plugin system**: install from a local `.zip` or folder, enable/disable from **Plugins → Manage Plugins…**, with plugins able to contribute context-menu actions, menu actions, and even new view modes. See [`examples/plugins/`](examples/plugins/) for working examples and [`src/myapps/plugins/api.py`](src/myapps/plugins/api.py) for the API surface.
+- A VS Code-style **plugin system**: install from a local `.zip` or folder, enable/disable from **Plugins → Manage Plugins…**, with plugins able to contribute context-menu actions, menu actions, and even new view modes. **Plugins → Browse Marketplace…** (also available as a button inside the Manage Plugins dialog) opens the companion [plugins marketplace](../my-apps-library-plugins-marketplace) web app in your browser to find something to install — the app itself stays network-free; installs are still local `.zip`/folder only. See [`examples/plugins/`](examples/plugins/) for working examples and [`src/myapps/plugins/api.py`](src/myapps/plugins/api.py) for the API surface.
 - **Multi-language** (English/French built in), switchable live from **Preferences → Language** with no restart — and extensible by third-party **translation plugins** that add a whole new language (see [`examples/plugins/german_translation/`](examples/plugins/german_translation/)) or patch/override individual strings in an existing one.
 
-Planned next: a plugin marketplace client (browse/install remotely, once the marketplace service exists), code signing/notarization, auto-update.
+Planned next: code signing/notarization, auto-update.
+
+### Marketplace link
+
+`Plugins → Browse Marketplace…` opens the URL from the `MYAPPS_MARKETPLACE_URL` environment variable, falling back to `http://localhost:5173` (the marketplace frontend's local dev address) if unset — the marketplace isn't deployed anywhere public yet. Once it has a real production domain, set `MYAPPS_MARKETPLACE_URL` at packaging time (or just update the fallback in `src/myapps/constants.py`) to point there instead.
 
 ## Development
 

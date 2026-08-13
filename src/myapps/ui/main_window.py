@@ -6,10 +6,11 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from PySide6.QtCore import QByteArray, QItemSelectionModel, QSize, Qt
+from PySide6.QtCore import QByteArray, QItemSelectionModel, QSize, Qt, QUrl
 from PySide6.QtGui import (
     QAction,
     QActionGroup,
+    QDesktopServices,
     QDragEnterEvent,
     QDropEvent,
     QIcon,
@@ -29,7 +30,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from myapps.constants import APP_NAME, DEFAULT_VIEW_MODE, UNCATEGORIZED_ID, VERSION
+from myapps.constants import APP_NAME, DEFAULT_VIEW_MODE, MARKETPLACE_URL, UNCATEGORIZED_ID, VERSION
 from myapps.core.events import event_bus
 from myapps.core.project_manager import ProjectManager
 from myapps.core.settings_manager import SettingsManager
@@ -328,6 +329,10 @@ class MainWindow(QMainWindow):
         manage_action.triggered.connect(self._open_plugin_manager)
         self._plugins_menu.addAction(manage_action)
 
+        browse_action = QAction(tr("menu.plugins.browseMarketplace"), self._plugins_menu)
+        browse_action.triggered.connect(self._open_marketplace)
+        self._plugins_menu.addAction(browse_action)
+
         if self._plugins is None:
             return
         contributed = self._plugins.collect_menu_actions()
@@ -522,6 +527,14 @@ class MainWindow(QMainWindow):
             )
             return
         PluginManagerDialog(self._plugins, self).exec()
+
+    def _open_marketplace(self) -> None:
+        """Opens the plugin marketplace in the system browser. The app
+        itself stays network-free (installs are still local zip/folder
+        only, per PLAN.md's Phase 3 boundary) — this is just a discovery
+        shortcut, same role as the "install missing editor" download-page
+        links in editor_picker_dialog.py."""
+        QDesktopServices.openUrl(QUrl(MARKETPLACE_URL))
 
     def _show_context_menu(self, project_id: str, global_pos) -> None:
         # Right-clicking a project that's part of the current multi-selection
