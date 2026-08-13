@@ -1,7 +1,9 @@
 name: Package
 
-# Builds native, unsigned PyInstaller bundles for macOS, Windows, and Linux
-# and attaches them as downloadable workflow artifacts.
+# Builds native, unsigned PyInstaller bundles for macOS (both Apple Silicon
+# and Intel — PyInstaller doesn't produce universal2 binaries, and PySide6
+# isn't shipped as universal2 either, so the two need separate runners),
+# Windows, and Linux, and attaches them as downloadable workflow artifacts.
 #
 # Deliberately does NOT trigger on `pull_request`: only pushes to `main`
 # (i.e. after a PR has been reviewed and merged by a maintainer) or a
@@ -34,7 +36,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        # macos-latest = Apple Silicon (arm64). macos-15-intel is GitHub's
+        # last Intel (x86_64) macOS image, available until Aug 2027 — see
+        # https://github.com/actions/runner-images — without it, an
+        # Apple-Silicon-only build can't even launch on an Intel Mac
+        # ("isn't supported by this Mac", not just a Gatekeeper warning).
+        os: [macos-latest, macos-15-intel, windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -58,7 +65,10 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
-          name: MyAppsLibrary-${{ runner.os }}-${{ github.sha }}
+          # runner.arch is needed too: both macOS runners report
+          # runner.os == 'macOS', and upload-artifact requires unique
+          # names within a run.
+          name: MyAppsLibrary-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
           path: dist/
           retention-days: 30
           if-no-files-found: error

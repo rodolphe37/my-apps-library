@@ -1,0 +1,130 @@
+name: Release
+
+# Builds native, unsigned PyInstaller bundles for macOS (Apple Silicon and
+# Intel — see the `os` matrix below), Windows, and Linux, and publishes
+# them as downloadable assets on a GitHub Release — this is
+# what end users should actually download the app from (see the
+# Installation section in README.md), as opposed to `package.yml`, which
+# just validates on every push to main that the build still works (its
+# artifacts expire after 30 days and aren't meant for public download).
+#
+# Two ways to trigger a release:
+#   1. Push a version tag:
+#        git tag v0.6.0 && git push origin v0.6.0
+#      (tags aren't covered by the `main` branch ruleset, so this doesn't
+#      need a PR — only someone with push access can do it).
+#   2. Manually, from the Actions tab → this workflow → "Run workflow",
+#      giving the tag to use. Handy for re-publishing release assets
+#      without cutting a new tag (e.g. after fixing a build issue), or for
+#      creating the very first release off of `main` directly.
+#
+# Shares its build steps with `package.yml` — if you change how the app is
+# built (spec file, dependencies, data files), update both.
+#
+# No code signing/notarization yet (see the Roadmap in README.md) — these
+# are plain unsigned builds; expect Gatekeeper/SmartScreen warnings on
+# first launch, per packaging/README.md.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version tag to release (e.g. v0.6.0) — created at the current commit if it doesn't already exist"
+        required: true
+
+permissions:
+  contents: write # needed to create the Release and upload assets
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-latest = Apple Silicon (arm64). macos-15-intel is GitHub's
+        # last Intel (x86_64) macOS image, available until Aug 2027 — see
+        # https://github.com/actions/runner-images — without it, an
+        # Apple-Silicon-only build can't even launch on an Intel Mac
+        # ("isn't supported by this Mac", not just a Gatekeeper warning).
+        os: [macos-latest, macos-15-intel, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Install Qt runtime dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libxkbcommon0 libgl1
+
+      - name: Install the app + build tooling
+        run: pip install -e ".[dev]"
+
+      - name: Build with PyInstaller
+        run: pyinstaller packaging/pyinstaller/myapps.spec --noconfirm
+
+      - name: Zip the build for this OS
+        shell: bash
+        run: |
+          mkdir -p release-assets
+          case "${{ runner.os }}" in
+            macOS)
+              # `zip`/`upload-artifact` don't preserve the extended
+              # attributes the .app's ad-hoc code signature relies on —
+              # round-tripping through them turns the app "damaged" in
+              # Finder/Gatekeeper (a barred/prohibitory icon on launch).
+              # `ditto` is Apple's own tool for archiving .app bundles
+              # losslessly and is what notarization workflows use.
+              (cd dist && ditto -c -k --keepParent "MyAppsLibrary.app" "../release-assets/MyAppsLibrary-macOS-${{ runner.arch }}.zip")
+              ;;
+            Windows) (cd dist && 7z a "../release-assets/MyAppsLibrary-Windows.zip" "MyAppsLibrary") ;;
+            Linux)   (cd dist && zip -r "../release-assets/MyAppsLibrary-Linux.zip" "MyAppsLibrary") ;;
+          esac
+
+      - name: Upload build as workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          # runner.arch is needed too: both macOS runners report
+          # runner.os == 'macOS', and upload-artifact requires unique
+          # names within a run.
+          name: release-assets-${{ runner.os }}-${{ runner.arch }}
+          path: release-assets/*.zip
+          retention-days: 7
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: release-assets-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create/update the GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: MyAppsLibrary ${{ steps.tag.outputs.tag }}
+          generate_release_notes: true
+          files: release-assets/*.zip
