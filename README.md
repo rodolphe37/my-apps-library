@@ -1,54 +1,287 @@
-# MyAppsLibrary
+<p align="center">
+  <img src="packaging/icons/app.png" alt="MyAppsLibrary logo" width="160">
+</p>
 
-A personal desktop launcher/library for your developer projects — add them once, organize by category, and open any of them in your preferred code editor with one click, no matter where they live on disk.
+<h1 align="center">MyAppsLibrary</h1>
+
+<p align="center">
+  <strong>A fast, native desktop launcher for every developer project you own — organized, searchable, and one click away from your favorite editor.</strong>
+</p>
+
+<p align="center">
+  <a href="README.fr.md">🇫🇷 Lire en français</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/rodolphe37/my-apps-library/actions/workflows/ci.yml"><img src="https://github.com/rodolphe37/my-apps-library/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-4A6AFC.svg" alt="License: MIT"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.11%2B-1AA3FD.svg?logo=python&logoColor=white" alt="Python 3.11+"></a>
+  <a href="https://pypi.org/project/PySide6/"><img src="https://img.shields.io/badge/UI-PySide6%20(Qt)-41CD52.svg?logo=qt&logoColor=white" alt="PySide6"></a>
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-7D31FC.svg" alt="Platforms">
+  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.5.0-4A6AFC.svg" alt="Version 0.5.0"></a>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome"></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/last-commit/rodolphe37/my-apps-library" alt="Last commit">
+  <img src="https://img.shields.io/github/issues/rodolphe37/my-apps-library" alt="Open issues">
+  <img src="https://img.shields.io/github/stars/rodolphe37/my-apps-library?style=social" alt="GitHub stars">
+</p>
+
+---
+
+## Table of contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Supported editors](#supported-editors)
+- [Installation](#installation)
+- [Getting started](#getting-started)
+- [The plugin system](#the-plugin-system)
+- [Internationalization](#internationalization)
+- [Architecture](#architecture)
+- [Project layout](#project-layout)
+- [Development](#development)
+- [Packaging / building installers](#packaging--building-installers)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [Community](#community)
+- [License](#license)
+- [Author](#author)
+
+## Overview
+
+If your projects live scattered across a dozen folders, on different drives, in different states of "I'll get back to this" — **MyAppsLibrary** is a small, native desktop app that gives them one home. Point it at a folder once, and from then on you get a searchable, filterable, categorized library that opens any project in the editor of your choice with a single click.
+
+It is **not** a cloud service, an account system, or a project manager with opinions about your workflow. It stores nothing but folder references and metadata, entirely on your machine, and never touches your files or reaches out to the network on its own.
+
+- 🖥️ **Native desktop app** — built with [PySide6](https://doc.qt.io/qtforpython/) (Qt for Python), not Electron
+- 🔒 **Local-first & offline** — your project list lives in a local JSON store; nothing is uploaded anywhere
+- 🧩 **Extensible** — a VS Code-style plugin system lets the community add features without forking
+- 🌍 **Multilingual** — English and French out of the box, more via plugins
+- 🎨 **Themeable** — light/dark mode that follows your OS, built around the app's own brand gradient
 
 ## Features
 
-- Add/remove projects (folder references only — your files are never touched), including drag-and-drop of one or more folders — works identically whether you're in list or grid view
-- Multi-select (Ctrl/Cmd-click, Shift-click range-select — same convention as Finder/Explorer) with bulk actions: edit categories, pin/unpin, and remove, all applied to the whole selection at once
-- Fully custom categories — no built-in/generic ones. Create as many as you want (**Project → Manage Categories…**), assign a project to several at once via right-click → **Edit Categories…** (bulk-aware — edits every selected project's categories together, using tri-state checkboxes when the selection is mixed), or drag a project onto a category in the sidebar to move it there directly
-- Sort by name, date added, date modified (the folder's own filesystem timestamp), or size, ascending or descending (**View → Sort By**) — pinned projects always float to the top regardless of sort
-- Search and filter by category
-- List and grid/thumbnail views, toggled from the View menu, with selection preserved across the switch
-- Auto-detects installed code editors (VS Code, Cursor, Sublime Text, JetBrains IDEs, Zed, VSCodium, and more) and opens a project directly in one
-- "Open With…" to pick a different editor, or add a custom one
-- Right-click → "Show in Finder/Explorer" to reveal a project's folder
-- Light/dark theme with automatic OS detection, plus a manual switch — the whole UI (selection outline, sidebar, buttons) is themed around the app's blue-to-purple logo gradient (see `src/myapps/ui/theme/brand.py`); a selected project is shown with an accent-colored border rather than a filled background, so its own icon/chip colors stay readable
-- Native menu bar with all major actions
-- A VS Code-style **plugin system**: install from a local `.zip` or folder, enable/disable from **Plugins → Manage Plugins…**, with plugins able to contribute context-menu actions, menu actions, and even new view modes. **Plugins → Browse Marketplace…** (also available as a button inside the Manage Plugins dialog) opens the companion [plugins marketplace](../my-apps-library-plugins-marketplace) web app in your browser to find something to install — the app itself stays network-free; installs are still local `.zip`/folder only. See [`examples/plugins/`](examples/plugins/) for working examples and [`src/myapps/plugins/api.py`](src/myapps/plugins/api.py) for the API surface.
-- **Multi-language** (English/French built in), switchable live from **Preferences → Language** with no restart — and extensible by third-party **translation plugins** that add a whole new language (see [`examples/plugins/german_translation/`](examples/plugins/german_translation/)) or patch/override individual strings in an existing one.
+- **Add / remove projects** — folder references only, your files are never touched or moved. Add via dialog or **drag-and-drop** of one or more folders, in either list or grid view.
+- **Multi-select** — `Ctrl`/`Cmd`-click and `Shift`-click range-select (the same convention as Finder/Explorer), with bulk actions: edit categories, pin/unpin, and remove, all applied to the whole selection at once.
+- **Fully custom categories** — no built-in/generic categories. Create as many as you want (**Project → Manage Categories…**), assign a project to several at once via right-click → **Edit Categories…** (bulk-aware, with tri-state checkboxes when the selection is mixed), or drag a project onto a category in the sidebar to move it there directly.
+- **Sort** by name, date added, date modified (the folder's own filesystem timestamp), or size, ascending or descending (**View → Sort By**) — pinned projects always float to the top regardless of sort order.
+- **Search & filter** by name and by category.
+- **List and grid/thumbnail views**, toggled from the View menu, with selection preserved across the switch.
+- **Auto-detected editors** — VS Code, Cursor, Sublime Text, JetBrains IDEs, Zed, VSCodium, and more (see [Supported editors](#supported-editors)); open a project directly in one, or use **"Open With…"** to pick a different editor or register a custom one.
+- **Reveal in file manager** — right-click → "Show in Finder/Explorer" to jump straight to a project's folder.
+- **Light/dark theme** with automatic OS detection plus a manual switch. The whole UI (selection outline, sidebar, buttons) is themed around the app's blue-to-purple logo gradient (see [`src/myapps/ui/theme/brand.py`](src/myapps/ui/theme/brand.py)); a selected project is shown with an accent-colored border rather than a filled background, so its own icon/chip colors stay legible.
+- **Native menu bar** with all major actions, keyboard-friendly throughout.
+- **Plugin system** — install from a local `.zip` or folder, enable/disable from **Plugins → Manage Plugins…**; plugins can contribute context-menu actions, menu actions, new view modes, and translations. **Plugins → Browse Marketplace…** opens the companion [plugins marketplace](https://github.com/rodolphe37/my-apps-library-plugins-marketplace) web app in your browser — the app itself stays network-free, and installs remain local `.zip`/folder only.
+- **Multi-language UI** — English and French built in, switchable live from **Preferences → Language** with no restart, and extensible by third-party translation plugins.
 
-Planned next: code signing/notarization, auto-update.
+> Planned next: code signing/notarization, auto-update. See the [Roadmap](#roadmap).
 
-### Marketplace link
+## Supported editors
 
-`Plugins → Browse Marketplace…` opens the URL from the `MYAPPS_MARKETPLACE_URL` environment variable, falling back to `http://localhost:5173` (the marketplace frontend's local dev address) if unset — the marketplace isn't deployed anywhere public yet. Once it has a real production domain, set `MYAPPS_MARKETPLACE_URL` at packaging time (or just update the fallback in `src/myapps/constants.py`) to point there instead.
+MyAppsLibrary auto-detects whichever of these are installed on your system:
+
+| Editor | | Editor | |
+|---|---|---|---|
+| Visual Studio Code | ✅ | IntelliJ IDEA | ✅ |
+| VS Code – Insiders | ✅ | WebStorm | ✅ |
+| Cursor | ✅ | GoLand | ✅ |
+| VSCodium | ✅ | CLion | ✅ |
+| Sublime Text | ✅ | RubyMine | ✅ |
+| Zed | ✅ | Neovide (Neovim) | ✅ |
+| PyCharm | ✅ | *your favorite, via "Open With…"* | ➕ |
+
+Don't see yours? Use **"Open With…"** to add any custom editor by path, or open a PR against [`src/myapps/editors/catalog.py`](src/myapps/editors/catalog.py) — see [Contributing](#contributing).
+
+## Installation
+
+MyAppsLibrary is currently distributed from source while packaged installers (macOS `.dmg`, Windows installer, Linux `AppImage`) are being finalized — see [Packaging](#packaging--building-installers) and the [Roadmap](#roadmap).
+
+```bash
+git clone https://github.com/rodolphe37/my-apps-library.git
+cd my-apps-library
+
+python3 -m venv .venv
+source .venv/bin/activate      # Windows: .venv\Scripts\activate
+
+pip install -e ".[dev]"
+python -m myapps
+```
+
+Requirements: **Python 3.11+** and a desktop environment capable of running Qt applications (Windows, macOS, or Linux with a display server).
+
+## Getting started
+
+1. Launch the app with `python -m myapps` (or the installed `myapps` command).
+2. **Add your first project**: `Project → Add Project…`, or just drag a folder onto the window.
+3. **Organize**: create categories from `Project → Manage Categories…`, then drag projects onto a category in the sidebar, or right-click → *Edit Categories…* for bulk assignment.
+4. **Open it**: click a project to open it in its default detected editor, or right-click → *Open With…* to choose another one.
+5. **Make it yours**: switch theme and language from `Preferences`, pin your most-used projects, and try the *List*/*Grid* views from the `View` menu.
+
+## The plugin system
+
+MyAppsLibrary ships with a small, VS Code-style plugin API so the community can extend the app without forking it.
+
+- Install a plugin from a local `.zip` or folder via **Plugins → Manage Plugins…**
+- A plugin can contribute:
+  - **Context-menu actions** on projects (`contribute_project_context_actions`)
+  - **Menu-bar actions** (`contribute_menu_actions`)
+  - **New view modes** (`contribute_views`)
+  - **Translations** — new locales or overrides of existing ones (`contribute_translations`)
+  - Lifecycle hooks: `on_load`, `on_unload`, `on_project_added`, `on_project_removed`, `on_project_opened`
+- Every plugin receives a single `PluginContext` object (never raw app internals) — see [`src/myapps/plugins/api.py`](src/myapps/plugins/api.py) for the full contract.
+- Plugins currently run with full app privileges and are **not sandboxed**; the app shows a one-time trust disclosure before enabling a new plugin. Real sandboxing is tracked on the [Roadmap](#roadmap).
+
+Two working, minimal examples are included:
+
+| Plugin | Demonstrates |
+|---|---|
+| [`examples/plugins/open_in_terminal`](examples/plugins/open_in_terminal) | Context-menu contribution, `permissions` declaration |
+| [`examples/plugins/recently_opened_logger`](examples/plugins/recently_opened_logger) | `on_project_opened` hook, menu contribution, `ctx.storage_dir`, `ctx.settings` |
+| [`examples/plugins/german_translation`](examples/plugins/german_translation) | Adding a whole new locale (`de`) via `contribute_translations` |
+
+**`Plugins → Browse Marketplace…`** opens the companion [plugins marketplace](https://github.com/rodolphe37/my-apps-library-plugins-marketplace) web app — reads the `MYAPPS_MARKETPLACE_URL` environment variable, falling back to `http://localhost:5173` (the marketplace's local dev address) until a production domain exists.
+
+## Internationalization
+
+The UI ships with **English** and **French**, switchable live from **Preferences → Language** — no restart required. Translations live in [`src/myapps/i18n/locales/`](src/myapps/i18n/locales/) as flat JSON key/value catalogs, loaded through [`src/myapps/i18n/translator.py`](src/myapps/i18n/translator.py).
+
+Adding a language is deliberately low-friction:
+
+- **As a core locale**: add `src/myapps/i18n/locales/<code>.json` mirroring `en.json`'s keys, including the reserved `meta.language_name` key for its display name in the Settings dropdown.
+- **As a plugin**: implement `contribute_translations()` to add a new locale or patch strings in an existing one — see [`examples/plugins/german_translation`](examples/plugins/german_translation) for a full working example.
+
+Missing keys fall back to English, so a partial or in-progress translation never breaks the UI. Contributions of additional languages are very welcome — see [Contributing](#contributing).
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph UI["ui/ — PySide6"]
+        MW[Main window & menus]
+        Views[List / Grid views]
+        Dialogs[Dialogs]
+        Theme[Theme engine]
+    end
+
+    subgraph Core["core/ — data layer"]
+        PM[ProjectManager]
+        SM[SettingsManager]
+        Store[(JSON store)]
+    end
+
+    subgraph Ext["Extensibility"]
+        Editors[editors/ — detection & launch]
+        Plugins[plugins/ — loader, manager, API]
+        I18n[i18n/ — catalog & translator]
+    end
+
+    MW --> PM
+    Views --> PM
+    Dialogs --> PM
+    PM --> Store
+    SM --> Store
+    MW --> Editors
+    MW --> Plugins
+    Plugins -. contributes to .-> MW
+    Plugins -. contributes to .-> I18n
+    MW --> I18n
+    Theme --> MW
+```
+
+Everything persists to a local, atomically-written JSON store (see [`src/myapps/core/store.py`](src/myapps/core/store.py)) under your OS's standard app-data directory (via [`platformdirs`](https://pypi.org/project/platformdirs/)) — no database, no server, no network calls from the core app.
+
+## Project layout
+
+```
+src/myapps/
+├── core/          # Data layer — models, ProjectManager, SettingsManager, JSON store
+├── editors/        # Editor detection (macOS/Windows/Linux) & launch
+├── plugins/         # Plugin system — manifest, loader, manager, public API
+├── i18n/            # Translation catalog, tr(), built-in en/fr locales
+├── ui/              # PySide6 widgets, dialogs, views, theming
+│   └── theme/        # brand.py (source-of-truth colors), palettes, QSS
+└── utils/           # Filesystem & process helpers, logging
+
+packaging/         # PyInstaller spec, OS-specific metadata, icons
+examples/plugins/  # Working example plugins
+tests/
+├── unit/           # Fast, no-GUI unit tests
+└── integration/    # pytest-qt integration tests
+```
 
 ## Development
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 python -m myapps
 ```
 
-Run tests:
+**Run the test suite:**
 
 ```bash
 pytest
 ```
 
-Lint:
+**Lint:**
 
 ```bash
 ruff check src tests examples
 ```
 
-## Project layout
+The project targets **Python 3.11+**, uses [`ruff`](https://github.com/astral-sh/ruff) for linting (`E`, `F`, `I`, `UP`, `B` rule sets, 100-char lines), and [`pytest`](https://docs.pytest.org/) + [`pytest-qt`](https://pytest-qt.readthedocs.io/) for testing, including headless GUI integration tests.
 
-See `src/myapps/` — `core/` (data layer), `editors/` (detection & launch), `plugins/` (plugin system: manifest, loader, manager, API), `i18n/` (translation catalog, `tr()`, built-in `en`/`fr` locales), `ui/` (PySide6 widgets, theming, views), `utils/`. Packaging configs live in `packaging/`. Example plugins live in `examples/plugins/`.
+## Packaging / building installers
+
+Native builds only — PyInstaller does not cross-compile, so each OS's build must run on that OS.
+
+```bash
+pip install -e ".[dev]"
+pyinstaller packaging/pyinstaller/myapps.spec --noconfirm
+```
+
+See [`packaging/README.md`](packaging/README.md) for the full per-OS process (`.dmg` on macOS, installer on Windows, `AppImage` on Linux) and [`packaging/icons/README.md`](packaging/icons/README.md) for regenerating app icons from new artwork.
+
+## Roadmap
+
+- [ ] Code signing & notarization (macOS Developer ID, Windows Authenticode)
+- [ ] Auto-update
+- [ ] Signed, one-click installers for all three platforms
+- [ ] Real plugin sandboxing (today plugins run with full app privileges)
+- [ ] Public deployment of the [plugins marketplace](https://github.com/rodolphe37/my-apps-library-plugins-marketplace)
+- [ ] More built-in languages
+
+Have an idea? [Open an issue](https://github.com/rodolphe37/my-apps-library/issues/new/choose) — see [Contributing](#contributing).
+
+## Contributing
+
+Contributions, bug reports, and ideas are genuinely welcome — this started as a personal tool and is now open for anyone to help shape. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full guide (setup, coding style, commit conventions, PR process) and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) before participating.
+
+Good first stops:
+
+- 🐛 [Report a bug](.github/ISSUE_TEMPLATE/bug_report.md)
+- ✨ [Suggest a feature](.github/ISSUE_TEMPLATE/feature_request.md)
+- 🧩 Write a [plugin](#the-plugin-system) or a new [translation](#internationalization)
+- 🖥️ Add support for another [editor](#supported-editors)
+
+## Community
+
+- **Bugs & features**: [GitHub Issues](https://github.com/rodolphe37/my-apps-library/issues)
+- **Security concerns**: please see [`SECURITY.md`](SECURITY.md) — do not open a public issue for vulnerabilities
+- **Changelog**: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## License
 
-MIT
+MyAppsLibrary is distributed under the [MIT License](LICENSE) — free for personal and commercial use.
+
+## Author
+
+Built and maintained by **[Rodolphe Augusto](https://github.com/rodolphe37)**.
+
+<p align="center">
+  <sub>If MyAppsLibrary saves you a few clicks a day, consider starring the repo ⭐</sub>
+</p>
