@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Packaged builds (PyInstaller) were missing `i18n/locales/` from the
+  bundle entirely, so every translated string fell back to its raw key
+  (e.g. the UI showed literal `search.placeholder` instead of the
+  actual translated text). Only affected frozen builds — `python -m
+  myapps` from source was never affected. First shipped, broken this
+  way, in the `v0.5.0` release; fixed for the next one.
+
 ### Added
 
 - New `Release` GitHub Actions workflow: builds macOS (Apple Silicon +

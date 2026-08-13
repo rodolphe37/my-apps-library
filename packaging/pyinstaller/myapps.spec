@@ -21,11 +21,18 @@ REPO_ROOT = SPEC_DIR.parents[1]  # SPEC_DIR is packaging/pyinstaller/, so up two
 SRC = REPO_ROOT / "src"
 ICONS = REPO_ROOT / "packaging" / "icons"
 
-# QSS stylesheets aren't Python source, so they need an explicit --add-data
-# entry to end up inside the frozen bundle at src/myapps/ui/theme/styles/.
+# Non-Python files aren't picked up by PyInstaller's import analysis, so
+# each needs an explicit --add-data entry to end up in the frozen bundle,
+# at the same relative path core/catalog.py etc. look for it at (Path(
+# __file__).parent / ...) — every such lookup in src/myapps must have a
+# matching entry here, or it silently finds nothing at runtime (this is
+# exactly what happened to i18n/locales/: missing here meant tr() always
+# fell back to returning the raw key, e.g. "search.placeholder" showing
+# up verbatim in the UI instead of actual translated text).
 datas = [
     (str(SRC / "myapps" / "ui" / "theme" / "styles"), "myapps/ui/theme/styles"),
     (str(SRC / "myapps" / "ui" / "resources"), "myapps/ui/resources"),
+    (str(SRC / "myapps" / "i18n" / "locales"), "myapps/i18n/locales"),
 ]
 
 if sys.platform == "darwin":
