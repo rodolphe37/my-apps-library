@@ -8,7 +8,7 @@ version = "0.5.0"
 description = "MyAppsLibrary — a personal launcher/library for your developer projects"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { text = "PolyForm-Noncommercial-1.0.0" }
 authors = [{ name = "Rodolphe Augusto" }]
 dependencies = [
     "PySide6>=6.6",

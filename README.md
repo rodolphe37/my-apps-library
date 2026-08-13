@@ -14,7 +14,7 @@
 
 <p align="center">
   <a href="https://github.com/rodolphe37/my-apps-library/actions/workflows/ci.yml"><img src="https://github.com/rodolphe37/my-apps-library/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-4A6AFC.svg" alt="License: MIT"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-4A6AFC.svg" alt="License: PolyForm Noncommercial 1.0.0"></a>
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.11%2B-1AA3FD.svg?logo=python&logoColor=white" alt="Python 3.11+"></a>
   <a href="https://pypi.org/project/PySide6/"><img src="https://img.shields.io/badge/UI-PySide6%20(Qt)-41CD52.svg?logo=qt&logoColor=white" alt="PySide6"></a>
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-7D31FC.svg" alt="Platforms">
@@ -276,7 +276,9 @@ Good first stops:
 
 ## License
 
-MyAppsLibrary is distributed under the [MIT License](LICENSE) — free for personal and commercial use.
+MyAppsLibrary is distributed under the [PolyForm Noncommercial License 1.0.0](LICENSE). You're free to use, modify, and redistribute it for any **noncommercial** purpose (personal use, learning, research, nonprofit/educational/government use, contributing back, etc.). **Commercial use is not permitted** under this license — if you'd like to use MyAppsLibrary commercially, please [get in touch](https://github.com/rodolphe37) to discuss a separate license.
+
+This also means external contributions are accepted under these same noncommercial terms — see [Contributing](#contributing).
 
 ## Author
 

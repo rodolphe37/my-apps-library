@@ -5,7 +5,7 @@
 <h1 align="center">MyAppsLibrary</h1>
 
 <p align="center">
-  <strong>Un lanceur de bureau natif et rapide pour tous vos projets de développement — organisés, cherchables, et ouverts en un clic dans votre éditeur préféré.</strong>
+  <strong>Un gestionnaire de bureau natif et rapide pour tous vos projets de développement — organisés, cherchables, et ouverts en un clic dans votre éditeur préféré.</strong>
 </p>
 
 <p align="center">
@@ -14,7 +14,7 @@
 
 <p align="center">
   <a href="https://github.com/rodolphe37/my-apps-library/actions/workflows/ci.yml"><img src="https://github.com/rodolphe37/my-apps-library/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/licence-MIT-4A6AFC.svg" alt="Licence : MIT"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/licence-PolyForm%20Noncommercial%201.0.0-4A6AFC.svg" alt="Licence : PolyForm Noncommercial 1.0.0"></a>
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.11%2B-1AA3FD.svg?logo=python&logoColor=white" alt="Python 3.11+"></a>
   <a href="https://pypi.org/project/PySide6/"><img src="https://img.shields.io/badge/UI-PySide6%20(Qt)-41CD52.svg?logo=qt&logoColor=white" alt="PySide6"></a>
   <img src="https://img.shields.io/badge/plateformes-Windows%20%7C%20macOS%20%7C%20Linux-7D31FC.svg" alt="Plateformes">
@@ -276,7 +276,9 @@ Bons points de départ :
 
 ## Licence
 
-MyAppsLibrary est distribuée sous licence [MIT](LICENSE) — libre d'usage personnel et commercial.
+MyAppsLibrary est distribuée sous la [licence PolyForm Noncommercial 1.0.0](LICENSE). Vous êtes libre de l'utiliser, de la modifier et de la redistribuer pour tout usage **non commercial** (usage personnel, apprentissage, recherche, usage associatif/éducatif/gouvernemental, contribution au projet, etc.). **L'usage commercial n'est pas autorisé** par cette licence — si vous souhaitez utiliser MyAppsLibrary dans un cadre commercial, merci de [me contacter](https://github.com/rodolphe37) pour discuter d'une licence séparée.
+
+Cela signifie également que les contributions externes sont acceptées sous ces mêmes conditions non commerciales — voir [Contribuer](#contribuer).
 
 ## Auteur
 

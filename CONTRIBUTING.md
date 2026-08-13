@@ -19,6 +19,7 @@ you need to get productive.
 - [Writing a plugin or translation](#writing-a-plugin-or-translation)
 - [Reporting bugs](#reporting-bugs)
 - [Suggesting features](#suggesting-features)
+- [License of contributions](#license-of-contributions)
 
 ## Code of Conduct
 
@@ -121,6 +122,10 @@ Please use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.md) and i
 
 Please use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.md). Check the [Roadmap](README.md#roadmap) first — your idea might already be planned, in which case a 👍 on the related issue is still very useful signal.
 
+## License of contributions
+
+MyAppsLibrary is distributed under the [PolyForm Noncommercial License 1.0.0](LICENSE) — noncommercial use only, see [`README.md#license`](README.md#license). By submitting a pull request, you agree that your contribution is licensed to the project under those same terms, and that you have the right to make that grant.
+
 ---
 
 # Contribuer à MyAppsLibrary
@@ -142,6 +147,7 @@ Merci d'envisager de contribuer — MyAppsLibrary a démarré comme un outil per
 - [Écrire un plugin ou une traduction](#écrire-un-plugin-ou-une-traduction)
 - [Signaler un bug](#signaler-un-bug)
 - [Suggérer une fonctionnalité](#suggérer-une-fonctionnalité)
+- [Licence des contributions](#licence-des-contributions)
 
 ## Code de conduite
 
@@ -243,3 +249,7 @@ Merci d'utiliser le [modèle de rapport de bug](.github/ISSUE_TEMPLATE/bug_repor
 ## Suggérer une fonctionnalité
 
 Merci d'utiliser le [modèle de suggestion de fonctionnalité](.github/ISSUE_TEMPLATE/feature_request.md). Vérifiez d'abord la [feuille de route](README.fr.md#feuille-de-route) — votre idée y est peut-être déjà prévue, auquel cas un 👍 sur l'issue correspondante reste un signal très utile.
+
+## Licence des contributions
+
+MyAppsLibrary est distribuée sous la [licence PolyForm Noncommercial 1.0.0](LICENSE) — usage non commercial uniquement, voir [`README.fr.md#licence`](README.fr.md#licence). En soumettant une pull request, vous acceptez que votre contribution soit distribuée au projet sous ces mêmes conditions, et vous garantissez disposer des droits nécessaires pour le faire.
