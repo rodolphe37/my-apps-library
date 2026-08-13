@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New `Release` GitHub Actions workflow: builds macOS (Apple Silicon +
+  Intel), Windows, and Linux bundles and publishes them as assets on a
+  GitHub Release, triggered by pushing a version tag or manually.
+
+### Fixed
+
+- CI packaging builds now also target Intel Macs (`macos-15-intel`)
+  alongside Apple Silicon (`macos-latest`) — a build made only on
+  `macos-latest` can't run at all on an Intel Mac ("isn't supported by
+  this Mac"), since neither PyInstaller nor PySide6 produce universal2
+  binaries.
+- The macOS build is now zipped with `ditto` instead of `zip`, which was
+  stripping the extended attributes the app's ad-hoc code signature
+  relies on (showed up as a barred icon / "app is damaged" in Finder).
+
 ### Changed
 
 - Enabled a branch protection ruleset on `main` (`main-protection`): all
