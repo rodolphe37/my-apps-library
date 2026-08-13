@@ -74,7 +74,7 @@ Ce n'est **pas** un service cloud, un système de comptes, ni un gestionnaire de
 - **Révéler dans l'explorateur de fichiers** — clic droit → « Afficher dans le Finder/l'Explorateur » pour accéder directement au dossier d'un projet.
 - **Thème clair/sombre** avec détection automatique de l'OS, plus un interrupteur manuel. Toute l'interface (contour de sélection, barre latérale, boutons) est stylée autour du dégradé bleu-violet du logo de l'application (voir [`src/myapps/ui/theme/brand.py`](src/myapps/ui/theme/brand.py)) ; un projet sélectionné est mis en valeur par une bordure de couleur d'accent plutôt qu'un fond plein, pour que ses propres couleurs d'icône/badge restent lisibles.
 - **Barre de menus native** avec toutes les actions principales, entièrement utilisable au clavier.
-- **Système de plugins** — installation depuis un `.zip` ou un dossier local, activation/désactivation depuis **Plugins → Gérer les plugins…** ; les plugins peuvent contribuer des actions de menu contextuel, des actions de menu, de nouveaux modes d'affichage et des traductions. **Plugins → Parcourir la Marketplace…** ouvre l'application web compagnon [marketplace de plugins](https://github.com/rodolphe37/my-apps-library-plugins-marketplace) dans votre navigateur — l'application elle-même reste hors-ligne, et les installations restent uniquement locales (`.zip`/dossier).
+- **Système de plugins** — installation depuis un `.zip` ou un dossier local, activation/désactivation depuis **Plugins → Gérer les plugins…** ; les plugins peuvent contribuer des actions de menu contextuel, des actions de menu, de nouveaux modes d'affichage et des traductions. **Plugins → Parcourir la Marketplace…** ouvre une application web compagnon de marketplace de plugins dans votre navigateur (code source conservé dans un dépôt privé) — l'application elle-même reste hors-ligne, et les installations restent uniquement locales (`.zip`/dossier).
 - **Interface multilingue** — anglais et français inclus, changeables à la volée depuis **Préférences → Langue** sans redémarrage, et extensible par des plugins de traduction tiers.
 
 > Prochaines étapes prévues : signature de code/notarisation, mise à jour automatique. Voir la [feuille de route](#feuille-de-route).
@@ -142,7 +142,7 @@ Deux exemples minimaux et fonctionnels sont inclus :
 | [`examples/plugins/recently_opened_logger`](examples/plugins/recently_opened_logger) | Hook `on_project_opened`, contribution de menu, `ctx.storage_dir`, `ctx.settings` |
 | [`examples/plugins/german_translation`](examples/plugins/german_translation) | Ajout d'une langue entièrement nouvelle (`de`) via `contribute_translations` |
 
-**`Plugins → Parcourir la Marketplace…`** ouvre l'application web compagnon [marketplace de plugins](https://github.com/rodolphe37/my-apps-library-plugins-marketplace) — elle lit la variable d'environnement `MYAPPS_MARKETPLACE_URL`, avec un repli sur `http://localhost:5173` (l'adresse de dev locale de la marketplace) tant qu'aucun domaine de production n'existe.
+**`Plugins → Parcourir la Marketplace…`** ouvre une application web compagnon de marketplace de plugins (son code source vit dans un dépôt séparé et privé — il ne fait pas partie de ce projet) — elle lit la variable d'environnement `MYAPPS_MARKETPLACE_URL`, avec un repli sur `http://localhost:5173` (l'adresse de dev locale de la marketplace) tant qu'aucun domaine de production n'existe.
 
 ## Internationalisation
 
@@ -252,7 +252,7 @@ Voir [`packaging/README.md`](packaging/README.md) pour le processus complet par 
 - [ ] Mise à jour automatique
 - [ ] Installeurs signés, en un clic, pour les trois plateformes
 - [ ] Véritable isolation (sandbox) des plugins (aujourd'hui, ils tournent avec tous les privilèges de l'application)
-- [ ] Déploiement public de la [marketplace de plugins](https://github.com/rodolphe37/my-apps-library-plugins-marketplace)
+- [ ] Déploiement public de l'application web de marketplace de plugins (le code source reste dans un dépôt privé ; seul le site en ligne est destiné à être public)
 - [ ] Davantage de langues intégrées
 
 Une idée ? [Ouvrez une issue](https://github.com/rodolphe37/my-apps-library/issues/new/choose) — voir [Contribuer](#contribuer).

@@ -74,7 +74,7 @@ It is **not** a cloud service, an account system, or a project manager with opin
 - **Reveal in file manager** — right-click → "Show in Finder/Explorer" to jump straight to a project's folder.
 - **Light/dark theme** with automatic OS detection plus a manual switch. The whole UI (selection outline, sidebar, buttons) is themed around the app's blue-to-purple logo gradient (see [`src/myapps/ui/theme/brand.py`](src/myapps/ui/theme/brand.py)); a selected project is shown with an accent-colored border rather than a filled background, so its own icon/chip colors stay legible.
 - **Native menu bar** with all major actions, keyboard-friendly throughout.
-- **Plugin system** — install from a local `.zip` or folder, enable/disable from **Plugins → Manage Plugins…**; plugins can contribute context-menu actions, menu actions, new view modes, and translations. **Plugins → Browse Marketplace…** opens the companion [plugins marketplace](https://github.com/rodolphe37/my-apps-library-plugins-marketplace) web app in your browser — the app itself stays network-free, and installs remain local `.zip`/folder only.
+- **Plugin system** — install from a local `.zip` or folder, enable/disable from **Plugins → Manage Plugins…**; plugins can contribute context-menu actions, menu actions, new view modes, and translations. **Plugins → Browse Marketplace…** opens a companion plugins marketplace web app in your browser (source kept in a private repository) — the app itself stays network-free, and installs remain local `.zip`/folder only.
 - **Multi-language UI** — English and French built in, switchable live from **Preferences → Language** with no restart, and extensible by third-party translation plugins.
 
 > Planned next: code signing/notarization, auto-update. See the [Roadmap](#roadmap).
@@ -142,7 +142,7 @@ Two working, minimal examples are included:
 | [`examples/plugins/recently_opened_logger`](examples/plugins/recently_opened_logger) | `on_project_opened` hook, menu contribution, `ctx.storage_dir`, `ctx.settings` |
 | [`examples/plugins/german_translation`](examples/plugins/german_translation) | Adding a whole new locale (`de`) via `contribute_translations` |
 
-**`Plugins → Browse Marketplace…`** opens the companion [plugins marketplace](https://github.com/rodolphe37/my-apps-library-plugins-marketplace) web app — reads the `MYAPPS_MARKETPLACE_URL` environment variable, falling back to `http://localhost:5173` (the marketplace's local dev address) until a production domain exists.
+**`Plugins → Browse Marketplace…`** opens a companion plugins marketplace web app (its source lives in a separate, private repository — not part of this project) — reads the `MYAPPS_MARKETPLACE_URL` environment variable, falling back to `http://localhost:5173` (the marketplace's local dev address) until a production domain exists.
 
 ## Internationalization
 
@@ -252,7 +252,7 @@ See [`packaging/README.md`](packaging/README.md) for the full per-OS process (`.
 - [ ] Auto-update
 - [ ] Signed, one-click installers for all three platforms
 - [ ] Real plugin sandboxing (today plugins run with full app privileges)
-- [ ] Public deployment of the [plugins marketplace](https://github.com/rodolphe37/my-apps-library-plugins-marketplace)
+- [ ] Public deployment of the plugins marketplace web app (its source stays in a private repository; only the live site is intended to be public)
 - [ ] More built-in languages
 
 Have an idea? [Open an issue](https://github.com/rodolphe37/my-apps-library/issues/new/choose) — see [Contributing](#contributing).
