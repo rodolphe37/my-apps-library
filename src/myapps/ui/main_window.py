@@ -38,6 +38,7 @@ from myapps.i18n import LanguageManager, tr
 from myapps.plugins.manager import PluginManager
 from myapps.ui.dialogs.add_project_dialog import AddProjectDialog
 from myapps.ui.dialogs.category_manager_dialog import (
+    BulkCategoryPickerDialog,
     CategoryManagerDialog,
     ProjectCategoryPickerDialog,
 )
@@ -50,7 +51,10 @@ from myapps.ui.theme.theme_manager import ThemeManager
 from myapps.ui.views.builtin import register_builtin_views
 from myapps.ui.views.registry import view_registry
 from myapps.ui.widgets.category_sidebar import ALL_ITEM_ID, CategorySidebar
-from myapps.ui.widgets.context_menu import build_project_context_menu
+from myapps.ui.widgets.context_menu import (
+    build_bulk_project_context_menu,
+    build_project_context_menu,
+)
 from myapps.ui.widgets.search_bar import SearchBar
 from myapps.utils.fs_utils import reveal_in_file_manager
 
@@ -222,18 +226,14 @@ class MainWindow(QMainWindow):
         open_action.triggered.connect(lambda: self._open_project(self._current_project_id()))
         project_menu.addAction(open_action)
         open_with_action = QAction(tr("menu.project.open_with"), self)
-        open_with_action.triggered.connect(
-            lambda: self._open_with(self._current_project_id())
-        )
+        open_with_action.triggered.connect(lambda: self._open_with(self._current_project_id()))
         project_menu.addAction(open_with_action)
         reveal_action = QAction(tr("menu.project.reveal"), self)
         reveal_action.triggered.connect(lambda: self._reveal(self._current_project_id()))
         project_menu.addAction(reveal_action)
         project_menu.addSeparator()
         categories_action = QAction(tr("menu.project.edit_categories"), self)
-        categories_action.triggered.connect(
-            lambda: self._edit_categories(self._current_project_id())
-        )
+        categories_action.triggered.connect(self._edit_categories_for_selection)
         project_menu.addAction(categories_action)
         project_menu.addSeparator()
         manage_categories_action = QAction(tr("menu.project.manage_categories"), self)
@@ -241,7 +241,7 @@ class MainWindow(QMainWindow):
         project_menu.addAction(manage_categories_action)
         project_menu.addSeparator()
         remove_action = QAction(tr("menu.project.remove"), self)
-        remove_action.triggered.connect(lambda: self._remove(self._current_project_id()))
+        remove_action.triggered.connect(self._remove_for_selection)
         project_menu.addAction(remove_action)
 
         # View
@@ -325,6 +325,20 @@ class MainWindow(QMainWindow):
             return None
         return index.data(ProjectIdRole)
 
+    def _selected_project_ids(self) -> list[str]:
+        """Every currently selected project, mode-agnostic (shared
+        selection model) and de-duplicated (QListView reports one index per
+        selected row, but this stays defensive if a future view emits more
+        than one column of indexes per row)."""
+        ids: list[str] = []
+        seen: set[str] = set()
+        for index in self._selection_model.selectedIndexes():
+            pid = index.data(ProjectIdRole)
+            if pid and pid not in seen:
+                seen.add(pid)
+                ids.append(pid)
+        return ids
+
     def _update_status_bar(self, *_args) -> None:
         count = len(self._pm.list_projects())
         key = "status.project_count.one" if count == 1 else "status.project_count.other"
@@ -384,9 +398,7 @@ class MainWindow(QMainWindow):
             return
         project = self._pm.get_project(project_id)
         if project and not reveal_in_file_manager(project.path):
-            QMessageBox.warning(
-                self, tr("msg.couldnt_reveal.title"), tr("msg.couldnt_reveal.body")
-            )
+            QMessageBox.warning(self, tr("msg.couldnt_reveal.title"), tr("msg.couldnt_reveal.body"))
 
     def _toggle_pin(self, project_id: str | None) -> None:
         if not project_id:
@@ -405,6 +417,28 @@ class MainWindow(QMainWindow):
         if dialog.exec() == dialog.DialogCode.Accepted:
             self._pm.set_categories(project_id, dialog.selected_category_ids())
 
+    def _edit_categories_for_selection(self) -> None:
+        """Wired to the Project menu's "Edit Categories…" action: bulk when
+        more than one project is selected, single-project otherwise —
+        mirrors the context menu's own selection-aware branching."""
+        selected_ids = self._selected_project_ids()
+        if len(selected_ids) > 1:
+            self._edit_categories_bulk(selected_ids)
+        else:
+            self._edit_categories(self._current_project_id())
+
+    def _edit_categories_bulk(self, project_ids: list[str]) -> None:
+        projects = [p for pid in project_ids if (p := self._pm.get_project(pid))]
+        if not projects:
+            return
+        dialog = BulkCategoryPickerDialog(projects, self._pm, self)
+        if dialog.exec() == dialog.DialogCode.Accepted:
+            dialog.apply()
+
+    def _toggle_pin_bulk(self, project_ids: list[str], *, pin: bool) -> None:
+        for project_id in project_ids:
+            self._pm.update_project(project_id, pinned=pin)
+
     def _rename(self, project_id: str | None) -> None:
         if not project_id:
             return
@@ -412,7 +446,9 @@ class MainWindow(QMainWindow):
         if not project:
             return
         new_name, ok = QInputDialog.getText(
-            self, tr("dialog.rename_project.title"), tr("dialog.rename_project.label"),
+            self,
+            tr("dialog.rename_project.title"),
+            tr("dialog.rename_project.label"),
             text=project.name,
         )
         if ok and new_name.strip():
@@ -432,6 +468,26 @@ class MainWindow(QMainWindow):
         if confirm == QMessageBox.StandardButton.Yes:
             self._pm.remove_project(project_id)
 
+    def _remove_for_selection(self) -> None:
+        selected_ids = self._selected_project_ids()
+        if len(selected_ids) > 1:
+            self._remove_bulk(selected_ids)
+        else:
+            self._remove(self._current_project_id())
+
+    def _remove_bulk(self, project_ids: list[str]) -> None:
+        projects = [p for pid in project_ids if (p := self._pm.get_project(pid))]
+        if not projects:
+            return
+        n = len(projects)
+        body_key = (
+            "dialog.remove_projects.body.one" if n == 1 else "dialog.remove_projects.body.other"
+        )
+        confirm = QMessageBox.question(self, tr("dialog.remove_project.title"), tr(body_key, n=n))
+        if confirm == QMessageBox.StandardButton.Yes:
+            for project in projects:
+                self._pm.remove_project(project.id)
+
     def _manage_categories(self) -> None:
         CategoryManagerDialog(self._pm, self).exec()
 
@@ -444,6 +500,16 @@ class MainWindow(QMainWindow):
         PluginManagerDialog(self._plugins, self).exec()
 
     def _show_context_menu(self, project_id: str, global_pos) -> None:
+        # Right-clicking a project that's part of the current multi-selection
+        # shows the bulk menu for the whole selection; right-clicking any
+        # other project (including one outside an existing selection) always
+        # shows the single-project menu for just that one — the standard
+        # Finder/Explorer convention.
+        selected_ids = self._selected_project_ids()
+        if project_id in selected_ids and len(selected_ids) > 1:
+            self._show_bulk_context_menu(selected_ids, global_pos)
+            return
+
         project = self._pm.get_project(project_id)
         if not project:
             return
@@ -465,6 +531,21 @@ class MainWindow(QMainWindow):
                 for plugin_action in plugin_actions:
                     action = menu.addAction(plugin_action.label, plugin_action.callback)
                     action.setEnabled(plugin_action.enabled)
+        menu.exec(global_pos)
+
+    def _show_bulk_context_menu(self, project_ids: list[str], global_pos) -> None:
+        projects = [p for pid in project_ids if (p := self._pm.get_project(pid))]
+        if not projects:
+            return
+        all_pinned = all(p.pinned for p in projects)
+        menu = build_bulk_project_context_menu(
+            len(projects),
+            self,
+            all_pinned=all_pinned,
+            on_toggle_pin=lambda: self._toggle_pin_bulk(project_ids, pin=not all_pinned),
+            on_edit_categories=lambda: self._edit_categories_bulk(project_ids),
+            on_remove=lambda: self._remove_bulk(project_ids),
+        )
         menu.exec(global_pos)
 
     def _on_filter_changed(self, filter_id: str) -> None:
@@ -552,9 +633,7 @@ class MainWindow(QMainWindow):
         self._theme.set_mode(mode)
 
     def _open_preferences(self) -> None:
-        SettingsDialog(
-            self._settings, self._editors, self, language_manager=self._language
-        ).exec()
+        SettingsDialog(self._settings, self._editors, self, language_manager=self._language).exec()
 
     def _show_about(self) -> None:
         box = QMessageBox(self)

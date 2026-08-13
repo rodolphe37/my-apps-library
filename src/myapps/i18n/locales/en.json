@@ -47,6 +47,8 @@
 
   "dialog.remove_project.title": "Remove from Library",
   "dialog.remove_project.body": "Remove '{name}' from the library?\n\nThis only removes the reference — the folder on disk is untouched.",
+  "dialog.remove_projects.body.one": "Remove {n} project from the library?\n\nThis only removes the reference — the folder on disk is untouched.",
+  "dialog.remove_projects.body.other": "Remove {n} projects from the library?\n\nThis only removes the reference — the folders on disk are untouched.",
 
   "msg.couldnt_open_editor.title": "Couldn't Open Editor",
   "msg.couldnt_open_editor.retry_body": "Failed to launch the editor. Try 'Open With…'.",
@@ -71,6 +73,14 @@
   "context_menu.rename": "Rename…",
   "context_menu.remove": "Remove from Library…",
   "context_menu.remove_tooltip": "Only removes the reference — your files are untouched",
+  "context_menu.pin_all.one": "Pin {n} project",
+  "context_menu.pin_all.other": "Pin {n} projects",
+  "context_menu.unpin_all.one": "Unpin {n} project",
+  "context_menu.unpin_all.other": "Unpin {n} projects",
+  "context_menu.edit_categories_bulk.one": "Edit Categories for {n} project…",
+  "context_menu.edit_categories_bulk.other": "Edit Categories for {n} projects…",
+  "context_menu.remove_bulk.one": "Remove {n} project from Library…",
+  "context_menu.remove_bulk.other": "Remove {n} projects from Library…",
 
   "dialog.add_project.title": "Add Project",
   "dialog.add_project.folder_placeholder": "Choose a project folder…",
@@ -92,6 +102,9 @@
   "dialog.delete_category.title": "Delete Category",
   "dialog.delete_category.body": "Delete '{name}'? Projects will simply lose this category.",
   "dialog.project_categories.title": "Categories — {project_name}",
+  "dialog.bulk_categories.title.one": "Categories — {n} project",
+  "dialog.bulk_categories.title.other": "Categories — {n} projects",
+  "dialog.bulk_categories.hint": "A partially-checked category is left as-is for every project. Fully check or uncheck one to add or remove it across the whole selection.",
 
   "dialog.open_with.title": "Open With…",
   "dialog.open_with.set_default": "Set as default editor for this project",

@@ -33,7 +33,12 @@ class ProjectListView(QListView):
         self.setViewMode(view_mode)
         self.setResizeMode(QListView.ResizeMode.Adjust)
         self.setUniformItemSizes(True)
-        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        # Extended = click selects one, Ctrl/Cmd-click toggles individual
+        # items, Shift-click selects a contiguous range — the standard
+        # Finder/Explorer multi-select convention. Bulk actions (edit
+        # categories, pin, remove) act on the whole selection; see
+        # MainWindow._selected_project_ids().
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.setMouseTracking(True)  # needed for the grid delegate's hover state
 

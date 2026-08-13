@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QHBoxLayout,
     QInputDialog,
+    QLabel,
     QListWidget,
     QListWidgetItem,
     QMessageBox,
@@ -72,7 +73,9 @@ class CategoryManagerDialog(QDialog):
         if not item:
             return
         new_name, ok = QInputDialog.getText(
-            self, tr("dialog.rename_category.title"), tr("dialog.rename_category.label"),
+            self,
+            tr("dialog.rename_category.title"),
+            tr("dialog.rename_category.label"),
             text=item.text(),
         )
         if ok and new_name.strip():
@@ -128,3 +131,81 @@ class ProjectCategoryPickerDialog(QDialog):
             for row in range(self._list.count())
             if self._list.item(row).checkState() == Qt.CheckState.Checked
         ]
+
+
+class BulkCategoryPickerDialog(QDialog):
+    """Checkbox list to edit multiple projects' category assignments at
+    once — the multi-select companion to ProjectCategoryPickerDialog.
+
+    Each checkbox starts tri-state: checked if every selected project
+    already has that category, unchecked if none do, partially-checked if
+    it's a mix. A box left partially-checked is left untouched on apply();
+    only boxes the user explicitly ticks or clears are added to/removed
+    from every selected project — this is the only sane semantic for
+    "set categories" across a heterogeneous selection (a plain overwrite
+    would silently wipe categories some projects already had that others
+    in the selection didn't).
+    """
+
+    def __init__(
+        self,
+        projects: list[Project],
+        project_manager: ProjectManager,
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(parent)
+        n = len(projects)
+        title_key = (
+            "dialog.bulk_categories.title.one" if n == 1 else "dialog.bulk_categories.title.other"
+        )
+        self.setWindowTitle(tr(title_key, n=n))
+        self._pm = project_manager
+        self._projects = projects
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel(tr("dialog.bulk_categories.hint")))
+
+        self._list = QListWidget()
+        for category in self._pm.list_categories():
+            item = QListWidgetItem(category.name)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            member_count = sum(1 for p in projects if category.id in p.categories)
+            if member_count == 0:
+                state = Qt.CheckState.Unchecked
+            elif member_count == len(projects):
+                state = Qt.CheckState.Checked
+            else:
+                state = Qt.CheckState.PartiallyChecked
+            item.setCheckState(state)
+            item.setData(Qt.ItemDataRole.UserRole, category.id)
+            self._list.addItem(item)
+        layout.addWidget(self._list)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def apply(self) -> None:
+        """Call after exec() == Accepted. Applies every explicit
+        check/uncheck across all selected projects in a single pass per
+        project (never overwrites a category left partially-checked)."""
+        updated: dict[str, set[str]] = {p.id: set(p.categories) for p in self._projects}
+        for row in range(self._list.count()):
+            item = self._list.item(row)
+            state = item.checkState()
+            if state == Qt.CheckState.PartiallyChecked:
+                continue
+            category_id = item.data(Qt.ItemDataRole.UserRole)
+            for project in self._projects:
+                if state == Qt.CheckState.Checked:
+                    updated[project.id].add(category_id)
+                else:
+                    updated[project.id].discard(category_id)
+
+        for project in self._projects:
+            new_categories = sorted(updated[project.id])
+            if set(new_categories) != set(project.categories):
+                self._pm.set_categories(project.id, new_categories)

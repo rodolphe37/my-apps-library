@@ -47,6 +47,8 @@
 
   "dialog.remove_project.title": "Retirer de la bibliothèque",
   "dialog.remove_project.body": "Retirer « {name} » de la bibliothèque ?\n\nSeule la référence sera supprimée — le dossier reste intact sur le disque.",
+  "dialog.remove_projects.body.one": "Retirer {n} projet de la bibliothèque ?\n\nSeule la référence sera supprimée — le dossier reste intact sur le disque.",
+  "dialog.remove_projects.body.other": "Retirer {n} projets de la bibliothèque ?\n\nSeule la référence sera supprimée — les dossiers restent intacts sur le disque.",
 
   "msg.couldnt_open_editor.title": "Impossible d'ouvrir l'éditeur",
   "msg.couldnt_open_editor.retry_body": "Échec du lancement de l'éditeur. Essayez « Ouvrir avec… ».",
@@ -71,6 +73,14 @@
   "context_menu.rename": "Renommer…",
   "context_menu.remove": "Retirer de la bibliothèque…",
   "context_menu.remove_tooltip": "Seule la référence sera supprimée — vos fichiers restent intacts",
+  "context_menu.pin_all.one": "Épingler {n} projet",
+  "context_menu.pin_all.other": "Épingler {n} projets",
+  "context_menu.unpin_all.one": "Désépingler {n} projet",
+  "context_menu.unpin_all.other": "Désépingler {n} projets",
+  "context_menu.edit_categories_bulk.one": "Modifier les catégories de {n} projet…",
+  "context_menu.edit_categories_bulk.other": "Modifier les catégories de {n} projets…",
+  "context_menu.remove_bulk.one": "Retirer {n} projet de la bibliothèque…",
+  "context_menu.remove_bulk.other": "Retirer {n} projets de la bibliothèque…",
 
   "dialog.add_project.title": "Ajouter un projet",
   "dialog.add_project.folder_placeholder": "Choisissez un dossier de projet…",
@@ -92,6 +102,9 @@
   "dialog.delete_category.title": "Supprimer la catégorie",
   "dialog.delete_category.body": "Supprimer « {name} » ? Les projets perdront simplement cette catégorie.",
   "dialog.project_categories.title": "Catégories — {project_name}",
+  "dialog.bulk_categories.title.one": "Catégories — {n} projet",
+  "dialog.bulk_categories.title.other": "Catégories — {n} projets",
+  "dialog.bulk_categories.hint": "Une catégorie partiellement cochée reste inchangée pour tous les projets. Cochez-la ou décochez-la entièrement pour l'ajouter ou la retirer sur toute la sélection.",
 
   "dialog.open_with.title": "Ouvrir avec…",
   "dialog.open_with.set_default": "Définir comme éditeur par défaut pour ce projet",
