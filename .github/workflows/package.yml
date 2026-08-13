@@ -1,0 +1,64 @@
+name: Package
+
+# Builds native, unsigned PyInstaller bundles for macOS, Windows, and Linux
+# and attaches them as downloadable workflow artifacts.
+#
+# Deliberately does NOT trigger on `pull_request`: only pushes to `main`
+# (i.e. after a PR has been reviewed and merged by a maintainer) or a
+# manual run trigger a build. Combined with branch protection on `main`
+# (Settings → Branches → require a pull request + approval before
+# merging), this means only the repo owner/maintainers can cause a build
+# to run — contributor PRs only ever go through the `CI` workflow (lint +
+# tests), never this one.
+#
+# No code signing/notarization yet (see the Roadmap in README.md) — these
+# are plain unsigned builds; expect Gatekeeper/SmartScreen warnings on
+# first launch, per packaging/README.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "packaging/**"
+      - "pyproject.toml"
+      - ".github/workflows/package.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Qt runtime dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libxkbcommon0 libgl1
+
+      - name: Install the app + build tooling
+        run: pip install -e ".[dev]"
+
+      - name: Build with PyInstaller
+        run: pyinstaller packaging/pyinstaller/myapps.spec --noconfirm
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyAppsLibrary-${{ runner.os }}-${{ github.sha }}
+          path: dist/
+          retention-days: 30
+          if-no-files-found: error

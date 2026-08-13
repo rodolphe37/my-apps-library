@@ -246,6 +246,8 @@ pyinstaller packaging/pyinstaller/myapps.spec --noconfirm
 
 Voir [`packaging/README.md`](packaging/README.md) pour le processus complet par OS (`.dmg` sur macOS, installeur sur Windows, `AppImage` sur Linux) et [`packaging/icons/README.md`](packaging/icons/README.md) pour régénérer les icônes à partir d'un nouveau visuel source.
 
+Un [workflow GitHub Actions `Package`](.github/workflows/package.yml) construit automatiquement des builds non signés pour les trois OS — mais uniquement lors d'un push sur `main` (donc après qu'un mainteneur a fusionné une PR relue) ou d'un déclenchement manuel, jamais sur les pull requests des contributeurs. Les builds sont attachés à l'exécution du workflow sous forme d'artefacts téléchargeables, dans l'onglet **Actions** du dépôt.
+
 ## Feuille de route
 
 - [ ] Signature de code & notarisation (Developer ID macOS, Authenticode Windows)

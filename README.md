@@ -246,6 +246,8 @@ pyinstaller packaging/pyinstaller/myapps.spec --noconfirm
 
 See [`packaging/README.md`](packaging/README.md) for the full per-OS process (`.dmg` on macOS, installer on Windows, `AppImage` on Linux) and [`packaging/icons/README.md`](packaging/icons/README.md) for regenerating app icons from new artwork.
 
+A [`Package` GitHub Actions workflow](.github/workflows/package.yml) builds unsigned bundles for all three OSes automatically — but only on pushes to `main` (i.e. after a maintainer merges a reviewed PR) or a manual run, never on contributor pull requests. Builds are attached to the workflow run as downloadable artifacts under the repo's **Actions** tab.
+
 ## Roadmap
 
 - [ ] Code signing & notarization (macOS Developer ID, Windows Authenticode)
