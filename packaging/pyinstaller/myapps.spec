@@ -87,7 +87,7 @@ if sys.platform == "darwin":
         icon=icon_file,
         bundle_identifier="com.myappslibrary.app",
         info_plist={
-            "CFBundleShortVersionString": "0.5.0",
+            "CFBundleShortVersionString": "0.5.1",
             "NSHighResolutionCapable": True,
         },
     )
