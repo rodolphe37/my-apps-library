@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import stat
+from pathlib import Path
 
 from myapps.editors.detectors import macos
 
@@ -28,13 +29,17 @@ def _make_fake_app_bundle(base, app_name: str, *, with_bundled_cli: str | None =
 def test_prefers_bundled_cli_over_open_dash_a(tmp_path, monkeypatch):
     monkeypatch.setattr(macos, "APPLICATIONS_DIRS", [tmp_path])
     monkeypatch.setattr("shutil.which", lambda name: None)  # nothing on PATH
-    _make_fake_app_bundle(tmp_path, "Visual Studio Code", with_bundled_cli="code")
+    app_path = _make_fake_app_bundle(tmp_path, "Visual Studio Code", with_bundled_cli="code")
 
     results = macos.detect()
     vscode = next(r for r in results if r.id == "vscode")
 
     assert vscode.launch_strategy == "cli"
-    assert vscode.executable_path.endswith("Contents/Resources/app/bin/code")
+    # Compare as Path, not a hardcoded "/"-separated string — str(Path) uses
+    # "\" on Windows, and this test (like the module under test) has no
+    # platform guard so it runs on every CI OS.
+    expected_cli = app_path / "Contents" / "Resources" / "app" / "bin" / "code"
+    assert Path(vscode.executable_path) == expected_cli
     assert vscode.launch_template[0] == vscode.executable_path
 
 
@@ -71,7 +76,19 @@ def test_bundled_cli_must_be_executable(tmp_path, monkeypatch):
     bin_dir.mkdir(parents=True)
     non_exec = bin_dir / "code"
     non_exec.write_text("not executable", encoding="utf-8")
-    os.chmod(non_exec, 0o644)  # explicitly not executable
+
+    # Simulate "not executable" via a mocked os.access rather than a real
+    # chmod: Windows has no POSIX exec bit, so os.access(path, os.X_OK)
+    # returns True there regardless of chmod, which would make this
+    # assertion flaky depending on the CI OS.
+    real_access = os.access
+
+    def fake_access(path, mode, *args, **kwargs):
+        if mode == os.X_OK and Path(path) == non_exec:
+            return False
+        return real_access(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr("os.access", fake_access)
 
     results = macos.detect()
     vscode = next(r for r in results if r.id == "vscode")
