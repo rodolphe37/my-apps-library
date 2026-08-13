@@ -85,6 +85,9 @@ class MainWindow(QMainWindow):
         self.setAcceptDrops(True)
 
         self._model = ProjectListModel(self._pm)
+        self._model.set_sort(
+            self._settings.settings.sort_key, self._settings.settings.sort_direction
+        )
         self._selection_model = QItemSelectionModel(self._model, self)
         register_builtin_views(view_registry, self._pm)
         self._plugin_view_mode_ids: set[str] = set()
@@ -145,8 +148,7 @@ class MainWindow(QMainWindow):
         self._view_stack = QStackedWidget()
         for info in view_registry.list_modes():
             widget = info.factory(self._model, self._selection_model)
-            widget.open_requested.connect(self._open_project)
-            widget.context_menu_requested.connect(self._show_context_menu)
+            self._wire_view_signals(widget)
             self._views[info.mode_id] = widget
             self._view_stack.addWidget(widget)
         right_layout.addWidget(self._view_stack)
@@ -270,6 +272,28 @@ class MainWindow(QMainWindow):
             action.triggered.connect(lambda _, m=mode: self._set_theme_mode(m))
             theme_group.addAction(action)
             theme_menu.addAction(action)
+        view_menu.addSeparator()
+
+        sort_menu = view_menu.addMenu(tr("menu.view.sort"))
+        sort_group = QActionGroup(self)
+        sort_group.setExclusive(True)
+        sort_options = (
+            (tr("menu.view.sort.name"), "name"),
+            (tr("menu.view.sort.created"), "created_at"),
+            (tr("menu.view.sort.modified"), "modified_at"),
+            (tr("menu.view.sort.size"), "size"),
+        )
+        for label, key in sort_options:
+            action = QAction(label, self, checkable=True)
+            action.setChecked(self._settings.settings.sort_key == key)
+            action.triggered.connect(lambda _, k=key: self._set_sort_key(k))
+            sort_group.addAction(action)
+            sort_menu.addAction(action)
+        sort_menu.addSeparator()
+        descending_action = QAction(tr("menu.view.sort.descending"), self, checkable=True)
+        descending_action.setChecked(self._settings.settings.sort_direction == "desc")
+        descending_action.toggled.connect(self._set_sort_descending)
+        sort_menu.addAction(descending_action)
 
         # Plugins — always present, even with zero plugins installed, so
         # "Manage Plugins…" is discoverable regardless.
@@ -619,10 +643,20 @@ class MainWindow(QMainWindow):
             if info.mode_id in self._views:
                 continue
             widget = info.factory(self._model, self._selection_model)
-            widget.open_requested.connect(self._open_project)
-            widget.context_menu_requested.connect(self._show_context_menu)
+            self._wire_view_signals(widget)
             self._views[info.mode_id] = widget
             self._view_stack.addWidget(widget)
+
+    def _wire_view_signals(self, widget: QWidget) -> None:
+        """Connects the signals every registered view is contractually
+        required to emit (see ui/views/registry.py), plus
+        external_folders_dropped if this particular widget happens to
+        provide it — built-in views do (see ProjectListView), a
+        plugin-contributed view isn't required to."""
+        widget.open_requested.connect(self._open_project)
+        widget.context_menu_requested.connect(self._show_context_menu)
+        if hasattr(widget, "external_folders_dropped"):
+            widget.external_folders_dropped.connect(self._add_projects_from_paths)
 
         current_mode = self._settings.settings.view_mode
         if current_mode not in self._views:
@@ -631,6 +665,15 @@ class MainWindow(QMainWindow):
     def _set_theme_mode(self, mode: str) -> None:
         self._settings.set(theme_mode=mode)
         self._theme.set_mode(mode)
+
+    def _set_sort_key(self, key: str) -> None:
+        self._settings.set(sort_key=key)
+        self._model.set_sort(key, self._settings.settings.sort_direction)
+
+    def _set_sort_descending(self, checked: bool) -> None:
+        direction = "desc" if checked else "asc"
+        self._settings.set(sort_direction=direction)
+        self._model.set_sort(self._settings.settings.sort_key, direction)
 
     def _open_preferences(self) -> None:
         SettingsDialog(self._settings, self._editors, self, language_manager=self._language).exec()

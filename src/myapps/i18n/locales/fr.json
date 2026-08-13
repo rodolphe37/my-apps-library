@@ -21,6 +21,12 @@
   "menu.view.theme.system": "Système",
   "menu.view.theme.light": "Clair",
   "menu.view.theme.dark": "Sombre",
+  "menu.view.sort": "Trier par",
+  "menu.view.sort.name": "Nom",
+  "menu.view.sort.created": "Date d'ajout",
+  "menu.view.sort.modified": "Date de modification",
+  "menu.view.sort.size": "Taille",
+  "menu.view.sort.descending": "Ordre décroissant",
 
   "menu.plugins": "Plu&gins",
   "menu.plugins.manage": "Gérer les plugins…",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import platform
 import shutil
 from pathlib import Path
@@ -10,6 +11,28 @@ from pathlib import Path
 from myapps.utils.process_utils import launch_detached, run_capture
 
 logger = logging.getLogger(__name__)
+
+
+def directory_size(path: str) -> int:
+    """Total size in bytes of every regular file under `path`, recursively.
+    Best-effort: unreadable entries and broken symlinks are skipped rather
+    than raising, and symlinked directories are never followed (avoids
+    cycles) — same tolerance-over-precision tradeoff as the rest of this
+    module. Returns 0 for a path that doesn't exist or isn't a directory.
+
+    Can be slow for very large trees (deep node_modules/.git, etc.) since
+    it's a full recursive walk with no caching of its own — callers that
+    need this repeatedly (e.g. sort-by-size) should cache the result
+    themselves; see ui/models/project_list_model.py.
+    """
+    total = 0
+    for root, _dirs, files in os.walk(path, onerror=lambda _err: None):
+        for filename in files:
+            try:
+                total += os.path.getsize(os.path.join(root, filename))
+            except OSError:
+                continue  # permission denied, broken symlink, race with deletion, etc.
+    return total
 
 _SELECT_FLAG_BY_FILE_MANAGER = {
     "nautilus": "--select",

@@ -7,7 +7,10 @@ module docstring for the contract this relies on.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent
 from PySide6.QtWidgets import QAbstractItemView, QListView
 
 from myapps.ui.delegates.project_item_delegate import ProjectItemDelegate
@@ -17,6 +20,14 @@ from myapps.ui.models.project_list_model import ProjectIdRole
 class ProjectListView(QListView):
     open_requested = Signal(str)  # project_id
     context_menu_requested = Signal(str, object)  # project_id, global QPoint
+    # External folders dragged in from Finder/Explorer, dropped directly on
+    # this view. Handled here (in both list and grid mode) rather than
+    # relying on the drop bubbling up to MainWindow's own dragEnterEvent/
+    # dropEvent — Qt's propagation of unhandled drag events from a nested
+    # QAbstractItemView's viewport up to an ancestor widget isn't reliable
+    # enough to depend on, so each view explicitly accepts and re-emits
+    # external file drops itself instead.
+    external_folders_dropped = Signal(list)  # list[str] of folder paths
 
     def __init__(
         self,
@@ -42,10 +53,15 @@ class ProjectListView(QListView):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.setMouseTracking(True)  # needed for the grid delegate's hover state
 
-        # Drag-only (not a drop target itself): lets the user drag a project
-        # onto a category in the sidebar. See ProjectListModel.mimeData().
+        # DragOnly governs INTERNAL item drag/drop only (dragging a project
+        # onto a category in the sidebar — see ProjectListModel.mimeData());
+        # it does not accept drops back onto this view. Re-enabled below via
+        # setAcceptDrops(True) so the view can still separately accept
+        # EXTERNAL file drops from Finder/Explorer (handled in the three
+        # drag*/drop event overrides), without those two concerns conflicting.
         self.setDragEnabled(True)
         self.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
+        self.setAcceptDrops(True)
 
         if view_mode == QListView.ViewMode.IconMode:
             self.setFlow(QListView.Flow.LeftToRight)
@@ -69,3 +85,29 @@ class ProjectListView(QListView):
         project_id = index.data(ProjectIdRole)
         if project_id:
             self.context_menu_requested.emit(project_id, self.viewport().mapToGlobal(pos))
+
+    # -- external (Finder/Explorer) drag & drop import ---------------------
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:  # noqa: N802
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            super().dragEnterEvent(event)
+
+    def dragMoveEvent(self, event: QDragMoveEvent) -> None:  # noqa: N802
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            super().dragMoveEvent(event)
+
+    def dropEvent(self, event: QDropEvent) -> None:  # noqa: N802
+        folders = [
+            url.toLocalFile()
+            for url in event.mimeData().urls()
+            if url.isLocalFile() and Path(url.toLocalFile()).is_dir()
+        ]
+        if not folders:
+            super().dropEvent(event)
+            return
+        event.acceptProposedAction()
+        self.external_folders_dropped.emit(folders)

@@ -4,8 +4,10 @@ A personal desktop launcher/library for your developer projects — add them onc
 
 ## Features
 
-- Add/remove projects (folder references only — your files are never touched), including drag-and-drop of one or more folders
-- Fully custom categories — no built-in/generic ones. Create as many as you want (**Project → Manage Categories…**), assign a project to several at once via right-click → **Edit Categories…**, or drag a project onto a category in the sidebar to move it there directly
+- Add/remove projects (folder references only — your files are never touched), including drag-and-drop of one or more folders — works identically whether you're in list or grid view
+- Multi-select (Ctrl/Cmd-click, Shift-click range-select — same convention as Finder/Explorer) with bulk actions: edit categories, pin/unpin, and remove, all applied to the whole selection at once
+- Fully custom categories — no built-in/generic ones. Create as many as you want (**Project → Manage Categories…**), assign a project to several at once via right-click → **Edit Categories…** (bulk-aware — edits every selected project's categories together, using tri-state checkboxes when the selection is mixed), or drag a project onto a category in the sidebar to move it there directly
+- Sort by name, date added, date modified (the folder's own filesystem timestamp), or size, ascending or descending (**View → Sort By**) — pinned projects always float to the top regardless of sort
 - Search and filter by category
 - List and grid/thumbnail views, toggled from the View menu, with selection preserved across the switch
 - Auto-detects installed code editors (VS Code, Cursor, Sublime Text, JetBrains IDEs, Zed, VSCodium, and more) and opens a project directly in one

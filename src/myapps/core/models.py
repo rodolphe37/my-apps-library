@@ -79,6 +79,10 @@ class AppSettings:
     window_geometry: str | None = None  # base64 QByteArray, stored as text
     sidebar_visible: bool = True
     last_selected_category: str | None = None  # None = "All"
+    # "name" | "created_at" | "modified_at" | "size" — see
+    # ui/models/project_list_model.py::ProjectListModel.set_sort().
+    sort_key: str = "name"
+    sort_direction: str = "asc"  # "asc" | "desc"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -94,4 +98,6 @@ class AppSettings:
             window_geometry=data.get("window_geometry"),
             sidebar_visible=data.get("sidebar_visible", True),
             last_selected_category=data.get("last_selected_category"),
+            sort_key=data.get("sort_key", defaults.sort_key),
+            sort_direction=data.get("sort_direction", defaults.sort_direction),
         )

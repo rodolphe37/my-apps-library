@@ -7,11 +7,16 @@ duplicating data access.
 
 from __future__ import annotations
 
+import os
+
 from PySide6.QtCore import QAbstractListModel, QMimeData, QModelIndex, Qt
 
 from myapps.core.events import event_bus
 from myapps.core.models import Project
 from myapps.core.project_manager import ProjectManager
+from myapps.utils.fs_utils import directory_size
+
+SORT_KEYS = ("name", "created_at", "modified_at", "size")
 
 # Custom roles, starting after Qt's reserved built-in roles.
 ProjectIdRole = Qt.ItemDataRole.UserRole + 1
@@ -33,6 +38,14 @@ class ProjectListModel(QAbstractListModel):
         self._pm = project_manager
         self._category_filter: str | None | object = _NO_FILTER
         self._search_text = ""
+        self._sort_key = "name"
+        self._sort_direction = "asc"
+        # In-memory only, keyed by project id — populated lazily the first
+        # time sort_key == "size" is actually used, never persisted or
+        # proactively invalidated (a project's on-disk size changing while
+        # the app is running without a restart is an acceptable staleness
+        # tradeoff here, same as elsewhere in this codebase).
+        self._size_cache: dict[str, int] = {}
         self._projects: list[Project] = []
         self._refresh()
 
@@ -56,6 +69,50 @@ class ProjectListModel(QAbstractListModel):
     def set_search_text(self, text: str) -> None:
         self._search_text = text.strip().lower()
         self._refresh()
+
+    # -- sorting ---------------------------------------------------------
+
+    def set_sort(self, key: str, direction: str) -> None:
+        """`key` is one of SORT_KEYS, `direction` is "asc"/"desc". An
+        unrecognized key/direction falls back to name/asc rather than
+        raising — the persisted value could in principle come from an
+        older/newer settings.json."""
+        self._sort_key = key if key in SORT_KEYS else "name"
+        self._sort_direction = direction if direction in ("asc", "desc") else "asc"
+        self._refresh()
+
+    def _project_size(self, project: Project) -> int:
+        cached = self._size_cache.get(project.id)
+        if cached is None:
+            cached = directory_size(project.path)
+            self._size_cache[project.id] = cached
+        return cached
+
+    def _sort_value(self, project: Project):
+        if self._sort_key == "name":
+            return project.name.lower()
+        if self._sort_key == "created_at":
+            return project.created_at or ""
+        if self._sort_key == "modified_at":
+            try:
+                return os.stat(project.path).st_mtime
+            except OSError:
+                return 0
+        if self._sort_key == "size":
+            return self._project_size(project)
+        return project.name.lower()
+
+    def _sort_projects(self, projects: list[Project]) -> list[Project]:
+        # Two stable passes rather than one tuple-key sort: pinned projects
+        # must stay a floated-to-top tier no matter which direction is
+        # chosen (an outer key that never reverses), while the user's sort
+        # key/direction only governs ordering *within* each tier (an inner
+        # key that does reverse). Sorting by the inner key first, then
+        # stably by the outer key, composes the two correctly — a single
+        # `sorted(key=(not pinned, value), reverse=...)` would incorrectly
+        # flip the pinned tier too whenever direction == "desc".
+        by_value = sorted(projects, key=self._sort_value, reverse=self._sort_direction == "desc")
+        return sorted(by_value, key=lambda p: not p.pinned)
 
     # -- Qt model interface ----------------------------------------------
 
@@ -132,7 +189,7 @@ class ProjectListModel(QAbstractListModel):
             projects = self._pm.projects_in_category(self._category_filter)
         if self._search_text:
             projects = [p for p in projects if self._search_text in p.name.lower()]
-        self._projects = projects
+        self._projects = self._sort_projects(projects)
         self.endResetModel()
 
 
