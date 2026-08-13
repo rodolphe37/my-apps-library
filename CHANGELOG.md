@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-08-13
+
 ### Fixed
 
 - Packaged builds (PyInstaller) were missing `i18n/locales/` from the
@@ -18,16 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (e.g. the UI showed literal `search.placeholder` instead of the
   actual translated text). Only affected frozen builds — `python -m
   myapps` from source was never affected. First shipped, broken this
-  way, in the `v0.5.0` release; fixed for the next one.
-
-### Added
-
-- New `Release` GitHub Actions workflow: builds macOS (Apple Silicon +
-  Intel), Windows, and Linux bundles and publishes them as assets on a
-  GitHub Release, triggered by pushing a version tag or manually.
-
-### Fixed
-
+  way, in the `v0.5.0` release; fixed here.
 - CI packaging builds now also target Intel Macs (`macos-15-intel`)
   alongside Apple Silicon (`macos-latest`) — a build made only on
   `macos-latest` can't run at all on an Intel Mac ("isn't supported by
@@ -36,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The macOS build is now zipped with `ditto` instead of `zip`, which was
   stripping the extended attributes the app's ad-hoc code signature
   relies on (showed up as a barred icon / "app is damaged" in Finder).
+
+### Added
+
+- New `Release` GitHub Actions workflow: builds macOS (Apple Silicon +
+  Intel), Windows, and Linux bundles and publishes them as assets on a
+  GitHub Release, triggered by pushing a version tag or manually.
 
 ### Changed
 
