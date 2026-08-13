@@ -12,7 +12,12 @@ from pathlib import Path
 
 block_cipher = None
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+# Spec files are exec'd by PyInstaller in a namespace that does NOT define
+# `__file__` (this changed at some point — recent PyInstaller versions raise
+# NameError if you rely on it). SPECPATH is the supported, documented way to
+# get the spec file's own directory from inside a spec file.
+SPEC_DIR = Path(SPECPATH).resolve()  # noqa: F821 -- SPECPATH is injected by PyInstaller
+REPO_ROOT = SPEC_DIR.parents[1]  # SPEC_DIR is packaging/pyinstaller/, so up two levels
 SRC = REPO_ROOT / "src"
 ICONS = REPO_ROOT / "packaging" / "icons"
 
@@ -36,7 +41,7 @@ a = Analysis(
     binaries=[],
     datas=datas,
     hiddenimports=[],
-    hookspath=[str(Path(__file__).parent / "hooks")],
+    hookspath=[str(SPEC_DIR / "hooks")],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
