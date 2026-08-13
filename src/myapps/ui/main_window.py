@@ -149,10 +149,17 @@ class MainWindow(QMainWindow):
         self._view_stack = QStackedWidget()
         for info in view_registry.list_modes():
             widget = info.factory(self._model, self._selection_model)
-            self._wire_view_signals(widget)
             self._views[info.mode_id] = widget
+            self._wire_view_signals(widget)
             self._view_stack.addWidget(widget)
         right_layout.addWidget(self._view_stack)
+        # The one and only place the persisted view_mode is validated
+        # against the now-fully-populated self._views and restored (or
+        # falls back to DEFAULT_VIEW_MODE). _wire_view_signals() must NOT
+        # also do this per-widget mid-loop — self._views is necessarily
+        # incomplete for all but the last widget processed, so it used to
+        # treat a legitimately-saved "grid" as unknown and silently reset +
+        # persist it back to "list" on every single startup.
         self._set_active_view_mode(
             self._settings.settings.view_mode
             if self._settings.settings.view_mode in self._views
@@ -656,9 +663,16 @@ class MainWindow(QMainWindow):
             if info.mode_id in self._views:
                 continue
             widget = info.factory(self._model, self._selection_model)
-            self._wire_view_signals(widget)
             self._views[info.mode_id] = widget
+            self._wire_view_signals(widget)
             self._view_stack.addWidget(widget)
+
+        # Same validate-once-after-the-full-set-is-known pattern as the end
+        # of _build_ui(), for the same reason: covers a plugin being
+        # disabled while its contributed view was the active one.
+        current_mode = self._settings.settings.view_mode
+        if current_mode not in self._views:
+            self._set_active_view_mode(DEFAULT_VIEW_MODE)
 
     def _wire_view_signals(self, widget: QWidget) -> None:
         """Connects the signals every registered view is contractually
@@ -670,10 +684,6 @@ class MainWindow(QMainWindow):
         widget.context_menu_requested.connect(self._show_context_menu)
         if hasattr(widget, "external_folders_dropped"):
             widget.external_folders_dropped.connect(self._add_projects_from_paths)
-
-        current_mode = self._settings.settings.view_mode
-        if current_mode not in self._views:
-            self._set_active_view_mode(DEFAULT_VIEW_MODE)
 
     def _set_theme_mode(self, mode: str) -> None:
         self._settings.set(theme_mode=mode)
