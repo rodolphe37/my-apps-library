@@ -51,7 +51,7 @@ cask "my-apps-library" do
 
   zap trash: [
     "~/Library/Application Support/MyAppsLibrary",
-    "~/Library/Preferences/com.myappslibrary.*.plist",
     "~/Library/Caches/MyAppsLibrary",
+    "~/Library/Preferences/com.myappslibrary.*.plist",
   ]
 end
