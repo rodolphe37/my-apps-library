@@ -97,7 +97,48 @@ Don't see yours? Use **"Open With…"** to add any custom editor by path, or ope
 
 ## Installation
 
-MyAppsLibrary is currently distributed from source while packaged installers (macOS `.dmg`, Windows installer, Linux `AppImage`) are being finalized — see [Packaging](#packaging--building-installers) and the [Roadmap](#roadmap).
+MyAppsLibrary isn't code-signed/notarized (see the [Roadmap](#roadmap) for why that's a deliberate choice, not an oversight) — pick whichever tradeoff below suits you.
+
+### macOS
+
+Two options, not a progression — pick one:
+
+```bash
+# Option 1: Homebrew — clean /Applications install + `brew upgrade`/`uninstall`,
+# but expect a one-time right-click → Open on first launch (unsigned app).
+brew tap rodolphe37/my-apps-library   # not published yet — see Casks/my-apps-library.rb
+brew install --cask my-apps-library
+
+# Option 2: install script — zero Gatekeeper warning at all (curl/ditto never
+# trigger it, unlike a browser download or Homebrew Cask — both apply
+# com.apple.quarantine deliberately), but no update mechanism: re-run this
+# script to update instead of `brew upgrade`.
+curl -fsSL https://raw.githubusercontent.com/rodolphe37/my-apps-library/main/packaging/macos/install.sh | bash
+```
+
+### Windows
+
+```powershell
+winget install rodolphe37.MyAppsLibrary
+```
+
+Not published to the `winget-pkgs` community repo yet — see [`packaging/winget/README.md`](packaging/winget/README.md). Expect a SmartScreen "Windows protected your PC" prompt on first launch either way (same unsigned-app reason as macOS) — click **More info → Run anyway**.
+
+### Linux
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rodolphe37/my-apps-library/main/packaging/linux/install.sh | bash
+```
+
+Downloads the latest release, installs to `~/.local/share/my-apps-library/`, and registers a proper application-menu entry (`.desktop` file + icon) — a bare `curl`+`chmod +x` alone would run fine but wouldn't show up in your launcher.
+
+### Manual download
+
+Grab the right `.zip` directly from [the latest release](https://github.com/rodolphe37/my-apps-library/releases/latest) if you'd rather skip all of the above.
+
+### Contributing to the app itself
+
+If you're working on MyAppsLibrary's own source (not just using it), run from a checkout instead:
 
 ```bash
 git clone https://github.com/rodolphe37/my-apps-library.git
@@ -250,9 +291,9 @@ A [`Package` GitHub Actions workflow](.github/workflows/package.yml) builds unsi
 
 ## Roadmap
 
-- [ ] Code signing & notarization (macOS Developer ID, Windows Authenticode)
-- [ ] Auto-update
-- [ ] Signed, one-click installers for all three platforms
+- [x] ~~Code signing & notarization~~ — deliberately not pursuing this (see [Installation](#installation)): Homebrew Cask/winget/an install script give a reasonable install experience without the $99/year Apple Developer Program or Windows Authenticode cert. Revisit only if the unsigned-app friction turns out to matter more than expected.
+- [ ] Publish the Homebrew tap (`rodolphe37/homebrew-my-apps-library`) and submit the winget manifest to `microsoft/winget-pkgs` — both written and ready (`Casks/my-apps-library.rb`, `packaging/winget/`), neither actually published yet
+- [ ] In-app update check — notify on startup if a newer release exists (pointing at the right upgrade command for however the app was installed), not a silent auto-updater given the app stays unsigned
 - [ ] Real plugin sandboxing (today plugins run with full app privileges)
 - [ ] Public deployment of the plugins marketplace web app (its source stays in a private repository; only the live site is intended to be public)
 - [ ] More built-in languages

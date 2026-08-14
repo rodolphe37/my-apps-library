@@ -1,0 +1,17 @@
+# winget default-locale manifest — metadata shown in `winget show`/the
+# Windows Package Manager UI.
+PackageIdentifier: rodolphe37.MyAppsLibrary
+PackageVersion: 0.5.2
+PackageLocale: en-US
+Publisher: rodolphe37
+PublisherUrl: https://github.com/rodolphe37
+PackageName: MyAppsLibrary
+PackageUrl: https://github.com/rodolphe37/my-apps-library
+License: PolyForm-Noncommercial-1.0.0
+LicenseUrl: https://github.com/rodolphe37/my-apps-library/blob/main/LICENSE
+ShortDescription: A personal launcher/library for your developer projects, extensible via plugins
+Tags:
+  - developer-tools
+  - project-management
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

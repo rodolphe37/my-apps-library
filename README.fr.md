@@ -97,7 +97,50 @@ Le vôtre n'y est pas ? Utilisez **« Ouvrir avec… »** pour ajouter n'importe
 
 ## Installation
 
-MyAppsLibrary est pour l'instant distribuée depuis les sources, le temps que les installeurs packagés (`.dmg` macOS, installeur Windows, `AppImage` Linux) soient finalisés — voir [Packaging](#packaging--créer-des-installeurs) et la [feuille de route](#feuille-de-route).
+MyAppsLibrary n'est pas signée/notariée (voir la [feuille de route](#feuille-de-route) — un choix délibéré, pas un oubli) — choisissez le compromis qui vous convient ci-dessous.
+
+### macOS
+
+Deux options, pas une progression — choisissez-en une :
+
+```bash
+# Option 1 : Homebrew — installation propre dans /Applications + `brew upgrade`/
+# `uninstall`, mais un clic-droit → Ouvrir sera nécessaire une fois au premier
+# lancement (app non signée).
+brew tap rodolphe37/my-apps-library   # pas encore publié — voir Casks/my-apps-library.rb
+brew install --cask my-apps-library
+
+# Option 2 : script d'installation — aucun avertissement Gatekeeper du tout
+# (curl/ditto ne le déclenchent jamais, contrairement à un téléchargement
+# navigateur ou à Homebrew Cask — les deux posent le flag de quarantine
+# volontairement), mais pas de mécanisme de mise à jour : relancez ce script
+# pour mettre à jour, au lieu de `brew upgrade`.
+curl -fsSL https://raw.githubusercontent.com/rodolphe37/my-apps-library/main/packaging/macos/install.sh | bash
+```
+
+### Windows
+
+```powershell
+winget install rodolphe37.MyAppsLibrary
+```
+
+Pas encore publié sur le dépôt communautaire `winget-pkgs` — voir [`packaging/winget/README.md`](packaging/winget/README.md). Attendez-vous à une invite SmartScreen "Windows a protégé votre ordinateur" au premier lancement dans tous les cas (même raison que macOS : app non signée) — cliquez **Plus d'infos → Exécuter quand même**.
+
+### Linux
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rodolphe37/my-apps-library/main/packaging/linux/install.sh | bash
+```
+
+Télécharge la dernière version, l'installe dans `~/.local/share/my-apps-library/`, et enregistre une véritable entrée dans le menu d'applications (fichier `.desktop` + icône) — un simple `curl`+`chmod +x` fonctionnerait mais n'apparaîtrait pas dans votre menu.
+
+### Téléchargement manuel
+
+Récupérez directement le bon `.zip` depuis [la dernière release](https://github.com/rodolphe37/my-apps-library/releases/latest) si vous préférez éviter tout ce qui précède.
+
+### Contribuer à l'application elle-même
+
+Si vous travaillez sur le code source de MyAppsLibrary (pas juste pour l'utiliser), lancez-la depuis un clone :
 
 ```bash
 git clone https://github.com/rodolphe37/my-apps-library.git
@@ -250,9 +293,9 @@ Un [workflow GitHub Actions `Package`](.github/workflows/package.yml) construit 
 
 ## Feuille de route
 
-- [ ] Signature de code & notarisation (Developer ID macOS, Authenticode Windows)
-- [ ] Mise à jour automatique
-- [ ] Installeurs signés, en un clic, pour les trois plateformes
+- [x] ~~Signature de code & notarisation~~ — délibérément écarté (voir [Installation](#installation)) : Homebrew Cask/winget/un script d'installation offrent une expérience d'installation raisonnable sans le programme Apple Developer à 99$/an ni un certificat Authenticode Windows. À reconsidérer seulement si la friction de l'app non signée s'avère plus gênante que prévu.
+- [ ] Publier le tap Homebrew (`rodolphe37/homebrew-my-apps-library`) et soumettre le manifeste winget à `microsoft/winget-pkgs` — les deux sont écrits et prêts (`Casks/my-apps-library.rb`, `packaging/winget/`), mais pas encore publiés
+- [ ] Vérification de mise à jour dans l'app — notifie au démarrage si une nouvelle version existe (en indiquant la bonne commande de mise à jour selon la méthode d'installation utilisée), pas une mise à jour automatique silencieuse vu que l'app reste non signée
 - [ ] Véritable isolation (sandbox) des plugins (aujourd'hui, ils tournent avec tous les privilèges de l'application)
 - [ ] Déploiement public de l'application web de marketplace de plugins (le code source reste dans un dépôt privé ; seul le site en ligne est destiné à être public)
 - [ ] Davantage de langues intégrées
