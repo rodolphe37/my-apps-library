@@ -19,19 +19,18 @@
 # Cask is about install/update convenience, not about removing that step.
 #
 # NOTE: this file lives here so it's versioned alongside the app it
-# describes, but `brew install --cask my-apps-library` (bare name) only
-# works once it's copied into a Homebrew tap — a separate GitHub repo
-# named `homebrew-<something>` (e.g. rodolphe37/homebrew-my-apps-library).
-# Modern Homebrew refuses to install a cask from a bare local file path
-# (confirmed: `brew install --cask ./Casks/my-apps-library.rb` errors
-# with "Homebrew requires casks to be in a tap") — verifying this formula
-# locally requires a local test tap (`brew tap-new`, no GitHub involved).
-# See README.md's Installation section for the current state of tap
-# publishing (a manual, one-time step not done yet).
+# describes, but `brew install --cask my-apps-library` (bare name) needs
+# a Homebrew tap — a separate GitHub repo named `homebrew-<something>`.
+# That tap is live: github.com/rodolphe37/homebrew-my-apps-library —
+# `brew tap rodolphe37/my-apps-library && brew install --cask
+# my-apps-library` works today, verified for real against the actual
+# public repo (not just a local test tap).
 #
-# Bump `version`/`sha256` on every release — both macOS zips' checksums
-# change every time release.yml runs. Not yet automated (a
-# `brew bump-cask-pr`-style CI step would be the natural follow-up).
+# `version`/`sha256` are kept in sync with the tap automatically —
+# .github/workflows/release.yml's update-homebrew-tap job bumps both
+# this file and the tap's copy after every release (see
+# packaging/homebrew/bump_cask.py and packaging/homebrew/README.md for
+# the one remaining manual step, a repo secret it needs).
 cask "my-apps-library" do
   arch arm: "ARM64", intel: "X64"
 

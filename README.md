@@ -292,7 +292,8 @@ A [`Package` GitHub Actions workflow](.github/workflows/package.yml) builds unsi
 ## Roadmap
 
 - [x] ~~Code signing & notarization~~ — deliberately not pursuing this (see [Installation](#installation)): Homebrew Cask/winget/an install script give a reasonable install experience without the $99/year Apple Developer Program or Windows Authenticode cert. Revisit only if the unsigned-app friction turns out to matter more than expected.
-- [ ] Publish the Homebrew tap (`rodolphe37/homebrew-my-apps-library`) and submit the winget manifest to `microsoft/winget-pkgs` — both written and ready (`Casks/my-apps-library.rb`, `packaging/winget/`), neither actually published yet
+- [x] ~~Publish the Homebrew tap~~ — [`rodolphe37/homebrew-my-apps-library`](https://github.com/rodolphe37/homebrew-my-apps-library) is live, `version`/`sha256` bumped automatically on every release ([`packaging/homebrew/`](packaging/homebrew/))
+- [ ] Submit the winget manifest to `microsoft/winget-pkgs` — written and ready (`packaging/winget/`), not submitted yet
 - [ ] In-app update check — notify on startup if a newer release exists (pointing at the right upgrade command for however the app was installed), not a silent auto-updater given the app stays unsigned
 - [ ] Real plugin sandboxing (today plugins run with full app privileges)
 - [ ] Public deployment of the plugins marketplace web app (its source stays in a private repository; only the live site is intended to be public)

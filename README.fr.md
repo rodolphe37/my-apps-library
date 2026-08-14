@@ -294,7 +294,8 @@ Un [workflow GitHub Actions `Package`](.github/workflows/package.yml) construit 
 ## Feuille de route
 
 - [x] ~~Signature de code & notarisation~~ — délibérément écarté (voir [Installation](#installation)) : Homebrew Cask/winget/un script d'installation offrent une expérience d'installation raisonnable sans le programme Apple Developer à 99$/an ni un certificat Authenticode Windows. À reconsidérer seulement si la friction de l'app non signée s'avère plus gênante que prévu.
-- [ ] Publier le tap Homebrew (`rodolphe37/homebrew-my-apps-library`) et soumettre le manifeste winget à `microsoft/winget-pkgs` — les deux sont écrits et prêts (`Casks/my-apps-library.rb`, `packaging/winget/`), mais pas encore publiés
+- [x] ~~Publier le tap Homebrew~~ — [`rodolphe37/homebrew-my-apps-library`](https://github.com/rodolphe37/homebrew-my-apps-library) est en ligne, `version`/`sha256` mis à jour automatiquement à chaque release ([`packaging/homebrew/`](packaging/homebrew/))
+- [ ] Soumettre le manifeste winget à `microsoft/winget-pkgs` — écrit et prêt (`packaging/winget/`), pas encore soumis
 - [ ] Vérification de mise à jour dans l'app — notifie au démarrage si une nouvelle version existe (en indiquant la bonne commande de mise à jour selon la méthode d'installation utilisée), pas une mise à jour automatique silencieuse vu que l'app reste non signée
 - [ ] Véritable isolation (sandbox) des plugins (aujourd'hui, ils tournent avec tous les privilèges de l'application)
 - [ ] Déploiement public de l'application web de marketplace de plugins (le code source reste dans un dépôt privé ; seul le site en ligne est destiné à être public)
