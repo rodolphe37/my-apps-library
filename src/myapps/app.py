@@ -41,10 +41,16 @@ def main() -> int:
         editor_registry.refresh()
 
     theme_manager = ThemeManager(app)
-    theme_manager.set_mode(settings_manager.settings.theme_mode)
 
     plugin_manager = PluginManager(project_manager)
     plugin_manager.load_all_enabled()
+
+    # Palettes/mode applied only after plugins are loaded, so a
+    # plugin-contributed palette picked in a previous session is available
+    # from the very first paint rather than flashing the default first.
+    theme_manager.set_available_palettes(plugin_manager.collect_theme_palettes())
+    theme_manager.set_palette(settings_manager.settings.theme_palette_id)
+    theme_manager.set_mode(settings_manager.settings.theme_mode)
 
     language_manager = LanguageManager()
     language_manager.set_plugin_translations(plugin_manager.collect_translations())

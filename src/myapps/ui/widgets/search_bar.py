@@ -25,7 +25,7 @@ class SearchBar(QLineEdit):
         self.textChanged.connect(lambda _: self._debounce.start())
 
     def retranslate(self) -> None:
-        """The placeholder is otherwise only set once in __init__ — unlike
+        """The placeholder is otherwise only set once in __init__ - unlike
         menus/dialogs, this widget is long-lived, so it needs to be told to
         refresh explicitly on language change (see MainWindow._on_language_changed)."""
         self.setPlaceholderText(tr("search.placeholder"))

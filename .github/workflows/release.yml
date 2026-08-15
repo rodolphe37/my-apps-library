@@ -1,8 +1,8 @@
 name: Release
 
 # Builds native, unsigned PyInstaller bundles for macOS (Apple Silicon and
-# Intel — see the `os` matrix below), Windows, and Linux, and publishes
-# them as downloadable assets on a GitHub Release — this is
+# Intel - see the `os` matrix below), Windows, and Linux, and publishes
+# them as downloadable assets on a GitHub Release - this is
 # what end users should actually download the app from (see the
 # Installation section in README.md), as opposed to `package.yml`, which
 # just validates on every push to main that the build still works (its
@@ -12,16 +12,16 @@ name: Release
 #   1. Push a version tag:
 #        git tag v0.6.0 && git push origin v0.6.0
 #      (tags aren't covered by the `main` branch ruleset, so this doesn't
-#      need a PR — only someone with push access can do it).
+#      need a PR - only someone with push access can do it).
 #   2. Manually, from the Actions tab → this workflow → "Run workflow",
 #      giving the tag to use. Handy for re-publishing release assets
 #      without cutting a new tag (e.g. after fixing a build issue), or for
 #      creating the very first release off of `main` directly.
 #
-# Shares its build steps with `package.yml` — if you change how the app is
+# Shares its build steps with `package.yml` - if you change how the app is
 # built (spec file, dependencies, data files), update both.
 #
-# No code signing/notarization yet (see the Roadmap in README.md) — these
+# No code signing/notarization yet (see the Roadmap in README.md) - these
 # are plain unsigned builds; expect Gatekeeper/SmartScreen warnings on
 # first launch, per packaging/README.md.
 
@@ -32,7 +32,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Version tag to release (e.g. v0.6.0) — created at the current commit if it doesn't already exist"
+        description: "Version tag to release (e.g. v0.6.0) - created at the current commit if it doesn't already exist"
         required: true
 
 permissions:
@@ -45,8 +45,8 @@ jobs:
       fail-fast: false
       matrix:
         # macos-latest = Apple Silicon (arm64). macos-15-intel is GitHub's
-        # last Intel (x86_64) macOS image, available until Aug 2027 — see
-        # https://github.com/actions/runner-images — without it, an
+        # last Intel (x86_64) macOS image, available until Aug 2027 - see
+        # https://github.com/actions/runner-images - without it, an
         # Apple-Silicon-only build can't even launch on an Intel Mac
         # ("isn't supported by this Mac", not just a Gatekeeper warning).
         os: [macos-latest, macos-15-intel, windows-latest, ubuntu-latest]
@@ -77,7 +77,7 @@ jobs:
           case "${{ runner.os }}" in
             macOS)
               # `zip`/`upload-artifact` don't preserve the extended
-              # attributes the .app's ad-hoc code signature relies on —
+              # attributes the .app's ad-hoc code signature relies on -
               # round-tripping through them turns the app "damaged" in
               # Finder/Gatekeeper (a barred/prohibitory icon on launch).
               # `ditto` is Apple's own tool for archiving .app bundles
@@ -168,19 +168,19 @@ jobs:
             git push
           fi
 
-      # The tap (rodolphe37/homebrew-my-apps-library) is a separate repo —
+      # The tap (rodolphe37/homebrew-my-apps-library) is a separate repo -
       # the default GITHUB_TOKEN above only has write access to *this*
       # repo, so pushing there needs a fine-grained PAT scoped to just
       # that repo (Contents: read and write), stored as the
       # HOMEBREW_TAP_TOKEN secret. See packaging/homebrew/README.md for
-      # how to create one — until it's set, this step skips itself with a
+      # how to create one - until it's set, this step skips itself with a
       # warning instead of failing the whole release.
       - name: Push the updated cask to the Homebrew tap
         env:
           TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           if [ -z "$TAP_TOKEN" ]; then
-            echo "::warning::HOMEBREW_TAP_TOKEN secret not set — skipping the tap push. See packaging/homebrew/README.md."
+            echo "::warning::HOMEBREW_TAP_TOKEN secret not set - skipping the tap push. See packaging/homebrew/README.md."
             exit 0
           fi
           git clone "https://x-access-token:${TAP_TOKEN}@github.com/rodolphe37/homebrew-my-apps-library.git" tap-repo

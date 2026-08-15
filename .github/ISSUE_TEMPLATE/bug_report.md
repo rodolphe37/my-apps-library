@@ -7,8 +7,8 @@ assignees: ''
 ---
 
 <!--
-EN: Fill in as much as you can — see CONTRIBUTING.md for guidance.
-FR : Remplissez autant que possible — voir CONTRIBUTING.md pour le guide.
+EN: Fill in as much as you can - see CONTRIBUTING.md for guidance.
+FR : Remplissez autant que possible - voir CONTRIBUTING.md pour le guide.
 -->
 
 ## Description

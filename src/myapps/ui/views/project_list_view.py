@@ -1,7 +1,7 @@
 """A QListView using ProjectListModel and ProjectItemDelegate, usable in
 either ListMode (row layout, MVP default) or IconMode (grid/tile layout,
 Phase 2) via the `view_mode` constructor kwarg. Emits signals for the actions
-main_window.py wires up, regardless of mode — see ui/views/registry.py's
+main_window.py wires up, regardless of mode - see ui/views/registry.py's
 module docstring for the contract this relies on.
 """
 
@@ -23,7 +23,7 @@ class ProjectListView(QListView):
     # External folders dragged in from Finder/Explorer, dropped directly on
     # this view. Handled here (in both list and grid mode) rather than
     # relying on the drop bubbling up to MainWindow's own dragEnterEvent/
-    # dropEvent — Qt's propagation of unhandled drag events from a nested
+    # dropEvent - Qt's propagation of unhandled drag events from a nested
     # QAbstractItemView's viewport up to an ancestor widget isn't reliable
     # enough to depend on, so each view explicitly accepts and re-emits
     # external file drops itself instead.
@@ -45,7 +45,7 @@ class ProjectListView(QListView):
         self.setResizeMode(QListView.ResizeMode.Adjust)
         self.setUniformItemSizes(True)
         # Extended = click selects one, Ctrl/Cmd-click toggles individual
-        # items, Shift-click selects a contiguous range — the standard
+        # items, Shift-click selects a contiguous range - the standard
         # Finder/Explorer multi-select convention. Bulk actions (edit
         # categories, pin, remove) act on the whole selection; see
         # MainWindow._selected_project_ids().
@@ -54,7 +54,7 @@ class ProjectListView(QListView):
         self.setMouseTracking(True)  # needed for the grid delegate's hover state
 
         # DragOnly governs INTERNAL item drag/drop only (dragging a project
-        # onto a category in the sidebar — see ProjectListModel.mimeData());
+        # onto a category in the sidebar - see ProjectListModel.mimeData());
         # it does not accept drops back onto this view. Re-enabled below via
         # setAcceptDrops(True) so the view can still separately accept
         # EXTERNAL file drops from Finder/Explorer (handled in the three

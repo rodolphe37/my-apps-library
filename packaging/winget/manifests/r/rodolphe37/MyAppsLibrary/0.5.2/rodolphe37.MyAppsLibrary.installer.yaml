@@ -2,14 +2,14 @@
 #
 # InstallerType: zip + NestedInstallerType: portable is the correct shape
 # for this project's actual Windows release artifact (a plain PyInstaller
-# onedir zip, MyAppsLibrary/MyAppsLibrary.exe — not an MSI/EXE installer)
-# — winget's schema has supported "zip containing a portable exe" since
+# onedir zip, MyAppsLibrary/MyAppsLibrary.exe - not an MSI/EXE installer)
+# - winget's schema has supported "zip containing a portable exe" since
 # manifest schema 1.4. PortableCommandAlias is what makes `MyAppsLibrary`
 # resolve on PATH after `winget install`, same convenience an MSI's Start
 # Menu shortcut would give, without needing to actually build one.
 #
 # Bump PackageVersion (+ the sibling .yaml/.locale.en-US.yaml files) and
-# InstallerSha256 on every release — not yet automated.
+# InstallerSha256 on every release - not yet automated.
 PackageIdentifier: rodolphe37.MyAppsLibrary
 PackageVersion: 0.5.2
 InstallerType: zip

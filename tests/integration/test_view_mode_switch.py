@@ -60,7 +60,7 @@ def test_view_mode_survives_a_real_restart(tmp_path, qtbot, qapp):
     registered view's signals were wired, which used to trigger a bogus
     "unknown view mode" fallback). A fresh SettingsManager + MainWindow
     pointed at the same settings.json, as a second launch would see, is
-    what actually catches this — asserting against the same live window
+    what actually catches this - asserting against the same live window
     instance (as the other tests above do) can't."""
     settings_path = tmp_path / "settings.json"
     window1, _pm = make_window(tmp_path, qtbot, qapp)

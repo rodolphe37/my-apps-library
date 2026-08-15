@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerates Casks/my-apps-library.rb's version/sha256 fields in place —
+"""Regenerates Casks/my-apps-library.rb's version/sha256 fields in place -
 run by .github/workflows/release.yml's update-homebrew-tap job after every
 release. Targeted regex substitution, not a full re-render, so the
 formula's hand-written comments/formatting survive untouched (the same
@@ -7,7 +7,7 @@ approach the marketplace's mal-plugin CLI uses for plugin.toml, and for
 the same reason).
 
 Fails loudly (non-zero exit) if a pattern doesn't match exactly once,
-rather than silently leaving the file unchanged or corrupting it — a
+rather than silently leaving the file unchanged or corrupting it - a
 CI script editing a file in place should never fail quietly.
 """
 
@@ -48,7 +48,7 @@ def main() -> None:
     if (n_version, n_arm, n_intel) != (1, 1, 1):
         sys.exit(
             f"Expected exactly one match each for version/arm/intel, got "
-            f"{n_version}/{n_arm}/{n_intel} — did the Cask's formatting change? "
+            f"{n_version}/{n_arm}/{n_intel} - did the Cask's formatting change? "
             f"Update this script's regexes to match."
         )
 

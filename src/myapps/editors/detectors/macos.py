@@ -15,7 +15,7 @@ APPLICATIONS_DIRS = [Path("/Applications"), Path.home() / "Applications"]
 
 # VS Code and its Electron-based forks (Cursor, VSCodium, Insiders builds)
 # all ship their own `code`-style CLI binary inside the .app bundle, at this
-# relative path — the same binary that gets symlinked onto PATH when the
+# relative path - the same binary that gets symlinked onto PATH when the
 # user runs "Shell Command: Install 'code' command in PATH" from the command
 # palette. Checking for it directly means launching still works reliably
 # even if the user never ran that command.
@@ -25,7 +25,7 @@ _BUNDLED_CLI_RELATIVE_PATH = Path("Contents/Resources/app/bin")
 def detect() -> list[EditorInfo]:
     found: list[EditorInfo] = []
     for entry in CATALOG:
-        # 1. A CLI shim on PATH — most reliable, respects the user's own setup.
+        # 1. A CLI shim on PATH - most reliable, respects the user's own setup.
         cli_path = None
         for name in entry.cli_names:
             cli_path = shutil.which(name)
@@ -53,7 +53,7 @@ def detect() -> list[EditorInfo]:
             continue
 
         # 3. Last resort: `open -a`. Note this is NOT reliable for passing
-        # `--args` to an app that's already running — macOS's `open` just
+        # `--args` to an app that's already running - macOS's `open` just
         # activates the existing instance and silently drops the new args
         # in that case. Only reached when no CLI binary could be found at
         # all (steps 1-2 above), which is now the uncommon case for the

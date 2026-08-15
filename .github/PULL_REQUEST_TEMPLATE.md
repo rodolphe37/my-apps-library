@@ -19,7 +19,7 @@ Closes #
 - [ ] New feature / Nouvelle fonctionnalité
 - [ ] Documentation / Documentation
 - [ ] Translation / Traduction
-- [ ] Refactor / no behavior change — Refactorisation / sans changement de comportement
+- [ ] Refactor / no behavior change - Refactorisation / sans changement de comportement
 - [ ] Other / Autre :
 
 ## Screenshots or recording (UI changes) / Captures ou enregistrement (changements d'interface)

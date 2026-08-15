@@ -1,4 +1,4 @@
-# winget version manifest — see packaging/winget/README.md for how/whether
+# winget version manifest - see packaging/winget/README.md for how/whether
 # this has actually been submitted to microsoft/winget-pkgs yet.
 PackageIdentifier: rodolphe37.MyAppsLibrary
 PackageVersion: 0.5.2

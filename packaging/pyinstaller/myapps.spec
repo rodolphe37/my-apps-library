@@ -3,7 +3,7 @@
 # Build (run from the repo root, with the dev venv active):
 #   pyinstaller packaging/pyinstaller/myapps.spec --noconfirm
 #
-# Produces a native bundle for whichever OS you run it on — PyInstaller does
+# Produces a native bundle for whichever OS you run it on - PyInstaller does
 # not cross-compile, so macOS/Windows/Linux builds must each run on that OS
 # (e.g. via a CI matrix).
 
@@ -13,7 +13,7 @@ from pathlib import Path
 block_cipher = None
 
 # Spec files are exec'd by PyInstaller in a namespace that does NOT define
-# `__file__` (this changed at some point — recent PyInstaller versions raise
+# `__file__` (this changed at some point - recent PyInstaller versions raise
 # NameError if you rely on it). SPECPATH is the supported, documented way to
 # get the spec file's own directory from inside a spec file.
 SPEC_DIR = Path(SPECPATH).resolve()  # noqa: F821 -- SPECPATH is injected by PyInstaller
@@ -24,7 +24,7 @@ ICONS = REPO_ROOT / "packaging" / "icons"
 # Non-Python files aren't picked up by PyInstaller's import analysis, so
 # each needs an explicit --add-data entry to end up in the frozen bundle,
 # at the same relative path core/catalog.py etc. look for it at (Path(
-# __file__).parent / ...) — every such lookup in src/myapps must have a
+# __file__).parent / ...) - every such lookup in src/myapps must have a
 # matching entry here, or it silently finds nothing at runtime (this is
 # exactly what happened to i18n/locales/: missing here meant tr() always
 # fell back to returning the raw key, e.g. "search.placeholder" showing

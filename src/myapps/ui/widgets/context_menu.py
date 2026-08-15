@@ -28,6 +28,7 @@ def build_project_context_menu(
     on_reveal: Callable[[], None],
     on_toggle_pin: Callable[[], None],
     on_edit_categories: Callable[[], None],
+    on_choose_icon: Callable[[], None],
     on_rename: Callable[[], None],
     on_remove: Callable[[], None],
 ) -> QMenu:
@@ -40,6 +41,7 @@ def build_project_context_menu(
         tr("context_menu.unpin") if project.pinned else tr("context_menu.pin"), on_toggle_pin
     )
     menu.addAction(tr("context_menu.edit_categories"), on_edit_categories)
+    menu.addAction(tr("context_menu.choose_icon"), on_choose_icon)
     menu.addAction(tr("context_menu.rename"), on_rename)
     menu.addSeparator()
     remove_action = menu.addAction(tr("context_menu.remove"), on_remove)
@@ -48,7 +50,7 @@ def build_project_context_menu(
 
 
 def _plural(key_base: str, n: int, **kwargs) -> str:
-    # Two-form pluralization, decided at the call site — same convention as
+    # Two-form pluralization, decided at the call site - same convention as
     # main_window.py's status.project_count.{one,other}.
     return tr(f"{key_base}.{'one' if n == 1 else 'other'}", n=n, **kwargs)
 
@@ -62,7 +64,7 @@ def build_bulk_project_context_menu(
     on_edit_categories: Callable[[], None],
     on_remove: Callable[[], None],
 ) -> QMenu:
-    """The multi-select companion to build_project_context_menu — shown
+    """The multi-select companion to build_project_context_menu - shown
     instead of it when the right-clicked project is part of a selection of
     more than one. Deliberately a smaller action set: only what makes
     unambiguous sense across an arbitrary group (open/open-with/reveal/

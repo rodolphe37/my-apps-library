@@ -1,6 +1,6 @@
 """PluginManifest: parsed and validated from a `plugin.toml` file.
 
-Hand-rolled validation, not pydantic — matches the precedent already set in
+Hand-rolled validation, not pydantic - matches the precedent already set in
 `core/models.py` (plain dataclasses; strictness isolated to where it's
 actually needed). This schema is ~9 flat scalar/list-of-str fields with no
 nesting and no cross-field business rules beyond a regex and required-field
@@ -38,7 +38,7 @@ class PluginManifest:
     min_app_version: str = "0.0.0"
     permissions: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
-    # Advisory discoverability metadata for a translation plugin — e.g.
+    # Advisory discoverability metadata for a translation plugin - e.g.
     # ["de"]. Not enforced: the runtime source of truth for what a plugin
     # actually translates is its loaded contribute_translations() return
     # value (same advisory relationship `permissions` already has to actual
@@ -50,7 +50,7 @@ class PluginManifest:
 
 def parse_manifest(toml_path: Path) -> PluginManifest:
     """Parse and validate a plugin.toml file. Raises ManifestError with all
-    problems aggregated into one message on any failure — never lets a raw
+    problems aggregated into one message on any failure - never lets a raw
     tomllib exception escape."""
     try:
         with toml_path.open("rb") as f:

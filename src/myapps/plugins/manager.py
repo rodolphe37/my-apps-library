@@ -25,11 +25,13 @@ from myapps.core.project_manager import ProjectManager
 from myapps.core.store import load_json, save_json
 from myapps.paths import plugins_dir as default_plugins_dir
 from myapps.plugins.api import (
+    IconPack,
     PluginBase,
     PluginContext,
     PluginMenuAction,
     PluginSettingsStore,
     PluginUIRegistrar,
+    ThemePalette,
 )
 from myapps.plugins.loader import discover_local
 from myapps.plugins.manifest import (
@@ -38,6 +40,7 @@ from myapps.plugins.manifest import (
     parse_manifest,
     parse_min_app_version,
 )
+from myapps.ui.theme.tokens import validate_tokens
 from myapps.ui.views.registry import ViewModeInfo
 
 logger = logging.getLogger(__name__)
@@ -92,7 +95,7 @@ class InstalledPluginRecord:
 
 
 class PluginInstallError(Exception):
-    """Raised by install_from_path() — no partial state is left behind."""
+    """Raised by install_from_path() - no partial state is left behind."""
 
 
 def _now_iso() -> str:
@@ -144,7 +147,7 @@ class PluginManager:
             record = self._installed.get(manifest.id)
             if record is None:
                 # Seen for the first time (e.g. dropped into plugins_dir by
-                # hand) — register as installed-but-disabled, don't auto-run.
+                # hand) - register as installed-but-disabled, don't auto-run.
                 record = InstalledPluginRecord(
                     plugin_id=manifest.id,
                     version=manifest.version,
@@ -161,7 +164,7 @@ class PluginManager:
                 self._loaded[manifest.id] = LoadedPlugin(manifest, None, PluginLoadState.DISABLED)
 
     def load(self, manifest: PluginManifest) -> LoadedPlugin:
-        """Dynamic import + instantiate + on_load(ctx). Never raises — a
+        """Dynamic import + instantiate + on_load(ctx). Never raises - a
         failure is captured as state=FAILED with the error message."""
         try:
             min_version = parse_min_app_version(manifest.min_app_version)
@@ -208,7 +211,7 @@ class PluginManager:
         plugin id (`myapps_plugin_<id>.<module_name>`) rather than the bare
         module name. Two different plugins very commonly both name their
         entry file `plugin.py` (it's the convention this project's own
-        examples use) — importing under the bare name would collide in
+        examples use) - importing under the bare name would collide in
         sys.modules, silently returning the wrong plugin's module to the
         second loader. Entry_point-sourced plugins (no source_dir) are
         already importable normally via the standard mechanism."""
@@ -277,7 +280,7 @@ class PluginManager:
     # -- install / uninstall -------------------------------------------
 
     def install_from_path(self, source_path: Path) -> PluginManifest:
-        """Local zip or folder only — no networking. This is exactly the
+        """Local zip or folder only - no networking. This is exactly the
         function Phase 3's marketplace client will call later after
         resolving a URL to a local download."""
         source_path = Path(source_path)
@@ -425,7 +428,7 @@ class PluginManager:
         """Merges contribute_translations() from every LOADED+enabled
         plugin, locale-by-locale, key-by-key, in dict-iteration (i.e.
         load/enable) order. A later plugin's key wins over an earlier
-        plugin's key for the same (locale, key) pair — same 'last writer
+        plugin's key for the same (locale, key) pair - same 'last writer
         wins, never crash' spirit as the rest of this module."""
         merged: dict[str, dict[str, str]] = {}
         for plugin_id, loaded in self._active_plugins():
@@ -438,6 +441,49 @@ class PluginManager:
                     continue
                 merged.setdefault(locale, {}).update(entries)
         return merged
+
+    def collect_icon_packs(self) -> list[IconPack]:
+        """Concatenates contribute_icon_packs() from every LOADED+enabled
+        plugin, in load order. A plugin returning something other than a
+        list of IconPack contributes nothing rather than crashing the
+        picker."""
+        packs: list[IconPack] = []
+        for plugin_id, loaded in self._active_plugins():
+            contributed = self._safe_call(plugin_id, loaded.instance.contribute_icon_packs, [])
+            for pack in contributed:
+                if not isinstance(pack, IconPack):
+                    logger.warning("Plugin %r contributed a non-IconPack icon pack", plugin_id)
+                    continue
+                packs.append(pack)
+        return packs
+
+    def collect_theme_palettes(self) -> list[ThemePalette]:
+        """Concatenates contribute_theme_palettes() from every LOADED+
+        enabled plugin, in load order. A palette missing a complete light
+        or dark token dict is dropped (logged, not raised) rather than
+        letting a malformed palette reach ThemeManager and crash the
+        stylesheet template substitution."""
+        palettes: list[ThemePalette] = []
+        for plugin_id, loaded in self._active_plugins():
+            contributed = self._safe_call(plugin_id, loaded.instance.contribute_theme_palettes, [])
+            for palette in contributed:
+                if not isinstance(palette, ThemePalette):
+                    logger.warning("Plugin %r contributed a non-ThemePalette palette", plugin_id)
+                    continue
+                light_problems = validate_tokens(palette.light)
+                dark_problems = validate_tokens(palette.dark)
+                if light_problems or dark_problems:
+                    logger.warning(
+                        "Plugin %r's palette %r has incomplete tokens "
+                        "(light: %s, dark: %s), skipping",
+                        plugin_id,
+                        palette.id,
+                        light_problems,
+                        dark_problems,
+                    )
+                    continue
+                palettes.append(palette)
+        return palettes
 
     def _active_plugins(self):
         return [

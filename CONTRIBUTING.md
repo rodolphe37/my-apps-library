@@ -2,7 +2,7 @@
 
 *[Français ci-dessous ⬇️](#contribuer-à-myapplibrary)*
 
-Thanks for considering a contribution — MyAppsLibrary started as a personal
+Thanks for considering a contribution - MyAppsLibrary started as a personal
 tool and is now open for anyone to help shape. This guide covers everything
 you need to get productive.
 
@@ -29,12 +29,12 @@ This project follows a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, 
 
 You don't need to write Python to help:
 
-- 🐛 **Report bugs** — see [Reporting bugs](#reporting-bugs)
-- ✨ **Suggest features** — see [Suggesting features](#suggesting-features)
-- 🌍 **Add or improve a translation** — see [Writing a plugin or translation](#writing-a-plugin-or-translation)
-- 🧩 **Write a plugin** — either a real one to share, or an example that helps document the API
-- 🖥️ **Add editor support** — extend [`src/myapps/editors/catalog.py`](src/myapps/editors/catalog.py)
-- 📖 **Improve the docs** — README typos, unclear setup steps, missing examples all count
+- 🐛 **Report bugs** - see [Reporting bugs](#reporting-bugs)
+- ✨ **Suggest features** - see [Suggesting features](#suggesting-features)
+- 🌍 **Add or improve a translation** - see [Writing a plugin or translation](#writing-a-plugin-or-translation)
+- 🧩 **Write a plugin** - either a real one to share, or an example that helps document the API
+- 🖥️ **Add editor support** - extend [`src/myapps/editors/catalog.py`](src/myapps/editors/catalog.py)
+- 📖 **Improve the docs** - README typos, unclear setup steps, missing examples all count
 - 🧪 **Improve test coverage**, especially around platform-specific code (`editors/detectors/`)
 
 ## Development setup
@@ -58,9 +58,9 @@ This installs the app in editable mode plus the dev toolchain: `pytest`, `pytest
 
 ```
 src/myapps/
-├── core/       # Data layer — models, ProjectManager, SettingsManager, JSON store
+├── core/       # Data layer - models, ProjectManager, SettingsManager, JSON store
 ├── editors/     # Editor detection (macOS/Windows/Linux) & launch
-├── plugins/      # Plugin system — manifest, loader, manager, public API
+├── plugins/      # Plugin system - manifest, loader, manager, public API
 ├── i18n/         # Translation catalog, tr(), built-in en/fr locales
 ├── ui/           # PySide6 widgets, dialogs, views, theming
 └── utils/        # Filesystem & process helpers, logging
@@ -80,7 +80,7 @@ See the [Architecture diagram in the README](README.md#architecture) for how the
 - Prefer explicit, readable code over clever one-liners; match the naming and structure already used in the module you're editing.
 - Type hints are expected on new code; the codebase uses `from __future__ import annotations` throughout.
 - UI code should go through the existing theming (`ui/theme/brand.py`, `palettes.py`) rather than hardcoding colors.
-- Core logic changes (models, store schema) should stay backward-compatible with existing on-disk data, or include a `SCHEMA_VERSION` bump and migration — see [`src/myapps/constants.py`](src/myapps/constants.py).
+- Core logic changes (models, store schema) should stay backward-compatible with existing on-disk data, or include a `SCHEMA_VERSION` bump and migration - see [`src/myapps/constants.py`](src/myapps/constants.py).
 
 ## Testing
 
@@ -88,10 +88,10 @@ See the [Architecture diagram in the README](README.md#architecture) for how the
 pytest
 ```
 
-- `tests/unit/` — fast, no GUI required.
-- `tests/integration/` — uses `pytest-qt`; runs headless via the Qt `offscreen` platform plugin in CI.
+- `tests/unit/` - fast, no GUI required.
+- `tests/integration/` - uses `pytest-qt`; runs headless via the Qt `offscreen` platform plugin in CI.
 - New features should come with tests. Bug fixes should ideally include a regression test.
-- GUI tests run headless locally too — set `QT_QPA_PLATFORM=offscreen` if you don't want windows popping up while testing.
+- GUI tests run headless locally too - set `QT_QPA_PLATFORM=offscreen` if you don't want windows popping up while testing.
 
 ## Commit messages
 
@@ -106,25 +106,25 @@ Write clear, imperative-mood commit messages (`Fix drag-and-drop in grid view`, 
 5. Open a PR against `main` with a clear description of the change and, for UI changes, a screenshot or short clip if possible.
 6. A maintainer will review; expect feedback and please be responsive to review comments. CI must be green before merge.
 
-Small, focused PRs are much easier to review than large ones — if you're planning something big, consider opening an issue first to discuss the approach.
+Small, focused PRs are much easier to review than large ones - if you're planning something big, consider opening an issue first to discuss the approach.
 
 ## Writing a plugin or translation
 
 - **Plugin API**: the full contract lives in [`src/myapps/plugins/api.py`](src/myapps/plugins/api.py) (`PluginBase`, `PluginContext`). Start from [`examples/plugins/`](examples/plugins/) for working templates.
-- **New translation**: add `src/myapps/i18n/locales/<code>.json` mirroring `en.json`'s keys (including `meta.language_name`), or ship it as a plugin via `contribute_translations()` — see [`examples/plugins/german_translation`](examples/plugins/german_translation).
+- **New translation**: add `src/myapps/i18n/locales/<code>.json` mirroring `en.json`'s keys (including `meta.language_name`), or ship it as a plugin via `contribute_translations()` - see [`examples/plugins/german_translation`](examples/plugins/german_translation).
 - Full details in the [README's Plugin system](README.md#the-plugin-system) and [Internationalization](README.md#internationalization) sections.
 
 ## Reporting bugs
 
-Please use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.md) and include your OS, Python version, MyAppsLibrary version, and steps to reproduce. For security vulnerabilities, **do not** open a public issue — see [`SECURITY.md`](SECURITY.md).
+Please use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.md) and include your OS, Python version, MyAppsLibrary version, and steps to reproduce. For security vulnerabilities, **do not** open a public issue - see [`SECURITY.md`](SECURITY.md).
 
 ## Suggesting features
 
-Please use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.md). Check the [Roadmap](README.md#roadmap) first — your idea might already be planned, in which case a 👍 on the related issue is still very useful signal.
+Please use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.md). Check the [Roadmap](README.md#roadmap) first - your idea might already be planned, in which case a 👍 on the related issue is still very useful signal.
 
 ## License of contributions
 
-MyAppsLibrary is distributed under the [PolyForm Noncommercial License 1.0.0](LICENSE) — noncommercial use only, see [`README.md#license`](README.md#license). By submitting a pull request, you agree that your contribution is licensed to the project under those same terms, and that you have the right to make that grant.
+MyAppsLibrary is distributed under the [PolyForm Noncommercial License 1.0.0](LICENSE) - noncommercial use only, see [`README.md#license`](README.md#license). By submitting a pull request, you agree that your contribution is licensed to the project under those same terms, and that you have the right to make that grant.
 
 ---
 
@@ -132,7 +132,7 @@ MyAppsLibrary is distributed under the [PolyForm Noncommercial License 1.0.0](LI
 
 *[English above ⬆️](#contributing-to-myapplibrary)*
 
-Merci d'envisager de contribuer — MyAppsLibrary a démarré comme un outil personnel et est maintenant ouvert à toute personne qui souhaite aider à le façonner. Ce guide couvre tout ce dont vous avez besoin pour être productif rapidement.
+Merci d'envisager de contribuer - MyAppsLibrary a démarré comme un outil personnel et est maintenant ouvert à toute personne qui souhaite aider à le façonner. Ce guide couvre tout ce dont vous avez besoin pour être productif rapidement.
 
 ## Sommaire
 
@@ -157,12 +157,12 @@ Ce projet suit un [Code de conduite](CODE_OF_CONDUCT.md). En participant, vous v
 
 Pas besoin d'écrire du Python pour aider :
 
-- 🐛 **Signaler des bugs** — voir [Signaler un bug](#signaler-un-bug)
-- ✨ **Suggérer des fonctionnalités** — voir [Suggérer une fonctionnalité](#suggérer-une-fonctionnalité)
-- 🌍 **Ajouter ou améliorer une traduction** — voir [Écrire un plugin ou une traduction](#écrire-un-plugin-ou-une-traduction)
-- 🧩 **Écrire un plugin** — un vrai à partager, ou un exemple qui aide à documenter l'API
-- 🖥️ **Ajouter le support d'un éditeur** — étendre [`src/myapps/editors/catalog.py`](src/myapps/editors/catalog.py)
-- 📖 **Améliorer la documentation** — coquilles dans le README, étapes de mise en place peu claires, exemples manquants : tout compte
+- 🐛 **Signaler des bugs** - voir [Signaler un bug](#signaler-un-bug)
+- ✨ **Suggérer des fonctionnalités** - voir [Suggérer une fonctionnalité](#suggérer-une-fonctionnalité)
+- 🌍 **Ajouter ou améliorer une traduction** - voir [Écrire un plugin ou une traduction](#écrire-un-plugin-ou-une-traduction)
+- 🧩 **Écrire un plugin** - un vrai à partager, ou un exemple qui aide à documenter l'API
+- 🖥️ **Ajouter le support d'un éditeur** - étendre [`src/myapps/editors/catalog.py`](src/myapps/editors/catalog.py)
+- 📖 **Améliorer la documentation** - coquilles dans le README, étapes de mise en place peu claires, exemples manquants : tout compte
 - 🧪 **Améliorer la couverture de tests**, en particulier sur le code spécifique à chaque plateforme (`editors/detectors/`)
 
 ## Mise en place de l'environnement
@@ -186,9 +186,9 @@ Cela installe l'application en mode éditable ainsi que les outils de développe
 
 ```
 src/myapps/
-├── core/       # Couche de données — modèles, ProjectManager, SettingsManager, stockage JSON
+├── core/       # Couche de données - modèles, ProjectManager, SettingsManager, stockage JSON
 ├── editors/     # Détection des éditeurs (macOS/Windows/Linux) & lancement
-├── plugins/      # Système de plugins — manifest, loader, manager, API publique
+├── plugins/      # Système de plugins - manifest, loader, manager, API publique
 ├── i18n/         # Catalogue de traduction, tr(), langues en/fr intégrées
 ├── ui/           # Widgets PySide6, dialogues, vues, thème
 └── utils/        # Utilitaires fichiers & process, logging
@@ -208,7 +208,7 @@ Voir le [diagramme d'architecture du README](README.fr.md#architecture) pour com
 - Préférez un code explicite et lisible plutôt que des raccourcis trop malins ; respectez le nommage et la structure déjà utilisés dans le module que vous modifiez.
 - Le typage (type hints) est attendu sur le nouveau code ; la base de code utilise `from __future__ import annotations` partout.
 - Le code d'interface doit passer par le système de thème existant (`ui/theme/brand.py`, `palettes.py`) plutôt que de coder des couleurs en dur.
-- Les changements de logique cœur (modèles, schéma de stockage) doivent rester rétrocompatibles avec les données existantes sur disque, ou inclure une incrémentation de `SCHEMA_VERSION` et une migration — voir [`src/myapps/constants.py`](src/myapps/constants.py).
+- Les changements de logique cœur (modèles, schéma de stockage) doivent rester rétrocompatibles avec les données existantes sur disque, ou inclure une incrémentation de `SCHEMA_VERSION` et une migration - voir [`src/myapps/constants.py`](src/myapps/constants.py).
 
 ## Tests
 
@@ -216,10 +216,10 @@ Voir le [diagramme d'architecture du README](README.fr.md#architecture) pour com
 pytest
 ```
 
-- `tests/unit/` — rapides, sans interface graphique requise.
-- `tests/integration/` — utilise `pytest-qt` ; s'exécute en mode headless via le plugin de plateforme Qt `offscreen` en CI.
+- `tests/unit/` - rapides, sans interface graphique requise.
+- `tests/integration/` - utilise `pytest-qt` ; s'exécute en mode headless via le plugin de plateforme Qt `offscreen` en CI.
 - Les nouvelles fonctionnalités doivent être accompagnées de tests. Les corrections de bugs devraient idéalement inclure un test de non-régression.
-- Les tests graphiques peuvent aussi tourner en headless en local — utilisez `QT_QPA_PLATFORM=offscreen` si vous ne voulez pas voir de fenêtres s'ouvrir pendant les tests.
+- Les tests graphiques peuvent aussi tourner en headless en local - utilisez `QT_QPA_PLATFORM=offscreen` si vous ne voulez pas voir de fenêtres s'ouvrir pendant les tests.
 
 ## Messages de commit
 
@@ -234,22 +234,22 @@ pytest
 5. Ouvrez une PR sur `main` avec une description claire du changement et, pour les changements d'interface, une capture d'écran ou un court clip si possible.
 6. Un mainteneur relira la PR ; attendez-vous à des retours et merci d'y répondre. La CI doit être verte avant la fusion.
 
-Des PR petites et ciblées sont bien plus faciles à relire que de grosses PR — si vous prévoyez quelque chose d'important, envisagez d'ouvrir d'abord une issue pour discuter de l'approche.
+Des PR petites et ciblées sont bien plus faciles à relire que de grosses PR - si vous prévoyez quelque chose d'important, envisagez d'ouvrir d'abord une issue pour discuter de l'approche.
 
 ## Écrire un plugin ou une traduction
 
 - **API de plugin** : le contrat complet vit dans [`src/myapps/plugins/api.py`](src/myapps/plugins/api.py) (`PluginBase`, `PluginContext`). Partez des [`examples/plugins/`](examples/plugins/) pour des modèles fonctionnels.
-- **Nouvelle traduction** : ajoutez `src/myapps/i18n/locales/<code>.json` en reprenant les clés de `en.json` (y compris `meta.language_name`), ou distribuez-la comme un plugin via `contribute_translations()` — voir [`examples/plugins/german_translation`](examples/plugins/german_translation).
+- **Nouvelle traduction** : ajoutez `src/myapps/i18n/locales/<code>.json` en reprenant les clés de `en.json` (y compris `meta.language_name`), ou distribuez-la comme un plugin via `contribute_translations()` - voir [`examples/plugins/german_translation`](examples/plugins/german_translation).
 - Détails complets dans les sections [Système de plugins](README.fr.md#le-système-de-plugins) et [Internationalisation](README.fr.md#internationalisation) du README.
 
 ## Signaler un bug
 
-Merci d'utiliser le [modèle de rapport de bug](.github/ISSUE_TEMPLATE/bug_report.md) et d'inclure votre OS, votre version de Python, la version de MyAppsLibrary, et les étapes pour reproduire. Pour une vulnérabilité de sécurité, **n'ouvrez pas** d'issue publique — voir [`SECURITY.md`](SECURITY.md).
+Merci d'utiliser le [modèle de rapport de bug](.github/ISSUE_TEMPLATE/bug_report.md) et d'inclure votre OS, votre version de Python, la version de MyAppsLibrary, et les étapes pour reproduire. Pour une vulnérabilité de sécurité, **n'ouvrez pas** d'issue publique - voir [`SECURITY.md`](SECURITY.md).
 
 ## Suggérer une fonctionnalité
 
-Merci d'utiliser le [modèle de suggestion de fonctionnalité](.github/ISSUE_TEMPLATE/feature_request.md). Vérifiez d'abord la [feuille de route](README.fr.md#feuille-de-route) — votre idée y est peut-être déjà prévue, auquel cas un 👍 sur l'issue correspondante reste un signal très utile.
+Merci d'utiliser le [modèle de suggestion de fonctionnalité](.github/ISSUE_TEMPLATE/feature_request.md). Vérifiez d'abord la [feuille de route](README.fr.md#feuille-de-route) - votre idée y est peut-être déjà prévue, auquel cas un 👍 sur l'issue correspondante reste un signal très utile.
 
 ## Licence des contributions
 
-MyAppsLibrary est distribuée sous la [licence PolyForm Noncommercial 1.0.0](LICENSE) — usage non commercial uniquement, voir [`README.fr.md#licence`](README.fr.md#licence). En soumettant une pull request, vous acceptez que votre contribution soit distribuée au projet sous ces mêmes conditions, et vous garantissez disposer des droits nécessaires pour le faire.
+MyAppsLibrary est distribuée sous la [licence PolyForm Noncommercial 1.0.0](LICENSE) - usage non commercial uniquement, voir [`README.fr.md#licence`](README.fr.md#licence). En soumettant une pull request, vous acceptez que votre contribution soit distribuée au projet sous ces mêmes conditions, et vous garantissez disposer des droits nécessaires pour le faire.

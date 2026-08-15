@@ -1,7 +1,7 @@
 name: Package
 
 # Builds native, unsigned PyInstaller bundles for macOS (both Apple Silicon
-# and Intel — PyInstaller doesn't produce universal2 binaries, and PySide6
+# and Intel - PyInstaller doesn't produce universal2 binaries, and PySide6
 # isn't shipped as universal2 either, so the two need separate runners),
 # Windows, and Linux, and attaches them as downloadable workflow artifacts.
 #
@@ -10,10 +10,10 @@ name: Package
 # manual run trigger a build. Combined with branch protection on `main`
 # (Settings → Branches → require a pull request + approval before
 # merging), this means only the repo owner/maintainers can cause a build
-# to run — contributor PRs only ever go through the `CI` workflow (lint +
+# to run - contributor PRs only ever go through the `CI` workflow (lint +
 # tests), never this one.
 #
-# No code signing/notarization yet (see the Roadmap in README.md) — these
+# No code signing/notarization yet (see the Roadmap in README.md) - these
 # are plain unsigned builds; expect Gatekeeper/SmartScreen warnings on
 # first launch, per packaging/README.md.
 
@@ -37,8 +37,8 @@ jobs:
       fail-fast: false
       matrix:
         # macos-latest = Apple Silicon (arm64). macos-15-intel is GitHub's
-        # last Intel (x86_64) macOS image, available until Aug 2027 — see
-        # https://github.com/actions/runner-images — without it, an
+        # last Intel (x86_64) macOS image, available until Aug 2027 - see
+        # https://github.com/actions/runner-images - without it, an
         # Apple-Silicon-only build can't even launch on an Intel Mac
         # ("isn't supported by this Mac", not just a Gatekeeper warning).
         os: [macos-latest, macos-15-intel, windows-latest, ubuntu-latest]

@@ -5,7 +5,7 @@ string "__all__" is translated to None-with-no-filter by main_window.
 Also accepts drops of a project dragged from the list/grid view (see
 ui/models/project_list_model.py's PROJECT_ID_MIME_TYPE and
 ui/views/project_list_view.py's drag-enabled setup): dropping a project onto
-a category here *replaces* its categories with just that one — a "move into
+a category here *replaces* its categories with just that one - a "move into
 folder" semantic, distinct from the checkbox-based multi-category assignment
 in Project > Edit Categories…, which is still there for tagging a project
 into several categories at once.
@@ -57,10 +57,11 @@ class CategorySidebar(QListWidget):
         self.addItem(all_item)
 
         for category in self._pm.list_categories():
-            # category.name is user data, never translated — only the
+            # category.name is user data, never translated - only the
             # "{name} ({n})" template is.
             count = len(self._pm.projects_in_category(category.id))
-            item = QListWidgetItem(tr("sidebar.category_count", name=category.name, n=count))
+            display_name = f"{category.icon} {category.name}" if category.icon else category.name
+            item = QListWidgetItem(tr("sidebar.category_count", name=display_name, n=count))
             item.setData(Qt.ItemDataRole.UserRole, category.id)
             self.addItem(item)
 
@@ -113,7 +114,7 @@ class CategorySidebar(QListWidget):
         """Applies the drop: replaces `project_id`'s categories with just the
         target category (or clears them, for "Uncategorized"). Separated from
         dropEvent() so it can be exercised directly in tests without
-        constructing a real QDropEvent (fragile in PySide6 — event objects
+        constructing a real QDropEvent (fragile in PySide6 - event objects
         built in Python can crash when Qt's C++ side later reads them back).
         Returns True if the drop was handled.
         """

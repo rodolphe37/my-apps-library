@@ -1,15 +1,15 @@
 """Example plugin: adds German (Deutsch) as a full, selectable language.
-Exercises the translation-plugin extension point end-to-end — the same
+Exercises the translation-plugin extension point end-to-end - the same
 validation role the two Phase 2 example plugins played for the core plugin
 API. Covers every key present in the app's built-in en.json/fr.json.
 
-Translations live in `de.json`, right next to this file — the same JSON
+Translations live in `de.json`, right next to this file - the same JSON
 format the app itself uses for its built-in locales (src/myapps/i18n/locales/),
 so a translation-plugin author never has to write a Python dict literal by
 hand, just edit a plain JSON file.
 
 To try it: copy this folder into your MyAppsLibrary plugins directory (see
-paths.plugins_dir()), then enable it from Plugins > Manage Plugins — you'll
+paths.plugins_dir()), then enable it from Plugins > Manage Plugins - you'll
 see "Deutsch" become selectable in Preferences > Language.
 """
 

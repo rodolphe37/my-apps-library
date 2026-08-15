@@ -1,6 +1,6 @@
 """Registers the two built-in view modes (list, grid) into a ViewRegistry.
 
-Each factory builds its OWN ProjectItemDelegate instance — never share one
+Each factory builds its OWN ProjectItemDelegate instance - never share one
 between the two views, since `display_mode` is mutable instance state and
 both views coexist simultaneously inside MainWindow's QStackedWidget (hidden,
 not destroyed).
@@ -22,7 +22,7 @@ GRID_MODE_ID = "grid"
 
 def register_builtin_views(registry: ViewRegistry, project_manager: ProjectManager) -> None:
     """Re-runnable (called again on language change to re-translate the
-    "List"/"Grid" labels) — registry.register() overwrites by mode_id."""
+    "List"/"Grid" labels) - registry.register() overwrites by mode_id."""
     registry.register(
         LIST_MODE_ID, tr("view_mode.list"), lambda m, s: _make_list_view(m, s, project_manager)
     )

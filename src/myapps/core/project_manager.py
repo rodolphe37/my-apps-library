@@ -80,7 +80,7 @@ class ProjectManager:
 
     def remove_project(self, project_id: str) -> None:
         """Remove a project from the library. This never touches the folder
-        on disk — it only deletes the library reference.
+        on disk - it only deletes the library reference.
         """
         if project_id in self._projects:
             del self._projects[project_id]
@@ -115,9 +115,11 @@ class ProjectManager:
     def get_category(self, category_id: str) -> Category | None:
         return self._categories.get(category_id)
 
-    def add_category(self, name: str, color: str | None = None) -> Category:
+    def add_category(
+        self, name: str, color: str | None = None, icon: str | None = None
+    ) -> Category:
         order = len(self._categories)
-        category = Category(name=name, color=color, order=order)
+        category = Category(name=name, color=color, icon=icon, order=order)
         self._categories[category.id] = category
         self._save()
         event_bus.category_added.emit(category.id)
@@ -126,6 +128,12 @@ class ProjectManager:
     def rename_category(self, category_id: str, name: str) -> None:
         if category_id in self._categories:
             self._categories[category_id].name = name
+            self._save()
+            event_bus.category_updated.emit(category_id)
+
+    def set_category_icon(self, category_id: str, icon: str | None) -> None:
+        if category_id in self._categories:
+            self._categories[category_id].icon = icon
             self._save()
             event_bus.category_updated.emit(category_id)
 

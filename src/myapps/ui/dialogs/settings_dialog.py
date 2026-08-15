@@ -1,4 +1,5 @@
-"""Preferences dialog: theme mode, language, and global default editor."""
+"""Preferences dialog: theme mode/palette, language, and global default
+editor."""
 
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ from PySide6.QtWidgets import (
 from myapps.core.settings_manager import SettingsManager
 from myapps.editors.registry import EditorRegistry
 from myapps.i18n import LanguageManager, tr, translator
+from myapps.ui.theme.theme_manager import ThemeManager
 
 
 class SettingsDialog(QDialog):
@@ -23,6 +25,7 @@ class SettingsDialog(QDialog):
         editor_registry: EditorRegistry,
         parent: QWidget | None = None,
         language_manager: LanguageManager | None = None,
+        theme_manager: ThemeManager | None = None,
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(tr("dialog.settings.title"))
@@ -30,6 +33,7 @@ class SettingsDialog(QDialog):
         self._settings = settings_manager
         self._registry = editor_registry
         self._language_manager = language_manager
+        self._theme_manager = theme_manager
 
         layout = QVBoxLayout(self)
         form = QFormLayout()
@@ -42,6 +46,19 @@ class SettingsDialog(QDialog):
         current_theme = settings_manager.settings.theme_mode
         self._theme_combo.setCurrentIndex(max(0, self._theme_combo.findData(current_theme)))
         form.addRow(tr("dialog.settings.theme_label"), self._theme_combo)
+
+        self._palette_combo = QComboBox()
+        if theme_manager is not None:
+            for palette_id, label in theme_manager.available_palette_choices():
+                self._palette_combo.addItem(label, palette_id)
+            current_palette = settings_manager.settings.theme_palette_id
+            idx = self._palette_combo.findData(current_palette)
+            self._palette_combo.setCurrentIndex(idx if idx >= 0 else 0)
+        # Only worth showing once a plugin has actually contributed a
+        # palette - otherwise it's a single-item "Default" dropdown with
+        # nothing to choose between.
+        if self._palette_combo.count() > 1:
+            form.addRow(tr("dialog.settings.palette_label"), self._palette_combo)
 
         self._language_combo = QComboBox()
         self._language_combo.addItem(tr("dialog.settings.language_system"), "system")
@@ -70,11 +87,17 @@ class SettingsDialog(QDialog):
 
     def _on_accept(self) -> None:
         new_language = self._language_combo.currentData()
+        new_mode = self._theme_combo.currentData()
+        new_palette = self._palette_combo.currentData() or "default"
         self._settings.set(
-            theme_mode=self._theme_combo.currentData(),
+            theme_mode=new_mode,
+            theme_palette_id=new_palette,
             language=new_language,
             global_default_editor_id=self._editor_combo.currentData(),
         )
         if self._language_manager is not None:
             self._language_manager.set_mode(new_language)
+        if self._theme_manager is not None:
+            self._theme_manager.set_palette(new_palette)
+            self._theme_manager.set_mode(new_mode)
         self.accept()
