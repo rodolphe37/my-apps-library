@@ -165,7 +165,11 @@ jobs:
             echo "No changes to commit."
           else
             git commit -m "Bump Homebrew cask to ${{ needs.release.outputs.tag }} [skip ci]"
-            git push
+            # actions/checkout leaves this job on a detached HEAD (the tag
+            # that triggered the release, not a branch) - a bare `git push`
+            # has no upstream to infer and fails with "You are not
+            # currently on a branch." Push explicitly to main instead.
+            git push origin HEAD:main
           fi
 
       # The tap (rodolphe37/homebrew-my-apps-library) is a separate repo -
