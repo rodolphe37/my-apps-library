@@ -662,6 +662,14 @@ class MainWindow(QMainWindow):
             # A plugin enable/disable can add or remove a translation-plugin
             # contributed locale, or patch keys in an existing one.
             self._language.set_plugin_translations(self._plugins.collect_translations())
+        if self._plugins is not None:
+            # A plugin enable/disable can add or remove a theme palette (the
+            # Preferences dialog's combo is only rebuilt on next open, but it
+            # reads theme_manager.available_palette_choices() fresh each
+            # time, so refreshing the source list here is enough — see
+            # ThemeManager.set_available_palettes()'s docstring).
+            self._theme.set_available_palettes(self._plugins.collect_theme_palettes())
+            self._theme.set_palette(self._theme.palette_id)  # re-validate current choice
 
     def _sync_view_stack(self) -> None:
         active_mode_ids = {info.mode_id for info in view_registry.list_modes()}
