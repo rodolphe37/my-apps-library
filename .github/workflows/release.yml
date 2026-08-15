@@ -171,6 +171,11 @@ jobs:
       - name: Open a PR with the cask bump
         uses: peter-evans/create-pull-request@v7
         with:
+          # actions/checkout on a tag-triggered run leaves this job on a
+          # detached HEAD (the tag commit, not a branch) - without an
+          # explicit `base`, the action can't infer what to open the PR
+          # against and fails with "the 'base' input must be supplied."
+          base: main
           commit-message: "Bump Homebrew cask to ${{ needs.release.outputs.tag }}"
           title: "Bump Homebrew cask to ${{ needs.release.outputs.tag }}"
           body: |
