@@ -108,7 +108,7 @@ Deux options, pas une progression - choisissez-en une :
 # Option 1 : Homebrew - installation propre dans /Applications + `brew upgrade`/
 # `uninstall`, mais un clic-droit → Ouvrir sera nécessaire une fois au premier
 # lancement (app non signée).
-brew tap rodolphe37/my-apps-library   # pas encore publié - voir Casks/my-apps-library.rb
+brew tap rodolphe37/my-apps-library
 brew install --cask my-apps-library
 
 # Option 2 : script d'installation - aucun avertissement Gatekeeper du tout
@@ -125,7 +125,7 @@ curl -fsSL https://raw.githubusercontent.com/rodolphe37/my-apps-library/main/pac
 winget install rodolphe37.MyAppsLibrary
 ```
 
-Pas encore publié sur le dépôt communautaire `winget-pkgs` - voir [`packaging/winget/README.md`](packaging/winget/README.md). Attendez-vous à une invite SmartScreen "Windows a protégé votre ordinateur" au premier lancement dans tous les cas (même raison que macOS : app non signée) - cliquez **Plus d'infos → Exécuter quand même**.
+Pas encore publié sur le dépôt communautaire `winget-pkgs` - voir [`packaging/winget/README.md`](packaging/winget/README.md), donc cette commande ne résoudra rien pour personne pour l'instant. En attendant, récupérez [`MyAppsLibrary-Windows.zip` depuis la dernière release](https://github.com/rodolphe37/my-apps-library/releases/latest), extrayez-le, et lancez `MyAppsLibrary.exe` à l'intérieur - c'est une app portable, sans installateur, gardez donc le dossier extrait où vous voulez qu'il reste. Attendez-vous à une invite SmartScreen "Windows a protégé votre ordinateur" au premier lancement dans tous les cas (même raison que macOS : app non signée) - cliquez **Plus d'infos → Exécuter quand même**.
 
 ### Linux
 
