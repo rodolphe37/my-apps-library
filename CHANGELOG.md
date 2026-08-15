@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-08-15
+
+### Fixed
+
+- **Homebrew cask release automation** - the "Update Homebrew cask" release
+  job pushed straight to `main` with the default `GITHUB_TOKEN`, which
+  branch protection always rejected (`GH013`), even after adding a
+  ruleset bypass entry (turned out "GitHub Actions" isn't an available
+  bypass actor on a personal, non-organization repo). The job now opens
+  a small PR with the version/checksum bump instead, same as every other
+  change on this repo - no more manual cask resyncs after each release.
+
 ## [0.7.0] - 2026-08-15
 
 ### Added
