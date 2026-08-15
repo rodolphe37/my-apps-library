@@ -16,6 +16,8 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from myapps.utils.version_utils import parse_version
+
 PLUGIN_ID_PATTERN = re.compile(r"^[a-z0-9_-]+$")
 
 REQUIRED_STRING_FIELDS = ("id", "name", "version", "entry_point")
@@ -112,12 +114,8 @@ def _validate(section: dict) -> list[str]:
 
 
 def parse_min_app_version(version: str) -> tuple[int, ...]:
-    """Hand-rolled dotted-numeric version compare (no `packaging` dependency
-    needed for this narrow use). Non-numeric segments compare as 0."""
-    parts = []
-    for segment in version.split("."):
-        try:
-            parts.append(int(segment))
-        except ValueError:
-            parts.append(0)
-    return tuple(parts)
+    """Thin, name-preserving wrapper around utils/version_utils.py's
+    parse_version() - kept here too since it's this module's own public API
+    (see tests/unit/test_plugin_manifest.py) and reads more naturally at
+    call sites that are specifically about min_app_version."""
+    return parse_version(version)

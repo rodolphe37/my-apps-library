@@ -98,6 +98,11 @@ class AppSettings:
     # an enabled plugin. Falls back to "default" if that plugin gets
     # disabled/uninstalled - see ui/theme/theme_manager.py.
     theme_palette_id: str = "default"
+    # Set when the user clicks "Skip this version" on the update-available
+    # dialog (core/update_checker.py) - suppresses that one version's
+    # notice on future launches without silencing the check entirely; a
+    # later, newer release still notifies normally.
+    dismissed_update_version: str | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -116,4 +121,5 @@ class AppSettings:
             sort_key=data.get("sort_key", defaults.sort_key),
             sort_direction=data.get("sort_direction", defaults.sort_direction),
             theme_palette_id=data.get("theme_palette_id", defaults.theme_palette_id),
+            dismissed_update_version=data.get("dismissed_update_version"),
         )

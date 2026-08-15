@@ -8,12 +8,14 @@ import sys
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from myapps.constants import APP_NAME, ORG_NAME
+from myapps.constants import APP_NAME, ORG_NAME, VERSION
 from myapps.core.project_manager import ProjectManager
 from myapps.core.settings_manager import SettingsManager
+from myapps.core.update_checker import UpdateChecker
 from myapps.editors.registry import EditorRegistry
 from myapps.i18n import LanguageManager
 from myapps.plugins.manager import PluginManager
+from myapps.ui.dialogs.update_available_dialog import UpdateAvailableDialog
 from myapps.ui.main_window import MainWindow
 from myapps.ui.resources import app_icon_path
 from myapps.ui.theme.theme_manager import ThemeManager
@@ -66,7 +68,28 @@ def main() -> int:
     )
     window.show()
 
+    # Parented to the window so it's kept alive for the async reply's
+    # lifetime without needing a `main()`-local variable for that purpose;
+    # fired after show() so a slow/offline network check never delays the
+    # window a user is actively waiting to see.
+    update_checker = UpdateChecker(window)
+    update_checker.update_available.connect(
+        lambda latest: _on_update_available(latest, settings_manager, window)
+    )
+    update_checker.check(VERSION)
+
     return app.exec()
+
+
+def _on_update_available(
+    latest_version: str, settings_manager: SettingsManager, window: MainWindow
+) -> None:
+    if settings_manager.settings.dismissed_update_version == latest_version:
+        return  # user already clicked "Skip this version" for this exact one
+    dialog = UpdateAvailableDialog(VERSION, latest_version, window)
+    dialog.exec()
+    if dialog.skipped:
+        settings_manager.set(dismissed_update_version=latest_version)
 
 
 if __name__ == "__main__":
