@@ -21,16 +21,23 @@ from PySide6.QtWidgets import (
 from myapps.core.models import Project
 from myapps.core.project_manager import ProjectManager
 from myapps.i18n import tr
+from myapps.ui.dialogs.icon_picker_dialog import IconPickerDialog
 
 
 class CategoryManagerDialog(QDialog):
-    """Manage the global category list (add / rename / delete)."""
+    """Manage the global category list (add / rename / delete / icon)."""
 
-    def __init__(self, project_manager: ProjectManager, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        project_manager: ProjectManager,
+        parent: QWidget | None = None,
+        plugin_manager=None,
+    ) -> None:
         super().__init__(parent)
         self.setWindowTitle(tr("dialog.manage_categories.title"))
         self.setMinimumSize(360, 400)
         self._pm = project_manager
+        self._plugins = plugin_manager
 
         layout = QVBoxLayout(self)
         self._list = QListWidget()
@@ -40,11 +47,13 @@ class CategoryManagerDialog(QDialog):
         btn_row = QHBoxLayout()
         add_btn = QPushButton(tr("dialog.manage_categories.add"))
         rename_btn = QPushButton(tr("dialog.manage_categories.rename"))
+        icon_btn = QPushButton(tr("dialog.manage_categories.icon"))
         delete_btn = QPushButton(tr("dialog.manage_categories.delete"))
         add_btn.clicked.connect(self._add)
         rename_btn.clicked.connect(self._rename)
+        icon_btn.clicked.connect(self._choose_icon)
         delete_btn.clicked.connect(self._delete)
-        for b in (add_btn, rename_btn, delete_btn):
+        for b in (add_btn, rename_btn, icon_btn, delete_btn):
             btn_row.addWidget(b)
         layout.addLayout(btn_row)
 
@@ -56,9 +65,24 @@ class CategoryManagerDialog(QDialog):
     def _reload(self) -> None:
         self._list.clear()
         for category in self._pm.list_categories():
-            item = QListWidgetItem(category.name)
+            label = f"{category.icon}  {category.name}" if category.icon else category.name
+            item = QListWidgetItem(label)
             item.setData(Qt.ItemDataRole.UserRole, category.id)
             self._list.addItem(item)
+
+    def _choose_icon(self) -> None:
+        item = self._list.currentItem()
+        if not item:
+            return
+        category_id = item.data(Qt.ItemDataRole.UserRole)
+        category = self._pm.get_category(category_id)
+        if category is None:
+            return
+        plugin_packs = self._plugins.collect_icon_packs() if self._plugins else []
+        dialog = IconPickerDialog(plugin_packs, category.icon, self)
+        if dialog.exec() == dialog.DialogCode.Accepted:
+            self._pm.set_category_icon(category_id, dialog.selected_icon())
+            self._reload()
 
     def _add(self) -> None:
         name, ok = QInputDialog.getText(

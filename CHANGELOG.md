@@ -11,6 +11,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-15
+
+### Added
+
+- **Icon picker for categories and folders (projects)** — `Category`/`Project`
+  now carry an optional `icon` glyph, chosen from a built-in emoji pack or
+  any pack contributed by a plugin (see below). Wired into the category
+  manager, each project's right-click menu, and rendered in the sidebar,
+  category chips, and the list/grid delegate.
+- **Plugin API: `contribute_icon_packs()` and `contribute_theme_palettes()`**
+  — a plugin can now offer additional icon packs (`plugins/api.py`'s
+  `IconPack`/`IconDef`) and named color palettes (`ThemePalette`, light +
+  dark token dicts — see `ui/theme/tokens.py`) selectable from
+  Preferences → Theme, alongside the built-in default. A palette with
+  incomplete or malformed tokens is rejected at collection time rather
+  than reaching the stylesheet engine.
+- `ui/theme/palettes.py` and the `.qss` stylesheets are now driven by the
+  same token dict (built-in brand colors by default, a plugin palette's
+  when one is selected) via `string.Template` substitution — a handful of
+  neutral hover/pressed micro-shades stay hardcoded per mode (not brand
+  identity, see the comment atop each `.qss` file).
+
 ## [0.5.2] - 2026-08-13
 
 ### Fixed

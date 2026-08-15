@@ -20,7 +20,12 @@ from PySide6.QtGui import QColor, QFontMetrics, QLinearGradient, QPainter, QPain
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
 
 from myapps.core.project_manager import ProjectManager
-from myapps.ui.models.project_list_model import CategoriesRole, PinnedRole, ProjectPathRole
+from myapps.ui.models.project_list_model import (
+    CategoriesRole,
+    IconRole,
+    PinnedRole,
+    ProjectPathRole,
+)
 from myapps.ui.theme import brand
 
 ROW_HEIGHT = 60
@@ -103,7 +108,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
             ICON_SIZE,
             ICON_SIZE,
         )
-        self._paint_folder_icon(painter, icon_rect)
+        self._paint_folder_icon(painter, icon_rect, index.data(IconRole))
 
         text_left = icon_rect.right() + PADDING
         name = index.data(Qt.ItemDataRole.DisplayRole) or ""
@@ -155,7 +160,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
             text_color = option.palette.text().color()
 
         icon_rect = QRect(rect.center().x() - 24, rect.top() + 12, 48, 48)
-        self._paint_folder_icon(painter, icon_rect)
+        self._paint_folder_icon(painter, icon_rect, index.data(IconRole))
 
         pinned = bool(index.data(PinnedRole))
         if pinned:
@@ -219,7 +224,9 @@ class ProjectItemDelegate(QStyledItemDelegate):
 
     def _chip_label(self, category_id: str) -> str:
         category = self._pm.get_category(category_id)
-        return category.name if category else "?"
+        if category is None:
+            return "?"
+        return f"{category.icon} {category.name}" if category.icon else category.name
 
     @staticmethod
     def _paint_one_chip(painter: QPainter, rect: QRect, label: str, on_gradient: bool) -> None:
@@ -246,10 +253,21 @@ class ProjectItemDelegate(QStyledItemDelegate):
         painter.restore()
 
     @staticmethod
-    def _paint_folder_icon(painter: QPainter, rect: QRect) -> None:
+    def _paint_folder_icon(painter: QPainter, rect: QRect, glyph: str | None = None) -> None:
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         icon_rect = rect.adjusted(0, 2, 0, 0)
+
+        if glyph:
+            # A user/plugin-picked icon: draw the glyph itself, no gradient
+            # background — emoji already render fine on either theme.
+            font = painter.font()
+            font.setPointSizeF(icon_rect.height() * 0.62)
+            painter.setFont(font)
+            painter.drawText(icon_rect, Qt.AlignmentFlag.AlignCenter, glyph)
+            painter.restore()
+            return
+
         path = QPainterPath()
         path.addRoundedRect(icon_rect, 8, 8)
         painter.fillPath(path, _brand_gradient(icon_rect))

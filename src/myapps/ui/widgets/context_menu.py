@@ -28,6 +28,7 @@ def build_project_context_menu(
     on_reveal: Callable[[], None],
     on_toggle_pin: Callable[[], None],
     on_edit_categories: Callable[[], None],
+    on_choose_icon: Callable[[], None],
     on_rename: Callable[[], None],
     on_remove: Callable[[], None],
 ) -> QMenu:
@@ -40,6 +41,7 @@ def build_project_context_menu(
         tr("context_menu.unpin") if project.pinned else tr("context_menu.pin"), on_toggle_pin
     )
     menu.addAction(tr("context_menu.edit_categories"), on_edit_categories)
+    menu.addAction(tr("context_menu.choose_icon"), on_choose_icon)
     menu.addAction(tr("context_menu.rename"), on_rename)
     menu.addSeparator()
     remove_action = menu.addAction(tr("context_menu.remove"), on_remove)

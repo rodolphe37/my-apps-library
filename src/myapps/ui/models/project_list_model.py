@@ -25,6 +25,7 @@ CategoriesRole = Qt.ItemDataRole.UserRole + 3
 EditorIdRole = Qt.ItemDataRole.UserRole + 4
 PinnedRole = Qt.ItemDataRole.UserRole + 5
 DescriptionRole = Qt.ItemDataRole.UserRole + 6
+IconRole = Qt.ItemDataRole.UserRole + 7
 
 # Drag payload: a single project id, utf-8 encoded. Used to drag a project
 # from the list/grid view onto a category in the sidebar (see
@@ -142,6 +143,8 @@ class ProjectListModel(QAbstractListModel):
             return project.pinned
         if role == DescriptionRole:
             return project.description
+        if role == IconRole:
+            return project.icon
         return None
 
     def roleNames(self) -> dict:  # noqa: N802
@@ -152,6 +155,7 @@ class ProjectListModel(QAbstractListModel):
             CategoriesRole: b"categories",
             EditorIdRole: b"editorId",
             PinnedRole: b"pinned",
+            IconRole: b"icon",
             DescriptionRole: b"description",
         }
 

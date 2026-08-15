@@ -24,6 +24,46 @@ class PluginMenuAction:
     enabled: bool = True
 
 
+@dataclass(frozen=True)
+class IconDef:
+    """A single pickable icon: `glyph` is a short unicode string, typically
+    one emoji (renders identically in light/dark — already color-neutral)
+    or a plain symbol character (rendered in the app's current text color
+    via the icon picker/list, so it's theme-aware for free either way — no
+    image assets, no per-theme variants to ship)."""
+
+    id: str
+    glyph: str
+    label: str = ""
+
+
+@dataclass(frozen=True)
+class IconPack:
+    """A named, orderable collection of IconDef, shown as its own section
+    in the icon picker (Categories → choose icon) alongside the built-in
+    pack and any other enabled plugin's pack."""
+
+    id: str
+    label: str
+    icons: list[IconDef] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ThemePalette:
+    """A named color scheme, selectable from Preferences → Theme alongside
+    the built-in default. `light` and `dark` must each be a complete token
+    dict — see ui/theme/tokens.py's TOKEN_KEYS for the exact keys expected
+    and ui/theme/tokens.default_light_tokens()/default_dark_tokens() for a
+    working example to copy. A palette missing either variant, or with an
+    incomplete token dict, is rejected at collection time (falls back to
+    the built-in default) rather than crashing the host."""
+
+    id: str
+    label: str
+    light: dict[str, str]
+    dark: dict[str, str]
+
+
 class PluginBase:
     """Base class for all plugins. Every hook is optional and defaults to a
     no-op / empty list — a plugin only overrides what it needs. Do setup in
@@ -60,6 +100,17 @@ class PluginBase:
         makes that locale display with a proper name (e.g. 'Deutsch') in the
         Settings dropdown."""
         return {}
+
+    def contribute_icon_packs(self) -> list[IconPack]:
+        """Optional: named icon collections offered in the icon picker
+        (Categories → choose icon), alongside the built-in pack."""
+        return []
+
+    def contribute_theme_palettes(self) -> list[ThemePalette]:
+        """Optional: named color schemes offered in Preferences → Theme,
+        alongside the built-in default. Each must supply both a light and a
+        dark token dict — see ThemePalette's docstring."""
+        return []
 
 
 class PluginSettingsStore:

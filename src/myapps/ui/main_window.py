@@ -44,6 +44,7 @@ from myapps.ui.dialogs.category_manager_dialog import (
     ProjectCategoryPickerDialog,
 )
 from myapps.ui.dialogs.editor_picker_dialog import EditorPickerDialog
+from myapps.ui.dialogs.icon_picker_dialog import IconPickerDialog
 from myapps.ui.dialogs.plugin_manager_dialog import PluginManagerDialog
 from myapps.ui.dialogs.settings_dialog import SettingsDialog
 from myapps.ui.models.project_list_model import ProjectIdRole, ProjectListModel
@@ -525,7 +526,18 @@ class MainWindow(QMainWindow):
                 self._pm.remove_project(project.id)
 
     def _manage_categories(self) -> None:
-        CategoryManagerDialog(self._pm, self).exec()
+        CategoryManagerDialog(self._pm, self, plugin_manager=self._plugins).exec()
+
+    def _choose_icon(self, project_id: str | None) -> None:
+        if not project_id:
+            return
+        project = self._pm.get_project(project_id)
+        if not project:
+            return
+        plugin_packs = self._plugins.collect_icon_packs() if self._plugins else []
+        dialog = IconPickerDialog(plugin_packs, project.icon, self)
+        if dialog.exec() == dialog.DialogCode.Accepted:
+            self._pm.update_project(project_id, icon=dialog.selected_icon())
 
     def _open_plugin_manager(self) -> None:
         if self._plugins is None:
@@ -565,6 +577,7 @@ class MainWindow(QMainWindow):
             on_reveal=lambda: self._reveal(project_id),
             on_toggle_pin=lambda: self._toggle_pin(project_id),
             on_edit_categories=lambda: self._edit_categories(project_id),
+            on_choose_icon=lambda: self._choose_icon(project_id),
             on_rename=lambda: self._rename(project_id),
             on_remove=lambda: self._remove(project_id),
         )
@@ -699,7 +712,13 @@ class MainWindow(QMainWindow):
         self._model.set_sort(self._settings.settings.sort_key, direction)
 
     def _open_preferences(self) -> None:
-        SettingsDialog(self._settings, self._editors, self, language_manager=self._language).exec()
+        SettingsDialog(
+            self._settings,
+            self._editors,
+            self,
+            language_manager=self._language,
+            theme_manager=self._theme,
+        ).exec()
 
     def _show_about(self) -> None:
         box = QMessageBox(self)

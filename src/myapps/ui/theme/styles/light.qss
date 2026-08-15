@@ -1,8 +1,15 @@
 /* Light theme accents QPalette can't express.
-   Colors mirror ui/theme/brand.py — keep in sync if you change one. */
+   Templated with Python's string.Template (dollar-sign placeholders, e.g.
+   dollar-bg) — see ui/theme/tokens.py and ui/theme/theme_manager.py's
+   _load_qss(). Only tokens that map cleanly onto an existing brand color
+   are parameterized; the handful of hover/pressed micro-shades below
+   (#eaeefa, #e2e8fd, #dfe6fb, #c7d0ea, #eef1fb, #3a4260) are neutral UI
+   chrome, not brand identity, and stay hardcoded per mode — a plugin-
+   contributed palette re-themes backgrounds/text/accent, not every
+   hand-tuned hover state. */
 
 QMainWindow, QDialog {
-    background-color: #f4f6fb;
+    background-color: $bg;
 }
 
 QListView {
@@ -28,19 +35,19 @@ QListView::item:selected {
 
 #SidebarPanel {
     background-color: #ecf0fa;
-    border-right: 1px solid #dee3f0;
+    border-right: 1px solid $border;
 }
 
 #BrandHeader {
-    background-color: #ffffff;
-    border-bottom: 1px solid #dee3f0;
+    background-color: $surface;
+    border-bottom: 1px solid $border;
 }
 
 #BrandTitle {
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 0.2px;
-    color: #1b2338;
+    color: $text;
 }
 
 #CategorySidebar {
@@ -62,7 +69,7 @@ QListView::item:selected {
 
 #CategorySidebar::item:selected {
     background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 #1aa3fd, stop:1 #7d31fc);
+        stop:0 $accent_blue, stop:1 $accent_purple);
     color: white;
     font-weight: 600;
 }
@@ -70,24 +77,24 @@ QListView::item:selected {
 /* -- Search bar --------------------------------------------------------- */
 
 QLineEdit#SearchBar {
-    border: 1px solid #dee3f0;
+    border: 1px solid $border;
     border-radius: 9px;
     padding: 7px 12px;
-    background-color: #ffffff;
-    selection-background-color: #4a6afc;
+    background-color: $surface;
+    selection-background-color: $accent_blend;
 }
 
 QLineEdit#SearchBar:focus {
-    border: 1px solid #4a6afc;
+    border: 1px solid $accent_blend;
 }
 
 /* -- Buttons -------------------------------------------------------- */
 
 QPushButton {
-    border: 1px solid #dee3f0;
+    border: 1px solid $border;
     border-radius: 7px;
     padding: 6px 14px;
-    background-color: #ffffff;
+    background-color: $surface;
 }
 
 QPushButton:hover {
@@ -100,14 +107,14 @@ QPushButton:pressed {
 }
 
 QPushButton:default {
-    background-color: #4a6afc;
-    border-color: #4a6afc;
+    background-color: $accent_blend;
+    border-color: $accent_blend;
     color: white;
     font-weight: 600;
 }
 
 QPushButton:default:hover {
-    background-color: #5d7bff;
+    background-color: $accent_blend_hover;
 }
 
 QToolBar {
@@ -116,10 +123,10 @@ QToolBar {
 }
 
 QMenu {
-    border: 1px solid #dee3f0;
+    border: 1px solid $border;
     border-radius: 8px;
     padding: 4px;
-    background-color: #ffffff;
+    background-color: $surface;
 }
 
 QMenu::item {
@@ -129,15 +136,15 @@ QMenu::item {
 
 QMenu::item:selected {
     background-color: #e2e8fd;
-    color: #1b2338;
+    color: $text;
 }
 
 QStatusBar {
     background-color: #ecf0fa;
-    border-top: 1px solid #dee3f0;
+    border-top: 1px solid $border;
 }
 
 QSplitter::handle {
-    background-color: #dee3f0;
+    background-color: $border;
     width: 1px;
 }

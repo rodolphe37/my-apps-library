@@ -60,7 +60,8 @@ class CategorySidebar(QListWidget):
             # category.name is user data, never translated — only the
             # "{name} ({n})" template is.
             count = len(self._pm.projects_in_category(category.id))
-            item = QListWidgetItem(tr("sidebar.category_count", name=category.name, n=count))
+            display_name = f"{category.icon} {category.name}" if category.icon else category.name
+            item = QListWidgetItem(tr("sidebar.category_count", name=display_name, n=count))
             item.setData(Qt.ItemDataRole.UserRole, category.id)
             self.addItem(item)
 
