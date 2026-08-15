@@ -19,7 +19,7 @@
   <a href="https://pypi.org/project/PySide6/"><img src="https://img.shields.io/badge/UI-PySide6%20(Qt)-41CD52.svg?logo=qt&logoColor=white" alt="PySide6"></a>
   <img src="https://img.shields.io/badge/plateformes-Windows%20%7C%20macOS%20%7C%20Linux-7D31FC.svg" alt="Plateformes">
   <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.5.2-4A6AFC.svg" alt="Version 0.5.2"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/github/v/release/rodolphe37/my-apps-library?label=version&color=4A6AFC" alt="Dernière version"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PR-bienvenues-brightgreen.svg" alt="PRs bienvenues"></a>
 </p>
 
