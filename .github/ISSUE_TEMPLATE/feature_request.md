@@ -7,8 +7,8 @@ assignees: ''
 ---
 
 <!--
-EN: Please check the Roadmap (README.md#roadmap) first — your idea might already be planned.
-FR : Merci de vérifier d'abord la feuille de route (README.fr.md#feuille-de-route) — votre idée y est peut-être déjà prévue.
+EN: Please check the Roadmap (README.md#roadmap) first - your idea might already be planned.
+FR : Merci de vérifier d'abord la feuille de route (README.fr.md#feuille-de-route) - votre idée y est peut-être déjà prévue.
 -->
 
 ## Problem / Problème

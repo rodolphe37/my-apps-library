@@ -2,7 +2,7 @@
 
 Structural mirror of ui/theme/theme_manager.py's ThemeManager: a `mode`
 property ("system" or a locale code), `apply()`, and one Qt signal that the
-UI connects to directly (not routed through the shared event_bus — same
+UI connects to directly (not routed through the shared event_bus - same
 reasoning theme switching doesn't route through it either: this is a
 dedicated, UI-facing runtime signal, not a generic data-change notification).
 """
@@ -47,7 +47,7 @@ class LanguageManager(QObject):
 
     def set_plugin_translations(self, plugin_translations: dict[str, dict[str, str]]) -> None:
         """Called at startup and again whenever the plugin set changes
-        (enable/disable/install/uninstall) — updates the translator, then
+        (enable/disable/install/uninstall) - updates the translator, then
         re-applies since a plugin enable/disable can add or remove the
         currently active locale's availability."""
         translator.set_plugin_translations(plugin_translations)

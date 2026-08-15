@@ -1,14 +1,14 @@
 """Registry mapping a view-mode id to a factory that builds the widget for it.
 
-Deliberately generic, no domain logic — mirrors `core/events.py`'s "just
+Deliberately generic, no domain logic - mirrors `core/events.py`'s "just
 plumbing" style. `main_window.py` registers the built-in list/grid modes at
 startup; Phase 2's PluginManager registers plugin-contributed modes the same
 way, through the exact same `register()` call, so this is a real
 extensibility point rather than a hardcoded if/else.
 
 Contract: any widget a factory returns must emit the same two signals
-`ProjectListView` already does — `open_requested(str)` and
-`context_menu_requested(str, QPoint)` — so `MainWindow` can wire it up
+`ProjectListView` already does - `open_requested(str)` and
+`context_menu_requested(str, QPoint)` - so `MainWindow` can wire it up
 identically regardless of which mode it came from. This can't be enforced via
 a typed Protocol because Qt Signals don't mix cleanly with ABCs/Protocols, so
 it's a documented convention instead.

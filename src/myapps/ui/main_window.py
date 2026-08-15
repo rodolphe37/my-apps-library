@@ -157,7 +157,7 @@ class MainWindow(QMainWindow):
         # The one and only place the persisted view_mode is validated
         # against the now-fully-populated self._views and restored (or
         # falls back to DEFAULT_VIEW_MODE). _wire_view_signals() must NOT
-        # also do this per-widget mid-loop — self._views is necessarily
+        # also do this per-widget mid-loop - self._views is necessarily
         # incomplete for all but the last widget processed, so it used to
         # treat a legitimately-saved "grid" as unknown and silently reset +
         # persist it back to "list" on every single startup.
@@ -206,7 +206,7 @@ class MainWindow(QMainWindow):
         return header
 
     def _build_menu_bar(self) -> None:
-        """Builds the whole menu bar from scratch. Safe to call again — the
+        """Builds the whole menu bar from scratch. Safe to call again - the
         leading `clear()` makes this idempotent, which is what lets
         `_on_language_changed()` just re-run this method wholesale instead
         of maintaining a second, parallel retranslation code path."""
@@ -304,7 +304,7 @@ class MainWindow(QMainWindow):
         descending_action.toggled.connect(self._set_sort_descending)
         sort_menu.addAction(descending_action)
 
-        # Plugins — always present, even with zero plugins installed, so
+        # Plugins - always present, even with zero plugins installed, so
         # "Manage Plugins…" is discoverable regardless.
         self._plugins_menu = menu_bar.addMenu(tr("menu.plugins"))
         self._populate_plugins_menu()
@@ -456,7 +456,7 @@ class MainWindow(QMainWindow):
 
     def _edit_categories_for_selection(self) -> None:
         """Wired to the Project menu's "Edit Categories…" action: bulk when
-        more than one project is selected, single-project otherwise —
+        more than one project is selected, single-project otherwise -
         mirrors the context menu's own selection-aware branching."""
         selected_ids = self._selected_project_ids()
         if len(selected_ids) > 1:
@@ -550,7 +550,7 @@ class MainWindow(QMainWindow):
     def _open_marketplace(self) -> None:
         """Opens the plugin marketplace in the system browser. The app
         itself stays network-free (installs are still local zip/folder
-        only, per PLAN.md's Phase 3 boundary) — this is just a discovery
+        only, per PLAN.md's Phase 3 boundary) - this is just a discovery
         shortcut, same role as the "install missing editor" download-page
         links in editor_picker_dialog.py."""
         QDesktopServices.openUrl(QUrl(MARKETPLACE_URL))
@@ -559,7 +559,7 @@ class MainWindow(QMainWindow):
         # Right-clicking a project that's part of the current multi-selection
         # shows the bulk menu for the whole selection; right-clicking any
         # other project (including one outside an existing selection) always
-        # shows the single-project menu for just that one — the standard
+        # shows the single-project menu for just that one - the standard
         # Finder/Explorer convention.
         selected_ids = self._selected_project_ids()
         if project_id in selected_ids and len(selected_ids) > 1:
@@ -637,7 +637,7 @@ class MainWindow(QMainWindow):
 
     def _on_language_changed(self, _locale: str) -> None:
         """Rebuilds every piece of persistent, always-visible UI that carries
-        translated text. Dialogs need no entry here — they're all freshly
+        translated text. Dialogs need no entry here - they're all freshly
         instantiated on each open, so a `tr()` call at construction time is
         always current (see i18n design notes)."""
         register_builtin_views(view_registry, self._pm)  # retranslate "List"/"Grid" labels
@@ -648,7 +648,7 @@ class MainWindow(QMainWindow):
 
     def _on_plugins_changed(self) -> None:
         """Rebuilds plugin-derived UI after install/uninstall/enable/disable.
-        Full rebuild rather than diffing — view-mode churn only happens via
+        Full rebuild rather than diffing - view-mode churn only happens via
         the Plugin Manager dialog (rare), so correctness-over-cleverness is
         the right tradeoff here."""
         for mode_id in self._plugin_view_mode_ids:
@@ -666,7 +666,7 @@ class MainWindow(QMainWindow):
             # A plugin enable/disable can add or remove a theme palette (the
             # Preferences dialog's combo is only rebuilt on next open, but it
             # reads theme_manager.available_palette_choices() fresh each
-            # time, so refreshing the source list here is enough — see
+            # time, so refreshing the source list here is enough - see
             # ThemeManager.set_available_palettes()'s docstring).
             self._theme.set_available_palettes(self._plugins.collect_theme_palettes())
             self._theme.set_palette(self._theme.palette_id)  # re-validate current choice
@@ -699,7 +699,7 @@ class MainWindow(QMainWindow):
         """Connects the signals every registered view is contractually
         required to emit (see ui/views/registry.py), plus
         external_folders_dropped if this particular widget happens to
-        provide it — built-in views do (see ProjectListView), a
+        provide it - built-in views do (see ProjectListView), a
         plugin-contributed view isn't required to."""
         widget.open_requested.connect(self._open_project)
         widget.context_menu_requested.connect(self._show_context_menu)

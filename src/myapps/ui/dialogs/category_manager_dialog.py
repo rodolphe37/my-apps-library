@@ -159,13 +159,13 @@ class ProjectCategoryPickerDialog(QDialog):
 
 class BulkCategoryPickerDialog(QDialog):
     """Checkbox list to edit multiple projects' category assignments at
-    once — the multi-select companion to ProjectCategoryPickerDialog.
+    once - the multi-select companion to ProjectCategoryPickerDialog.
 
     Each checkbox starts tri-state: checked if every selected project
     already has that category, unchecked if none do, partially-checked if
     it's a mix. A box left partially-checked is left untouched on apply();
     only boxes the user explicitly ticks or clears are added to/removed
-    from every selected project — this is the only sane semantic for
+    from every selected project - this is the only sane semantic for
     "set categories" across a heterogeneous selection (a plain overwrite
     would silently wipe categories some projects already had that others
     in the selection didn't).

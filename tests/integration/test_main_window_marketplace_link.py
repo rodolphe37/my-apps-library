@@ -1,5 +1,5 @@
 """Plugins menu should always offer a way to discover plugins on the
-marketplace, even with the plugin system unavailable (plugin_manager=None) —
+marketplace, even with the plugin system unavailable (plugin_manager=None) -
 mirrors how "Manage Plugins…" is always present regardless of that."""
 
 from PySide6.QtGui import QDesktopServices

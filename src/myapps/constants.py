@@ -14,7 +14,7 @@ DEFAULT_VIEW_MODE = "list"
 UNCATEGORIZED_ID = "__uncategorized__"
 
 # The marketplace is now live at marketplace.rodolphe-augusto.fr. Still read
-# from MYAPPS_MARKETPLACE_URL rather than hardcoding that domain — keeps
+# from MYAPPS_MARKETPLACE_URL rather than hardcoding that domain - keeps
 # local dev pointed at `npm run dev`'s localhost:5173 by default, and
 # packaging/CI free to override without a code change either way.
 MARKETPLACE_URL = os.environ.get("MYAPPS_MARKETPLACE_URL", "https://marketplace.rodolphe-augusto.fr")

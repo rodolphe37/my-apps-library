@@ -1,10 +1,10 @@
 /* Dark theme accents QPalette can't express.
    Templated with Python's string.Template (dollar-sign placeholders, e.g.
-   dollar-bg) — see ui/theme/tokens.py and ui/theme/theme_manager.py's
+   dollar-bg) - see ui/theme/tokens.py and ui/theme/theme_manager.py's
    _load_qss(). Only tokens that map cleanly onto an existing brand color
    are parameterized; the handful of hover/pressed micro-shades below
    (#202942, #26305a, #161d33, #232c46, #c7cde3, #37416a) are neutral UI
-   chrome, not brand identity, and stay hardcoded per mode — a plugin-
+   chrome, not brand identity, and stay hardcoded per mode - a plugin-
    contributed palette re-themes backgrounds/text/accent, not every
    hand-tuned hover state. */
 

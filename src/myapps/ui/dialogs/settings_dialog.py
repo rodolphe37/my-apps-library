@@ -55,7 +55,7 @@ class SettingsDialog(QDialog):
             idx = self._palette_combo.findData(current_palette)
             self._palette_combo.setCurrentIndex(idx if idx >= 0 else 0)
         # Only worth showing once a plugin has actually contributed a
-        # palette — otherwise it's a single-item "Default" dropdown with
+        # palette - otherwise it's a single-item "Default" dropdown with
         # nothing to choose between.
         if self._palette_combo.count() > 1:
             form.addRow(tr("dialog.settings.palette_label"), self._palette_combo)

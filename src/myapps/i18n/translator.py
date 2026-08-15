@@ -41,12 +41,12 @@ class Translator:
 
     def available_locales(self) -> set[str]:
         """Built-in locales union any locale a currently-loaded plugin
-        contributes — this is what powers the Settings dropdown."""
+        contributes - this is what powers the Settings dropdown."""
         return set(discover_builtin_locales()) | set(self._plugin_translations.keys())
 
     def display_name(self, locale: str) -> str:
         """Builds a throwaway catalog for `locale` (does NOT mutate active
-        state) and reads the reserved key 'meta.language_name' — e.g.
+        state) and reads the reserved key 'meta.language_name' - e.g.
         fr.json's own entry for that key is 'Français'. Falls back to the
         locale code if absent."""
         catalog = TranslationCatalog.build(locale, self._plugin_translations.get(locale))

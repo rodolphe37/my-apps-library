@@ -1,6 +1,6 @@
 """Regression coverage for a reported bug: dragging folders in from Finder/
 Explorer only imported them in grid view, not list view. Constructing a
-real QDropEvent in Python is avoided deliberately — it has crashed via
+real QDropEvent in Python is avoided deliberately - it has crashed via
 libshiboken before in this codebase (see CategorySidebar.dropEvent's own
 test, which delegates to a plain-Python method for the same reason). The
 fix itself (ProjectListView.setAcceptDrops(True) + its own drag*/drop

@@ -41,7 +41,7 @@ class ProjectListModel(QAbstractListModel):
         self._search_text = ""
         self._sort_key = "name"
         self._sort_direction = "asc"
-        # In-memory only, keyed by project id — populated lazily the first
+        # In-memory only, keyed by project id - populated lazily the first
         # time sort_key == "size" is actually used, never persisted or
         # proactively invalidated (a project's on-disk size changing while
         # the app is running without a restart is an acceptable staleness
@@ -76,7 +76,7 @@ class ProjectListModel(QAbstractListModel):
     def set_sort(self, key: str, direction: str) -> None:
         """`key` is one of SORT_KEYS, `direction` is "asc"/"desc". An
         unrecognized key/direction falls back to name/asc rather than
-        raising — the persisted value could in principle come from an
+        raising - the persisted value could in principle come from an
         older/newer settings.json."""
         self._sort_key = key if key in SORT_KEYS else "name"
         self._sort_direction = direction if direction in ("asc", "desc") else "asc"
@@ -109,7 +109,7 @@ class ProjectListModel(QAbstractListModel):
         # chosen (an outer key that never reverses), while the user's sort
         # key/direction only governs ordering *within* each tier (an inner
         # key that does reverse). Sorting by the inner key first, then
-        # stably by the outer key, composes the two correctly — a single
+        # stably by the outer key, composes the two correctly - a single
         # `sorted(key=(not pinned, value), reverse=...)` would incorrectly
         # flip the pinned tier too whenever direction == "desc".
         by_value = sorted(projects, key=self._sort_value, reverse=self._sort_direction == "desc")

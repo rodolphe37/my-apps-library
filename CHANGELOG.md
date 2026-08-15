@@ -15,29 +15,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Icon picker for categories and folders (projects)** — `Category`/`Project`
+- **Icon picker for categories and folders (projects)** - `Category`/`Project`
   now carry an optional `icon` glyph, chosen from a built-in emoji pack or
   any pack contributed by a plugin (see below). Wired into the category
   manager, each project's right-click menu, and rendered in the sidebar,
   category chips, and the list/grid delegate.
 - **Plugin API: `contribute_icon_packs()` and `contribute_theme_palettes()`**
-  — a plugin can now offer additional icon packs (`plugins/api.py`'s
+  - a plugin can now offer additional icon packs (`plugins/api.py`'s
   `IconPack`/`IconDef`) and named color palettes (`ThemePalette`, light +
-  dark token dicts — see `ui/theme/tokens.py`) selectable from
+  dark token dicts - see `ui/theme/tokens.py`) selectable from
   Preferences → Theme, alongside the built-in default. A palette with
   incomplete or malformed tokens is rejected at collection time rather
   than reaching the stylesheet engine.
 - `ui/theme/palettes.py` and the `.qss` stylesheets are now driven by the
   same token dict (built-in brand colors by default, a plugin palette's
-  when one is selected) via `string.Template` substitution — a handful of
+  when one is selected) via `string.Template` substitution - a handful of
   neutral hover/pressed micro-shades stay hardcoded per mode (not brand
   identity, see the comment atop each `.qss` file).
+
+### Fixed
+
+- **A plugin's theme palette never showed up in Preferences until a full
+  app restart.** `theme_manager.set_available_palettes()` was only ever
+  called once at startup, never refreshed when a plugin got enabled at
+  runtime via Plugin Manager. Now refreshed on every plugin
+  enable/disable, alongside the other plugin-derived UI.
+- **A project's picked icon replaced its folder shape entirely** instead
+  of being overlaid on it. `_paint_folder_icon()` now always draws the
+  folder gradient first, with the glyph centered on top (smaller than
+  before, so it stays within the folder's outline).
 
 ## [0.5.2] - 2026-08-13
 
 ### Fixed
 
-- The **List/Grid view choice wasn't actually persisted** — it silently
+- The **List/Grid view choice wasn't actually persisted** - it silently
   reset to List on every single app launch, regardless of what was saved.
   `MainWindow` wired each view's signals before the full set of views was
   known, which made a bogus "unknown view mode" fallback fire and
@@ -52,11 +64,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Packaged builds (PyInstaller) were missing `i18n/locales/` from the
   bundle entirely, so every translated string fell back to its raw key
   (e.g. the UI showed literal `search.placeholder` instead of the
-  actual translated text). Only affected frozen builds — `python -m
+  actual translated text). Only affected frozen builds - `python -m
   myapps` from source was never affected. First shipped, broken this
   way, in the `v0.5.0` release; fixed here.
 - CI packaging builds now also target Intel Macs (`macos-15-intel`)
-  alongside Apple Silicon (`macos-latest`) — a build made only on
+  alongside Apple Silicon (`macos-latest`) - a build made only on
   `macos-latest` can't run at all on an Intel Mac ("isn't supported by
   this Mac"), since neither PyInstaller nor PySide6 produce universal2
   binaries.
@@ -74,14 +86,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Enabled a branch protection ruleset on `main` (`main-protection`): all
   changes now require a pull request, 3 required status checks must pass,
-  and force pushes / branch deletion are blocked — for everyone, including
+  and force pushes / branch deletion are blocked - for everyone, including
   the repo owner.
 
 ## [0.5.0] - 2026-08-13
 
 ### Added
 
-- Marketplace link — `Plugins → Browse Marketplace…` opens the companion
+- Marketplace link - `Plugins → Browse Marketplace…` opens the companion
   plugins marketplace web app, configurable via `MYAPPS_MARKETPLACE_URL`.
 
 ### Changed
@@ -94,7 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Sort By** menu (**View → Sort By**) — sort projects by name, date added,
+- **Sort By** menu (**View → Sort By**) - sort projects by name, date added,
   date modified, or size, ascending or descending. Pinned projects always
   stay on top regardless of sort order.
 
@@ -110,7 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-select (`Ctrl`/`Cmd`-click, `Shift`-click range-select) with bulk
   actions: edit categories, pin/unpin, and remove for the whole selection
   at once.
-- Category drag-and-drop — drag a project onto a category in the sidebar to
+- Category drag-and-drop - drag a project onto a category in the sidebar to
   move it there directly.
 - Full visual rebrand around the app's blue-to-purple logo gradient
   (see `src/myapps/ui/theme/brand.py`).
@@ -137,7 +149,7 @@ Initial public snapshot. Core feature set:
   disable; contribute context-menu actions, menu actions, and view modes).
 
 <!--
-No git tags exist yet (see the Roadmap in README.md — signed releases are
+No git tags exist yet (see the Roadmap in README.md - signed releases are
 planned). Once tags are cut, replace the plain version headers above with
 links, e.g. [0.5.0]: https://github.com/rodolphe37/my-apps-library/releases/tag/v0.5.0
 -->

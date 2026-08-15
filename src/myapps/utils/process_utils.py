@@ -20,7 +20,7 @@ def launch_detached(argv: list[str]) -> bool:
         logger.error("Empty argv, nothing to launch")
         return False
     try:
-        subprocess.Popen(  # noqa: S603 — argv is a list, never shell=True
+        subprocess.Popen(  # noqa: S603 - argv is a list, never shell=True
             argv,
             close_fds=True,
             start_new_session=True,

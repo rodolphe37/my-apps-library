@@ -2,12 +2,12 @@
 
 `display_mode` ("row" for the list view, "tile" for the Phase 2 grid view) is
 a hook so both views reuse this same delegate class instead of duplicating
-paint logic — see ui/views/builtin.py, which builds one instance per mode.
+paint logic - see ui/views/builtin.py, which builds one instance per mode.
 
 This delegate paints everything itself (icon, text, selection outline),
 which means the QListView::item QSS selectors in theme/styles/*.qss don't
 apply here (a custom delegate.paint() bypasses the style's normal item
-drawing) — the selection/hover colors below are the ones that actually
+drawing) - the selection/hover colors below are the ones that actually
 render. Selection is an accent-colored border, not a filled background, so
 a row/tile's own colors (icon gradient, category chip tints) stay readable
 when selected instead of being washed out.
@@ -54,7 +54,7 @@ def _brand_gradient(rect: QRect) -> QLinearGradient:
 
 def _paint_selection_border(painter: QPainter, bg_path: QPainterPath) -> None:
     """Selected rows/tiles get an accent-colored outline, not a filled
-    background — keeps the row's own colors (icon gradient, category chip
+    background - keeps the row's own colors (icon gradient, category chip
     tints) readable instead of being washed out by a solid fill behind
     them."""
     painter.save()
@@ -181,7 +181,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
         painter.setFont(font)
 
         # Chips are never painted "on_gradient" style anymore now that
-        # selection is an outline rather than a filled background — always
+        # selection is an outline rather than a filled background - always
         # use the normal translucent brand-tinted chip.
         category_ids = index.data(CategoriesRole) or []
         self._paint_category_chips(
@@ -258,7 +258,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         icon_rect = rect.adjusted(0, 2, 0, 0)
 
-        # The folder shape is always drawn first — a picked icon (built-in
+        # The folder shape is always drawn first - a picked icon (built-in
         # or plugin-contributed) is overlaid centered on top of it, not a
         # replacement for it, so a project always still reads as a folder.
         path = QPainterPath()
@@ -273,7 +273,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
         if glyph:
             # Smaller than the old glyph-only rendering (0.62) since it now
             # sits inside the folder shape rather than filling the whole
-            # icon area — big enough to read, small enough to leave the
+            # icon area - big enough to read, small enough to leave the
             # folder's own outline/tab visible around it.
             font = painter.font()
             font.setPointSizeF(icon_rect.height() * 0.46)

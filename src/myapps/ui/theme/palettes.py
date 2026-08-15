@@ -1,5 +1,5 @@
 """QPalette builders for light and dark themes. Take a token dict (see
-ui/theme/tokens.py) — the built-in brand palette by default, or a plugin-
+ui/theme/tokens.py) - the built-in brand palette by default, or a plugin-
 contributed ThemePalette's light/dark dict when the user picks one in
 Preferences → Theme."""
 

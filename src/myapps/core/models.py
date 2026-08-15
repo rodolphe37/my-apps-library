@@ -1,7 +1,7 @@
 """Plain dataclasses for the app's core domain objects.
 
 These are trusted, internally-produced data (unlike plugin manifests, which
-will be validated more strictly in Phase 2), so plain dataclasses are enough —
+will be validated more strictly in Phase 2), so plain dataclasses are enough -
 no need for pydantic here.
 """
 
@@ -26,7 +26,7 @@ class Category:
     name: str = ""
     color: str | None = None
     # A short glyph (emoji or symbol character) picked from the built-in
-    # icon pack or a plugin-contributed one — see plugins/api.py's IconDef.
+    # icon pack or a plugin-contributed one - see plugins/api.py's IconDef.
     # None = no icon, category shows by name/color only (pre-existing look).
     icon: str | None = None
     order: int = 0
@@ -57,7 +57,7 @@ class Project:
     last_opened_at: str | None = None
     pinned: bool = False
     # A short glyph (emoji or symbol character) overriding the default
-    # folder icon in list/grid views — same pool as Category.icon, see
+    # folder icon in list/grid views - same pool as Category.icon, see
     # plugins/api.py's IconDef. None = default folder icon (pre-existing
     # look, unchanged).
     icon: str | None = None
@@ -90,13 +90,13 @@ class AppSettings:
     window_geometry: str | None = None  # base64 QByteArray, stored as text
     sidebar_visible: bool = True
     last_selected_category: str | None = None  # None = "All"
-    # "name" | "created_at" | "modified_at" | "size" — see
+    # "name" | "created_at" | "modified_at" | "size" - see
     # ui/models/project_list_model.py::ProjectListModel.set_sort().
     sort_key: str = "name"
     sort_direction: str = "asc"  # "asc" | "desc"
     # "default" (built-in brand palette) | a ThemePalette.id contributed by
     # an enabled plugin. Falls back to "default" if that plugin gets
-    # disabled/uninstalled — see ui/theme/theme_manager.py.
+    # disabled/uninstalled - see ui/theme/theme_manager.py.
     theme_palette_id: str = "default"
 
     def to_dict(self) -> dict:

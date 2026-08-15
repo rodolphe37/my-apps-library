@@ -72,16 +72,16 @@ Maintainers will follow these Community Impact Guidelines in determining
 the consequences for any action they deem in violation of this Code of
 Conduct:
 
-1. **Correction** — Community Impact: use of inappropriate language or other
+1. **Correction** - Community Impact: use of inappropriate language or other
    unprofessional behavior. Consequence: a private, written warning and
    clarification of the violation.
-2. **Warning** — Community Impact: a violation through a single incident or
+2. **Warning** - Community Impact: a violation through a single incident or
    series of actions. Consequence: a warning with consequences for continued
    behavior, including temporary avoidance of interaction with the reporter.
-3. **Temporary Ban** — Community Impact: a serious violation of standards,
+3. **Temporary Ban** - Community Impact: a serious violation of standards,
    including sustained inappropriate behavior. Consequence: a temporary ban
    from any interaction with the project.
-4. **Permanent Ban** — Community Impact: demonstrating a pattern of
+4. **Permanent Ban** - Community Impact: demonstrating a pattern of
    violation, including sustained inappropriate behavior, harassment, or
    aggression. Consequence: a permanent ban from any public interaction
    within the project.
@@ -176,17 +176,17 @@ Les mainteneurs suivront ces Directives d'impact communautaire pour
 déterminer les conséquences de toute action jugée contraire à ce Code de
 conduite :
 
-1. **Correction** — Impact : usage de langage inapproprié ou autre
+1. **Correction** - Impact : usage de langage inapproprié ou autre
    comportement non professionnel. Conséquence : un avertissement écrit
    privé, avec clarification de la violation.
-2. **Avertissement** — Impact : une violation via un incident isolé ou une
+2. **Avertissement** - Impact : une violation via un incident isolé ou une
    série d'actions. Conséquence : un avertissement avec des conséquences en
    cas de récidive, pouvant inclure l'évitement temporaire d'interaction
    avec la personne ayant signalé l'incident.
-3. **Bannissement temporaire** — Impact : violation sérieuse des standards,
+3. **Bannissement temporaire** - Impact : violation sérieuse des standards,
    y compris un comportement inapproprié soutenu. Conséquence :
    bannissement temporaire de toute interaction avec le projet.
-4. **Bannissement permanent** — Impact : démonstration d'un schéma de
+4. **Bannissement permanent** - Impact : démonstration d'un schéma de
    violation, y compris comportement inapproprié soutenu, harcèlement ou
    agressivité. Conséquence : bannissement permanent de toute interaction
    publique avec le projet.

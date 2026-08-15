@@ -1,5 +1,5 @@
 """Tests for ThemeManager's palette selection/fallback and the QSS
-`string.Template` substitution — see plugins/api.py's ThemePalette and
+`string.Template` substitution - see plugins/api.py's ThemePalette and
 ui/theme/tokens.py.
 """
 
@@ -46,7 +46,7 @@ def test_unavailable_palette_falls_back_to_default(qapp):
 
 def test_palette_becomes_unavailable_after_plugin_disabled(qapp):
     """Simulates a plugin being disabled/uninstalled after its palette was
-    selected — set_available_palettes([]) then re-applying must not raise
+    selected - set_available_palettes([]) then re-applying must not raise
     and must fall back cleanly."""
     tm = ThemeManager(qapp)
     tm.set_available_palettes([make_palette("ocean")])

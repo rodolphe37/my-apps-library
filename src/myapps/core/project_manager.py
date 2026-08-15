@@ -80,7 +80,7 @@ class ProjectManager:
 
     def remove_project(self, project_id: str) -> None:
         """Remove a project from the library. This never touches the folder
-        on disk — it only deletes the library reference.
+        on disk - it only deletes the library reference.
         """
         if project_id in self._projects:
             del self._projects[project_id]

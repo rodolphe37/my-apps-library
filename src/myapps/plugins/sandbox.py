@@ -1,4 +1,4 @@
-"""Advisory trust/permission disclosure — NOT a real sandbox.
+"""Advisory trust/permission disclosure - NOT a real sandbox.
 
 Plugins run as regular in-process Python with full application privileges.
 True sandboxing (subprocess + IPC isolation) is a large undertaking that's
@@ -6,7 +6,7 @@ out of scope for now; this module only produces the disclosure text and
 permission descriptions shown to the user before they enable a plugin.
 
 Consumed only by `PluginManagerDialog`, which is freshly instantiated on
-each open — so calling `tr()` here at call time (not at import time) is all
+each open - so calling `tr()` here at call time (not at import time) is all
 that's needed for these strings to stay current with the active language.
 """
 
@@ -15,7 +15,7 @@ from __future__ import annotations
 from myapps.i18n import tr
 from myapps.plugins.manifest import PluginManifest
 
-# Maps a permission id to its translation key — kept as keys, not
+# Maps a permission id to its translation key - kept as keys, not
 # pre-resolved strings, so the description text is re-looked-up per call
 # against whatever language is active at the time (see module docstring).
 _PERMISSION_KEYS: dict[str, str] = {

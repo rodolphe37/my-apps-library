@@ -1,6 +1,6 @@
 """Loads built-in locale files and builds a merged lookup for one locale.
 
-No Qt imports — plain data, testable with plain pytest (mirrors core/'s
+No Qt imports - plain data, testable with plain pytest (mirrors core/'s
 Qt-free layering).
 """
 
@@ -24,7 +24,7 @@ def discover_builtin_locales() -> list[str]:
 
 
 def load_builtin_locale(locale: str) -> dict[str, str]:
-    """Returns {} for a missing or malformed file — never raises."""
+    """Returns {} for a missing or malformed file - never raises."""
     path = BUILTIN_LOCALES_DIR / f"{locale}.json"
     if not path.exists():
         return {}

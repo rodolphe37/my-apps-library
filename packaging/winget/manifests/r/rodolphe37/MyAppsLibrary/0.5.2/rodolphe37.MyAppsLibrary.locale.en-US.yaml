@@ -1,4 +1,4 @@
-# winget default-locale manifest — metadata shown in `winget show`/the
+# winget default-locale manifest - metadata shown in `winget show`/the
 # Windows Package Manager UI.
 PackageIdentifier: rodolphe37.MyAppsLibrary
 PackageVersion: 0.5.2

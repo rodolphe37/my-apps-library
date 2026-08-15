@@ -2,7 +2,7 @@
 any plugin-contributed ones (see plugins/api.py's IconPack/IconDef).
 Emoji glyphs: render identically in light/dark, no image assets to ship.
 
-Labels are plain English (used as hover tooltips only, not translated —
+Labels are plain English (used as hover tooltips only, not translated -
 the glyph itself is the actual UI, a tooltip is a minor nicety, not worth
 28 extra keys x N locales to localize).
 """

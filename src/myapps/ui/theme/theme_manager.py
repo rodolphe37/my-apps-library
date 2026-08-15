@@ -1,7 +1,7 @@
 """Applies light/dark theme: system detection (darkdetect + Qt's own signal)
 plus a manual override, persisted in settings. Also resolves which color
-*palette* is active — the built-in brand palette, or one contributed by an
-enabled plugin (see plugins/api.py's ThemePalette) — and drives both the
+*palette* is active - the built-in brand palette, or one contributed by an
+enabled plugin (see plugins/api.py's ThemePalette) - and drives both the
 native QPalette (ui/theme/palettes.py) and the `.qss` stylesheets
 (templated with `string.Template`, see ui/theme/tokens.py) from the same
 token dict, so a palette is only ever defined once.
@@ -65,7 +65,7 @@ class ThemeManager(QObject):
 
     def set_available_palettes(self, palettes: list[ThemePalette]) -> None:
         """Call once after PluginManager has loaded every enabled plugin
-        (and again if plugins are enabled/disabled at runtime) — see
+        (and again if plugins are enabled/disabled at runtime) - see
         app.py and ui/dialogs/plugin_manager_dialog.py."""
         self._available_palettes = {p.id: p for p in palettes}
 
@@ -79,7 +79,7 @@ class ThemeManager(QObject):
     def set_palette(self, palette_id: str) -> None:
         """Falls back to the built-in default if `palette_id` doesn't match
         any currently-available plugin palette (e.g. its plugin was
-        disabled/uninstalled since it was picked) — never raises, never
+        disabled/uninstalled since it was picked) - never raises, never
         leaves the app on a half-applied theme."""
         if palette_id != DEFAULT_PALETTE_ID and palette_id not in self._available_palettes:
             logger.info("Palette %r not available, falling back to default", palette_id)

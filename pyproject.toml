@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "myapps"
 version = "0.5.2"
-description = "MyAppsLibrary — a personal launcher/library for your developer projects"
+description = "MyAppsLibrary - a personal launcher/library for your developer projects"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "PolyForm-Noncommercial-1.0.0" }

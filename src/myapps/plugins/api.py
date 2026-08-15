@@ -1,5 +1,5 @@
 """The plugin API surface: PluginBase (lifecycle hooks) and PluginContext
-(the only object plugins receive — never raw app internals). Keeping
+(the only object plugins receive - never raw app internals). Keeping
 PluginContext as the sole surface is what makes a future real sandbox
 retrofit-able without changing this contract.
 """
@@ -27,9 +27,9 @@ class PluginMenuAction:
 @dataclass(frozen=True)
 class IconDef:
     """A single pickable icon: `glyph` is a short unicode string, typically
-    one emoji (renders identically in light/dark — already color-neutral)
+    one emoji (renders identically in light/dark - already color-neutral)
     or a plain symbol character (rendered in the app's current text color
-    via the icon picker/list, so it's theme-aware for free either way — no
+    via the icon picker/list, so it's theme-aware for free either way - no
     image assets, no per-theme variants to ship)."""
 
     id: str
@@ -52,7 +52,7 @@ class IconPack:
 class ThemePalette:
     """A named color scheme, selectable from Preferences → Theme alongside
     the built-in default. `light` and `dark` must each be a complete token
-    dict — see ui/theme/tokens.py's TOKEN_KEYS for the exact keys expected
+    dict - see ui/theme/tokens.py's TOKEN_KEYS for the exact keys expected
     and ui/theme/tokens.default_light_tokens()/default_dark_tokens() for a
     working example to copy. A palette missing either variant, or with an
     incomplete token dict, is rejected at collection time (falls back to
@@ -66,7 +66,7 @@ class ThemePalette:
 
 class PluginBase:
     """Base class for all plugins. Every hook is optional and defaults to a
-    no-op / empty list — a plugin only overrides what it needs. Do setup in
+    no-op / empty list - a plugin only overrides what it needs. Do setup in
     `on_load()`, not `__init__` (PluginManager instantiates with no args).
     """
 
@@ -95,7 +95,7 @@ class PluginBase:
         """Optional: {locale_code: {key: translated_string}}. A plugin can
         EITHER patch/add keys onto an existing locale (e.g. adding French
         strings for its own contributed menu action) OR introduce a wholly
-        new locale code (e.g. 'de') — same dict shape either way. The
+        new locale code (e.g. 'de') - same dict shape either way. The
         reserved key 'meta.language_name' inside a new locale's dict is what
         makes that locale display with a proper name (e.g. 'Deutsch') in the
         Settings dropdown."""
@@ -109,14 +109,14 @@ class PluginBase:
     def contribute_theme_palettes(self) -> list[ThemePalette]:
         """Optional: named color schemes offered in Preferences → Theme,
         alongside the built-in default. Each must supply both a light and a
-        dark token dict — see ThemePalette's docstring."""
+        dark token dict - see ThemePalette's docstring."""
         return []
 
 
 class PluginSettingsStore:
     """Per-plugin settings, persisted to `<storage_dir>/settings.json` via
     the existing atomic-write helpers in core/store.py. Deliberately does NOT
-    touch AppSettings/settings.json — namespacing falls out for free from
+    touch AppSettings/settings.json - namespacing falls out for free from
     each plugin having its own storage_dir, no core schema change needed.
     """
 
@@ -137,7 +137,7 @@ class PluginUIRegistrar:
     for plugins that want to add UI dynamically after on_load rather than
     declaratively. Internally appends to buffers that PluginManager's
     collect_*() methods read alongside each plugin's contribute_*() return
-    value — same underlying storage, two ergonomics.
+    value - same underlying storage, two ergonomics.
     """
 
     def __init__(self) -> None:

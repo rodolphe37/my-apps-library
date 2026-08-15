@@ -17,11 +17,11 @@ def directory_size(path: str) -> int:
     """Total size in bytes of every regular file under `path`, recursively.
     Best-effort: unreadable entries and broken symlinks are skipped rather
     than raising, and symlinked directories are never followed (avoids
-    cycles) — same tolerance-over-precision tradeoff as the rest of this
+    cycles) - same tolerance-over-precision tradeoff as the rest of this
     module. Returns 0 for a path that doesn't exist or isn't a directory.
 
     Can be slow for very large trees (deep node_modules/.git, etc.) since
-    it's a full recursive walk with no caching of its own — callers that
+    it's a full recursive walk with no caching of its own - callers that
     need this repeatedly (e.g. sort-by-size) should cache the result
     themselves; see ui/models/project_list_model.py.
     """
@@ -57,7 +57,7 @@ def reveal_in_file_manager(path: str) -> bool:
         return launch_detached(["open", "-R", str(resolved)])
     elif system == "Windows":
         # `explorer` frequently returns a nonzero exit code even on success,
-        # so we don't treat that as failure — only a launch exception counts.
+        # so we don't treat that as failure - only a launch exception counts.
         return launch_detached(["explorer", f"/select,{resolved}"])
     elif system == "Linux":
         return _reveal_linux(resolved)

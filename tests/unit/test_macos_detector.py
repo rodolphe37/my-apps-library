@@ -35,7 +35,7 @@ def test_prefers_bundled_cli_over_open_dash_a(tmp_path, monkeypatch):
     vscode = next(r for r in results if r.id == "vscode")
 
     assert vscode.launch_strategy == "cli"
-    # Compare as Path, not a hardcoded "/"-separated string — str(Path) uses
+    # Compare as Path, not a hardcoded "/"-separated string - str(Path) uses
     # "\" on Windows, and this test (like the module under test) has no
     # platform guard so it runs on every CI OS.
     expected_cli = app_path / "Contents" / "Resources" / "app" / "bin" / "code"

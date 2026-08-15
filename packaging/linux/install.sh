@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Installs MyAppsLibrary on Linux: downloads the latest release zip
-# (release.yml's onedir PyInstaller build — plain curl + unzip, both of
+# (release.yml's onedir PyInstaller build - plain curl + unzip, both of
 # which are quarantine-unaware, so nothing here needs macOS's Gatekeeper-
-# style workaround), and — the part a bare curl+unzip alone wouldn't give
-# you — registers a .desktop entry so the app actually shows up in your
+# style workaround), and - the part a bare curl+unzip alone wouldn't give
+# you - registers a .desktop entry so the app actually shows up in your
 # application menu/launcher (GNOME Activities, KDE menu, etc.). Linux
 # discovers apps that way, not by scanning a folder the way macOS's
 # /Applications or Windows' Start Menu do; without this step you'd have a
@@ -34,7 +34,7 @@ release_json_file=$(mktemp)
 cleanup_files+=("$release_json_file")
 curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" -o "$release_json_file"
 # Read the response from a file, not interpolated into a Python string
-# literal — a release body/notes containing a quote or control character
+# literal - a release body/notes containing a quote or control character
 # would otherwise break (found via real testing) the naive
 # json.loads('''$release_json''') approach.
 download_url=$(python3 -c "
@@ -65,7 +65,7 @@ mkdir -p "$BIN_DIR"
 ln -sf "${INSTALL_DIR}/${APP_DIR_NAME}/${APP_DIR_NAME}" "${BIN_DIR}/my-apps-library"
 
 mkdir -p "$ICON_DIR"
-curl -fsSL -o "${ICON_DIR}/my-apps-library.png" "$ICON_URL" || echo "Warning: couldn't fetch the app icon — the .desktop entry will use a generic one." >&2
+curl -fsSL -o "${ICON_DIR}/my-apps-library.png" "$ICON_URL" || echo "Warning: couldn't fetch the app icon - the .desktop entry will use a generic one." >&2
 
 mkdir -p "$DESKTOP_DIR"
 cat > "${DESKTOP_DIR}/my-apps-library.desktop" <<EOF
@@ -90,5 +90,5 @@ echo ""
 echo "Installed MyAppsLibrary ${version}."
 echo "Launch it from your application menu, or run: my-apps-library"
 if [[ ":$PATH:" != *":${BIN_DIR}:"* ]]; then
-  echo "(Note: ${BIN_DIR} isn't on your PATH — add it to your shell profile to use the 'my-apps-library' command directly.)"
+  echo "(Note: ${BIN_DIR} isn't on your PATH - add it to your shell profile to use the 'my-apps-library' command directly.)"
 fi

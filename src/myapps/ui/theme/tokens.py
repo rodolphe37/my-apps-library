@@ -1,10 +1,10 @@
 """The color tokens a theme (built-in or plugin-contributed) must supply,
-one full set per mode (light/dark) — see plugins/api.py's `ThemePalette`.
+one full set per mode (light/dark) - see plugins/api.py's `ThemePalette`.
 Both `ui/theme/palettes.py` (QPalette, native widgets) and the `.qss`
 stylesheets (templated with `string.Template`, `$token` placeholders) are
 driven from the same token dict, so a palette only has to be defined once.
 
-Not every literal color in the `.qss` files is tokenized — hover/pressed
+Not every literal color in the `.qss` files is tokenized - hover/pressed
 micro-shades that aren't part of the brand identity stay hardcoded per mode
 (see the comment atop each `.qss` file). Only the tokens below are ever
 overridable by a plugin.

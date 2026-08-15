@@ -2,7 +2,7 @@
 
 Two sources: the local plugins folder (plugin.toml files dropped in by the
 user or by PluginManager.install_from_path), and Python entry_points (for
-plugins pip-installed into the same environment — a secondary/advanced path,
+plugins pip-installed into the same environment - a secondary/advanced path,
 since there's no real distribution flow yet; that's Phase 3's marketplace).
 """
 
@@ -21,7 +21,7 @@ ENTRY_POINT_GROUP = "myapps.plugins"
 
 def discover_local(plugins_dir: Path) -> list[PluginManifest]:
     """plugin_dir/*/plugin.toml for each subfolder of `plugins_dir`. A broken
-    manifest is logged and skipped — this never raises."""
+    manifest is logged and skipped - this never raises."""
     if not plugins_dir.exists():
         return []
 
@@ -40,7 +40,7 @@ def discover_local(plugins_dir: Path) -> list[PluginManifest]:
 
 
 def discover_entry_points() -> list[str]:
-    """Lists entry-point names only (group=myapps.plugins) — deliberately not
+    """Lists entry-point names only (group=myapps.plugins) - deliberately not
     hydrated into full PluginManifests here, since that would require
     importing plugin code, breaking the 'discover without importing'
     guarantee that matters for local/zip-sourced plugins. Full manifest +
