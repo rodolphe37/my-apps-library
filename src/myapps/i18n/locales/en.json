@@ -130,6 +130,15 @@
   "dialog.install_editor.title": "Install an Editor",
   "dialog.install_editor.body": "MyAppsLibrary doesn't auto-install editors yet.\nPick one below to open its download page, then use 'Refresh Detection' once it's installed.\n\nSuggested open-source editors:",
 
+  "dialog.update.title": "Update available",
+  "dialog.update.header": "MyAppsLibrary {latest} is available - you have {current}.",
+  "dialog.update.command_label": "Run this to update:",
+  "dialog.update.copy": "Copy",
+  "dialog.update.no_command_note": "No one-line upgrade command on Windows yet - download the latest version from the releases page below.",
+  "dialog.update.view_release": "View release",
+  "dialog.update.skip_version": "Skip this version",
+  "dialog.update.close": "Close",
+
   "dialog.settings.title": "Preferences",
   "dialog.settings.theme_label": "Theme:",
   "dialog.settings.palette_label": "Color palette:",

@@ -130,6 +130,15 @@
   "dialog.install_editor.title": "Installer un éditeur",
   "dialog.install_editor.body": "MyAppsLibrary n'installe pas encore les éditeurs automatiquement.\nChoisissez-en un ci-dessous pour ouvrir sa page de téléchargement, puis utilisez « Actualiser la détection » une fois installé.\n\nÉditeurs open source suggérés :",
 
+  "dialog.update.title": "Mise à jour disponible",
+  "dialog.update.header": "MyAppsLibrary {latest} est disponible - vous avez la {current}.",
+  "dialog.update.command_label": "Lancez ceci pour mettre à jour :",
+  "dialog.update.copy": "Copier",
+  "dialog.update.no_command_note": "Pas encore de commande de mise à jour en une ligne sous Windows - téléchargez la dernière version depuis la page des releases ci-dessous.",
+  "dialog.update.view_release": "Voir la release",
+  "dialog.update.skip_version": "Ignorer cette version",
+  "dialog.update.close": "Fermer",
+
   "dialog.settings.title": "Préférences",
   "dialog.settings.theme_label": "Thème :",
   "dialog.settings.palette_label": "Palette de couleurs :",

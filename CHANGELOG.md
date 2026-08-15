@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-15
+
+### Added
+
+- **Update check** - on startup, MyAppsLibrary now checks GitHub's latest
+  release against the running version and, if a newer one exists, shows a
+  dialog with the exact upgrade command for the current OS (`brew upgrade`
+  or the curl install script on macOS, the curl install script on Linux;
+  Windows gets a link to the releases page instead, since winget isn't
+  published yet). Fully async and silent on any failure (offline, GitHub
+  down) - never blocks startup or shows an error for this. "Skip this
+  version" remembers the choice so it won't nag again until an even newer
+  release comes out.
+
 ## [0.6.1] - 2026-08-15
 
 ### Fixed
