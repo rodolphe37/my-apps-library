@@ -19,7 +19,7 @@
   <a href="https://pypi.org/project/PySide6/"><img src="https://img.shields.io/badge/UI-PySide6%20(Qt)-41CD52.svg?logo=qt&logoColor=white" alt="PySide6"></a>
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-7D31FC.svg" alt="Platforms">
   <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.5.2-4A6AFC.svg" alt="Version 0.5.2"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/github/v/release/rodolphe37/my-apps-library?label=version&color=4A6AFC" alt="Latest version"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome"></a>
 </p>
 
@@ -107,7 +107,7 @@ Two options, not a progression - pick one:
 ```bash
 # Option 1: Homebrew - clean /Applications install + `brew upgrade`/`uninstall`,
 # but expect a one-time right-click → Open on first launch (unsigned app).
-brew tap rodolphe37/my-apps-library   # not published yet - see Casks/my-apps-library.rb
+brew tap rodolphe37/my-apps-library
 brew install --cask my-apps-library
 
 # Option 2: install script - zero Gatekeeper warning at all (curl/ditto never
@@ -123,7 +123,7 @@ curl -fsSL https://raw.githubusercontent.com/rodolphe37/my-apps-library/main/pac
 winget install rodolphe37.MyAppsLibrary
 ```
 
-Not published to the `winget-pkgs` community repo yet - see [`packaging/winget/README.md`](packaging/winget/README.md). Expect a SmartScreen "Windows protected your PC" prompt on first launch either way (same unsigned-app reason as macOS) - click **More info → Run anyway**.
+Not published to the `winget-pkgs` community repo yet - see [`packaging/winget/README.md`](packaging/winget/README.md), so this command won't resolve for anyone right now. Until it's merged, grab [`MyAppsLibrary-Windows.zip` from the latest release](https://github.com/rodolphe37/my-apps-library/releases/latest), extract it, and run `MyAppsLibrary.exe` inside - it's a portable app, no installer, so keep the extracted folder wherever you want it to live. Expect a SmartScreen "Windows protected your PC" prompt on first launch either way (same unsigned-app reason as macOS) - click **More info → Run anyway**.
 
 ### Linux
 

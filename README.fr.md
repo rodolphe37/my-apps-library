@@ -19,7 +19,7 @@
   <a href="https://pypi.org/project/PySide6/"><img src="https://img.shields.io/badge/UI-PySide6%20(Qt)-41CD52.svg?logo=qt&logoColor=white" alt="PySide6"></a>
   <img src="https://img.shields.io/badge/plateformes-Windows%20%7C%20macOS%20%7C%20Linux-7D31FC.svg" alt="Plateformes">
   <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.5.2-4A6AFC.svg" alt="Version 0.5.2"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/github/v/release/rodolphe37/my-apps-library?label=version&color=4A6AFC" alt="Dernière version"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PR-bienvenues-brightgreen.svg" alt="PRs bienvenues"></a>
 </p>
 
@@ -108,7 +108,7 @@ Deux options, pas une progression - choisissez-en une :
 # Option 1 : Homebrew - installation propre dans /Applications + `brew upgrade`/
 # `uninstall`, mais un clic-droit → Ouvrir sera nécessaire une fois au premier
 # lancement (app non signée).
-brew tap rodolphe37/my-apps-library   # pas encore publié - voir Casks/my-apps-library.rb
+brew tap rodolphe37/my-apps-library
 brew install --cask my-apps-library
 
 # Option 2 : script d'installation - aucun avertissement Gatekeeper du tout
@@ -125,7 +125,7 @@ curl -fsSL https://raw.githubusercontent.com/rodolphe37/my-apps-library/main/pac
 winget install rodolphe37.MyAppsLibrary
 ```
 
-Pas encore publié sur le dépôt communautaire `winget-pkgs` - voir [`packaging/winget/README.md`](packaging/winget/README.md). Attendez-vous à une invite SmartScreen "Windows a protégé votre ordinateur" au premier lancement dans tous les cas (même raison que macOS : app non signée) - cliquez **Plus d'infos → Exécuter quand même**.
+Pas encore publié sur le dépôt communautaire `winget-pkgs` - voir [`packaging/winget/README.md`](packaging/winget/README.md), donc cette commande ne résoudra rien pour personne pour l'instant. En attendant, récupérez [`MyAppsLibrary-Windows.zip` depuis la dernière release](https://github.com/rodolphe37/my-apps-library/releases/latest), extrayez-le, et lancez `MyAppsLibrary.exe` à l'intérieur - c'est une app portable, sans installateur, gardez donc le dossier extrait où vous voulez qu'il reste. Attendez-vous à une invite SmartScreen "Windows a protégé votre ordinateur" au premier lancement dans tous les cas (même raison que macOS : app non signée) - cliquez **Plus d'infos → Exécuter quand même**.
 
 ### Linux
 
