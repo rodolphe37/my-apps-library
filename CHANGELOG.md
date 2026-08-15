@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-08-15
+
+### Fixed
+
+- **Project menu actions did nothing when clicked with no project
+  selected** - Open, Open With..., Reveal, Edit Categories..., and Remove
+  now stay disabled until a project is actually selected, instead of
+  silently no-oping with zero feedback.
+
 ## [0.6.0] - 2026-08-15
 
 ### Added
