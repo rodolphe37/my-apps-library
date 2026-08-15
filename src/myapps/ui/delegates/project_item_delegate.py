@@ -258,16 +258,9 @@ class ProjectItemDelegate(QStyledItemDelegate):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         icon_rect = rect.adjusted(0, 2, 0, 0)
 
-        if glyph:
-            # A user/plugin-picked icon: draw the glyph itself, no gradient
-            # background — emoji already render fine on either theme.
-            font = painter.font()
-            font.setPointSizeF(icon_rect.height() * 0.62)
-            painter.setFont(font)
-            painter.drawText(icon_rect, Qt.AlignmentFlag.AlignCenter, glyph)
-            painter.restore()
-            return
-
+        # The folder shape is always drawn first — a picked icon (built-in
+        # or plugin-contributed) is overlaid centered on top of it, not a
+        # replacement for it, so a project always still reads as a folder.
         path = QPainterPath()
         path.addRoundedRect(icon_rect, 8, 8)
         painter.fillPath(path, _brand_gradient(icon_rect))
@@ -276,4 +269,15 @@ class ProjectItemDelegate(QStyledItemDelegate):
         highlight.addRoundedRect(icon_rect.adjusted(0, 0, 0, -int(icon_rect.height() * 0.7)), 8, 8)
         tab_color = QColor(255, 255, 255, 50)
         painter.fillPath(highlight, tab_color)
+
+        if glyph:
+            # Smaller than the old glyph-only rendering (0.62) since it now
+            # sits inside the folder shape rather than filling the whole
+            # icon area — big enough to read, small enough to leave the
+            # folder's own outline/tab visible around it.
+            font = painter.font()
+            font.setPointSizeF(icon_rect.height() * 0.46)
+            painter.setFont(font)
+            painter.drawText(icon_rect, Qt.AlignmentFlag.AlignCenter, glyph)
+
         painter.restore()
