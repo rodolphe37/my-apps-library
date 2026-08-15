@@ -301,9 +301,9 @@ Un [workflow GitHub Actions `Package`](.github/workflows/package.yml) construit 
 - [x] ~~Signature de code & notarisation~~ - délibérément écarté (voir [Installation](#installation)) : Homebrew Cask/winget/un script d'installation offrent une expérience d'installation raisonnable sans le programme Apple Developer à 99$/an ni un certificat Authenticode Windows. À reconsidérer seulement si la friction de l'app non signée s'avère plus gênante que prévu.
 - [x] ~~Publier le tap Homebrew~~ - [`rodolphe37/homebrew-my-apps-library`](https://github.com/rodolphe37/homebrew-my-apps-library) est en ligne, `version`/`sha256` mis à jour automatiquement à chaque release ([`packaging/homebrew/`](packaging/homebrew/))
 - [ ] Soumettre le manifeste winget à `microsoft/winget-pkgs` - écrit et prêt (`packaging/winget/`), pas encore soumis
-- [ ] Vérification de mise à jour dans l'app - notifie au démarrage si une nouvelle version existe (en indiquant la bonne commande de mise à jour selon la méthode d'installation utilisée), pas une mise à jour automatique silencieuse vu que l'app reste non signée
+- [x] ~~Vérification de mise à jour dans l'app~~ - au démarrage, compare la version installée à la dernière release GitHub et affiche la bonne commande de mise à jour selon l'OS si une nouvelle version existe (depuis la v0.7.0)
 - [ ] Véritable isolation (sandbox) des plugins (aujourd'hui, ils tournent avec tous les privilèges de l'application)
-- [ ] Déploiement public de l'application web de marketplace de plugins (le code source reste dans un dépôt privé ; seul le site en ligne est destiné à être public)
+- [x] ~~Déploiement public de l'application web de marketplace de plugins~~ - en ligne sur [marketplace.rodolphe-augusto.fr](https://marketplace.rodolphe-augusto.fr) (le code source reste dans un dépôt privé ; seul le site en ligne est public)
 - [ ] Davantage de langues intégrées
 
 Une idée ? [Ouvrez une issue](https://github.com/rodolphe37/my-apps-library/issues/new/choose) - voir [Contribuer](#contribuer).

@@ -299,9 +299,9 @@ A [`Package` GitHub Actions workflow](.github/workflows/package.yml) builds unsi
 - [x] ~~Code signing & notarization~~ - deliberately not pursuing this (see [Installation](#installation)): Homebrew Cask/winget/an install script give a reasonable install experience without the $99/year Apple Developer Program or Windows Authenticode cert. Revisit only if the unsigned-app friction turns out to matter more than expected.
 - [x] ~~Publish the Homebrew tap~~ - [`rodolphe37/homebrew-my-apps-library`](https://github.com/rodolphe37/homebrew-my-apps-library) is live, `version`/`sha256` bumped automatically on every release ([`packaging/homebrew/`](packaging/homebrew/))
 - [ ] Submit the winget manifest to `microsoft/winget-pkgs` - written and ready (`packaging/winget/`), not submitted yet
-- [ ] In-app update check - notify on startup if a newer release exists (pointing at the right upgrade command for however the app was installed), not a silent auto-updater given the app stays unsigned
+- [x] ~~In-app update check~~ - on startup, checks GitHub's latest release against the running version and shows the exact upgrade command for the current OS if there's a newer one (since v0.7.0)
 - [ ] Real plugin sandboxing (today plugins run with full app privileges)
-- [ ] Public deployment of the plugins marketplace web app (its source stays in a private repository; only the live site is intended to be public)
+- [x] ~~Public deployment of the plugins marketplace web app~~ - live at [marketplace.rodolphe-augusto.fr](https://marketplace.rodolphe-augusto.fr) (its source stays in a private repository; only the live site is public)
 - [ ] More built-in languages
 
 Have an idea? [Open an issue](https://github.com/rodolphe37/my-apps-library/issues/new/choose) - see [Contributing](#contributing).
