@@ -99,6 +99,11 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._build_menu_bar()
         self._restore_geometry()
+        # Connected once here (not in _build_menu_bar, which can re-run on
+        # language change) - _selection_model itself outlives every menu
+        # rebuild, and the slot always reads self._project_menu_actions
+        # fresh, so a single long-lived connection is enough.
+        self._selection_model.selectionChanged.connect(self._update_project_menu_enabled_state)
 
         if self._plugins is not None:
             event_bus.plugins_changed.connect(self._on_plugins_changed)
@@ -255,6 +260,21 @@ class MainWindow(QMainWindow):
         remove_action.triggered.connect(self._remove_for_selection)
         project_menu.addAction(remove_action)
 
+        # These five all operate on whatever's currently selected in the
+        # project list/grid and used to silently do nothing when clicked
+        # with nothing selected - now kept disabled instead, via
+        # _update_project_menu_enabled_state() (wired to the shared
+        # selection model once in __init__, and re-applied after every
+        # rebuild of this menu, e.g. on language change).
+        self._project_menu_actions = [
+            open_action,
+            open_with_action,
+            reveal_action,
+            categories_action,
+            remove_action,
+        ]
+        self._update_project_menu_enabled_state()
+
         # View
         view_menu = menu_bar.addMenu(tr("menu.view"))
         sidebar_action = QAction(tr("menu.view.show_sidebar"), self, checkable=True)
@@ -375,6 +395,19 @@ class MainWindow(QMainWindow):
                 seen.add(pid)
                 ids.append(pid)
         return ids
+
+    def _update_project_menu_enabled_state(self, *_args) -> None:
+        """Keeps the Project menu's selection-dependent actions (Open, Open
+        With…, Reveal, Edit Categories…, Remove) disabled while nothing is
+        selected, instead of them silently doing nothing when clicked - the
+        context menu equivalent simply doesn't appear in that case, but a
+        top menu-bar item can't do that, so it needs to look inert instead.
+        *_args swallows QItemSelectionModel.selectionChanged's (selected,
+        deselected) arguments - this only ever needs to know whether
+        anything is selected now."""
+        has_selection = bool(self._selected_project_ids())
+        for action in self._project_menu_actions:
+            action.setEnabled(has_selection)
 
     def _update_status_bar(self, *_args) -> None:
         count = len(self._pm.list_projects())
