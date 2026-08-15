@@ -37,6 +37,7 @@ on:
 
 permissions:
   contents: write # needed to create the Release and upload assets
+  pull-requests: write # needed to open the Homebrew cask bump PR below
 
 jobs:
   build:
@@ -158,19 +159,31 @@ jobs:
             --version "${{ steps.sha.outputs.version }}" \
             --arm-sha256 "${{ steps.sha.outputs.arm_sha }}" \
             --intel-sha256 "${{ steps.sha.outputs.intel_sha }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Casks/my-apps-library.rb
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-          else
-            git commit -m "Bump Homebrew cask to ${{ needs.release.outputs.tag }} [skip ci]"
-            # actions/checkout leaves this job on a detached HEAD (the tag
-            # that triggered the release, not a branch) - a bare `git push`
-            # has no upstream to infer and fails with "You are not
-            # currently on a branch." Push explicitly to main instead.
-            git push origin HEAD:main
-          fi
+
+      # `main` is branch-protected (PR required, no bypass available to
+      # the default GITHUB_TOKEN - a plain `git push origin HEAD:main`
+      # here was tried and always rejected with GH013, even with a
+      # "Deploy keys" bypass entry, since the token authenticates as the
+      # GitHub Actions app, not a deploy key). Opening a PR instead needs
+      # no bypass at all and matches how every other change lands on
+      # this repo - merge it from the Actions run summary or the Pull
+      # requests tab once it's up.
+      - name: Open a PR with the cask bump
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "Bump Homebrew cask to ${{ needs.release.outputs.tag }}"
+          title: "Bump Homebrew cask to ${{ needs.release.outputs.tag }}"
+          body: |
+            Automated cask bump for the ${{ needs.release.outputs.tag }} release.
+
+            - `version` → ${{ steps.sha.outputs.version }}
+            - macOS ARM64 sha256 → `${{ steps.sha.outputs.arm_sha }}`
+            - macOS Intel sha256 → `${{ steps.sha.outputs.intel_sha }}`
+
+            Merge this to keep `brew upgrade --cask my-apps-library` pointed at the new release.
+          branch: chore/cask-${{ needs.release.outputs.tag }}
+          delete-branch: true
+          add-paths: Casks/my-apps-library.rb
 
       # The tap (rodolphe37/homebrew-my-apps-library) is a separate repo -
       # the default GITHUB_TOKEN above only has write access to *this*
