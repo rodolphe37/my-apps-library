@@ -74,7 +74,7 @@ It is **not** a cloud service, an account system, or a project manager with opin
 - **Reveal in file manager** - right-click → "Show in Finder/Explorer" to jump straight to a project's folder.
 - **Light/dark theme** with automatic OS detection plus a manual switch, and a choice of **color palette** (**Preferences → Color palette**): the built-in default, or any palette a plugin contributes, each with its own light+dark variant. The whole UI (selection outline, sidebar, buttons) is themed around the app's blue-to-purple logo gradient by default (see [`src/myapps/ui/theme/brand.py`](src/myapps/ui/theme/brand.py)); a selected project is shown with an accent-colored border rather than a filled background, so its own icon/chip colors stay legible.
 - **Native menu bar** with all major actions, keyboard-friendly throughout.
-- **Plugin system**, install from a local `.zip` or folder, enable/disable from **Plugins → Manage Plugins…**; plugins can contribute context-menu actions, menu actions, new view modes, icon packs, color palettes, and translations. **Plugins → Browse Marketplace…** opens a companion plugins marketplace web app in your browser (source kept in a private repository); installs themselves remain local `.zip`/folder only, no marketplace account or network dependency required for that.
+- **Plugin system**, install from a local `.zip` or folder, enable/disable from **Plugins → Manage Plugins…**; plugins can contribute context-menu actions, menu actions, new view modes, icon packs, color palettes, and translations. **Plugins → Browse Marketplace…** opens a companion plugins marketplace web app in your browser (source kept in a private repository); installs themselves remain local `.zip`/folder only, no marketplace account required. The one exception is one-click updates: if an installed plugin is also published there, the dialog silently checks the marketplace's public API for a newer version and offers an **Update** button - the only network call this system makes on its own.
 - **Multi-language UI** - English and French built in, switchable live from **Preferences → Language** with no restart, and extensible by third-party translation plugins.
 - **Update check** - on startup, silently checks GitHub's latest release against the running version; if a newer one exists, a dialog shows the exact upgrade command for your OS. The only network call the app makes on its own initiative, and it fails silently (no error dialog) if you're offline or GitHub is unreachable.
 
@@ -167,6 +167,7 @@ Requirements: **Python 3.11+** and a desktop environment capable of running Qt a
 MyAppsLibrary ships with a small, VS Code-style plugin API so the community can extend the app without forking it.
 
 - Install a plugin from a local `.zip` or folder via **Plugins → Manage Plugins…**
+- **One-click updates**: if an installed plugin is also published on the marketplace, the dialog checks for a newer version each time it opens and shows an **Update** button right on its card - no need to manually download and reinstall over it. A currently-enabled plugin reloads its new code immediately, no app restart needed.
 - A plugin can contribute:
   - **Context-menu actions** on projects (`contribute_project_context_actions`)
   - **Menu-bar actions** (`contribute_menu_actions`)
