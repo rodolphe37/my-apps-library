@@ -23,7 +23,6 @@ from PySide6.QtWidgets import (
     QButtonGroup,
     QFrame,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
     QMainWindow,
     QMenu,
@@ -66,7 +65,7 @@ from myapps.ui.widgets.context_menu import (
     build_bulk_project_context_menu,
     build_project_context_menu,
 )
-from myapps.ui.widgets.dialog_buttons import ask_yes_no
+from myapps.ui.widgets.dialog_buttons import ask_yes_no, prompt_text
 from myapps.ui.widgets.search_bar import SearchBar
 from myapps.utils.fs_utils import reveal_in_file_manager
 
@@ -690,7 +689,7 @@ class MainWindow(QMainWindow):
         project = self._pm.get_project(project_id)
         if not project:
             return
-        new_name, ok = QInputDialog.getText(
+        new_name, ok = prompt_text(
             self,
             tr("dialog.rename_project.title"),
             tr("dialog.rename_project.label"),
@@ -738,10 +737,11 @@ class MainWindow(QMainWindow):
 
     def _quick_add_category(self) -> None:
         """Wired to the sidebar footer's "Add category" button - a fast,
-        single-field prompt (mirrors _rename()'s own QInputDialog pattern),
-        not the full CategoryManagerDialog (Project > Manage Categories…
-        stays the place for renaming/deleting/re-icon-ing)."""
-        name, ok = QInputDialog.getText(
+        single-field prompt (see ui/widgets/dialog_buttons.py's
+        prompt_text()), not the full CategoryManagerDialog (Project >
+        Manage Categories… stays the place for renaming/deleting/
+        re-icon-ing)."""
+        name, ok = prompt_text(
             self,
             tr("dialog.manage_categories.title"),
             tr("sidebar.add_category"),

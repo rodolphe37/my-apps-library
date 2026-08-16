@@ -198,25 +198,59 @@ def paint_soft_shadow(
     rect: QRect | QRectF,
     radius: float,
     *,
-    layers: int = 5,
-    y_offset: float = 3.0,
+    blur: float = 20.0,
+    y_offset: float = 4.0,
+    alpha: int = 70,
 ) -> None:
     """Hand-paints a soft shadow behind `rect` for delegate-painted content
     (QGraphicsDropShadowEffect only applies to real QWidgets - see
     `apply_elevation()` - so a list/grid row painted inside
-    QStyledItemDelegate.paint() has to fake elevation this way instead:
-    several progressively larger, progressively fainter rounded rects,
-    offset slightly downward, drawn *before* the row/tile's own
-    background). Cheap enough for a handful of visible rows/tiles; not
-    meant for large lists painted every frame."""
+    QStyledItemDelegate.paint() has to fake elevation this way instead):
+    many thin, progressively fainter rounded-rect *annuli*, offset
+    slightly downward, filled directly with the painter already in hand -
+    no QPixmap, no caching.
+
+    Each ring is subtracted from the next-larger one (QPainterPath.
+    subtracted()) so every pixel is painted by exactly one ring, never
+    more - an earlier version filled full overlapping rounded rects
+    instead, which looked reasonable at a glance but was a real bug: with
+    ~20 overlapping semi-transparent fills stacked via normal source-over
+    blending, the area right next to the card received *all* of them
+    compounded, not just the one ring's intended alpha - the result was a
+    thick, near-opaque dark blob hugging the card instead of a soft
+    gradient (visibly, not subtly, wrong - reported directly against a
+    screenshot).
+
+    Two other approaches were tried and reverted before landing here: a
+    real Gaussian blur via a throwaway QGraphicsScene +
+    QGraphicsDropShadowEffect (segfaulted when painted from inside a
+    QStyledItemDelegate.paint() call), and rendering the ring-based fill
+    once into a `functools.lru_cache`-held QPixmap and blitting it
+    thereafter (also crashed - a long-lived cache of Qt/C++-backed QPixmap
+    objects reused across many separate paint sessions is exactly the kind
+    of thing that can go wrong in ways that don't reproduce reliably).
+    Plain per-call QPainterPath fills are the boring, proven-safe pattern
+    already used everywhere else in this file - slightly more CPU per
+    paint, never crashes."""
     painter.save()
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
     painter.setPen(Qt.PenStyle.NoPen)
-    base_rect = QRectF(rect)
-    for i in range(layers, 0, -1):
-        spread = i * 1.6
-        alpha = int(9 * (layers - i + 1) / layers) + 2
-        layer_rect = base_rect.adjusted(-spread, -spread + y_offset, spread, spread + y_offset)
-        path = QPainterPath()
-        path.addRoundedRect(layer_rect, radius + spread, radius + spread)
-        painter.fillPath(path, QColor(10, 14, 30, alpha))
+
+    base_rect = QRectF(rect).translated(0, y_offset)
+    rings = max(8, int(blur))
+    inner_path: QPainterPath | None = None
+    for i in range(1, rings + 1):
+        t = i / rings  # ~0 (innermost, near-opaque) -> 1.0 (outermost, faintest)
+        spread = t * blur
+        # Quadratic falloff (not linear) - closer to how a real blur's
+        # density actually tapers off, and it's what keeps the rings from
+        # reading as discrete steps.
+        ring_alpha = int(alpha * (1 - t) ** 2)
+        outer_rect = base_rect.adjusted(-spread, -spread, spread, spread)
+        outer_path = QPainterPath()
+        outer_path.addRoundedRect(outer_rect, radius + spread, radius + spread)
+        band = outer_path if inner_path is None else outer_path.subtracted(inner_path)
+        if ring_alpha > 0:
+            painter.fillPath(band, QColor(10, 14, 30, ring_alpha))
+        inner_path = outer_path
     painter.restore()

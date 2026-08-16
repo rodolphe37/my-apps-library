@@ -287,3 +287,31 @@ QPushButton#PluginUpdateButton {
 QPushButton#PluginUpdateButton:hover {
     background-color: $accent_blend_hover;
 }
+
+/* -- Form dialogs (Add Project, prompt_text()...) ----------------------- */
+
+QLabel#FieldLabel {
+    color: $subtext;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+QPushButton#CategoryChipToggle {
+    border: 1px solid $border;
+    border-radius: 14px;
+    padding: 6px 14px;
+    background-color: $surface_alt;
+    color: $subtext;
+    font-weight: 600;
+}
+
+QPushButton#CategoryChipToggle:hover {
+    border-color: $accent_blend_hover;
+    color: $text;
+}
+
+QPushButton#CategoryChipToggle:checked {
+    background-color: rgba(93, 123, 255, 0.18);
+    border-color: $accent_blend_hover;
+    color: #ffffff;
+}

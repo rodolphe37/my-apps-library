@@ -11,6 +11,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-08-16
+
+### Fixed
+
+- **Grid tile hover crash.** Hovering a project tile could bring down the
+  whole app - a native segfault, not a catchable exception. Root cause:
+  `shapes.paint_soft_shadow()`'s hand-painted shadow drew each "ring" as a
+  full overlapping rounded-rect fill rather than a proper annulus, and
+  separately, two riskier rewrites attempted along the way (a real
+  Gaussian blur via a throwaway `QGraphicsScene` + `QGraphicsDropShadowEffect`,
+  then a `functools.lru_cache`-held `QPixmap`) both segfaulted when painted
+  from inside `QStyledItemDelegate.paint()`. Reverted to the simplest
+  stable pattern: plain per-call `QPainterPath` fills, with each ring now
+  `.subtracted()` from the next so no pixel is ever double-painted - the
+  actual bug behind the shadow looking like a dark blob instead of a soft
+  gradient in the first place.
+- **Untranslated Cancel/OK on every text-prompt dialog** (rename project,
+  add/rename category, add a custom editor). These used `QInputDialog.
+  getText()` directly, which bypasses the app's own translated
+  `standard_button_box()`/`ask_yes_no()` and falls back to Qt's own
+  (never-installed) bundled translations - the same class of bug fixed
+  everywhere else already, just missed here. New `dialog_buttons.
+  prompt_text()` is a drop-in replacement with the app's own translated
+  buttons and a proper label-above-field layout.
+
+### Changed
+
+- **"Add Project" dialog redesigned**: the folder field and its "Browse…"
+  button now sit on one row instead of stacked; categories are chip
+  toggles (matching the chip look already used throughout list/grid
+  views) laid out with a new reusable `FlowLayout`, replacing a plain
+  checkbox list.
+- Grid tiles now match the page background at rest (previously a visibly
+  whiter "surface" fill) - only a hairline border defines a resting card,
+  with a real elevation (shadow + border change) appearing only on
+  hover/selected, not constantly.
+- Category chips (and other centered tile content) are now genuinely
+  centered - previously left-stuck within their row.
+- Sidebar's "Library" section label above "All" now matches "Categories"
+  in size/weight/color/indentation (a missing QSS rule left it unstyled -
+  large, dark, flush-left).
+
 ## [0.11.0] - 2026-08-16
 
 ### Changed

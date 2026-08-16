@@ -1,7 +1,8 @@
 """Covers the sidebar footer's "+ Add category" button
-(MainWindow._build_sidebar_footer/_quick_add_category) - a fast QInputDialog
-prompt, deliberately distinct from the toolbar's "Add Project" button and
-from the full Project > Manage Categories… dialog."""
+(MainWindow._build_sidebar_footer/_quick_add_category) - a fast prompt_text()
+prompt (see ui/widgets/dialog_buttons.py), deliberately distinct from the
+toolbar's "Add Project" button and from the full Project > Manage
+Categories… dialog."""
 
 from myapps.core.project_manager import ProjectManager
 from myapps.core.settings_manager import SettingsManager
@@ -23,7 +24,7 @@ def make_window(tmp_path, qtbot, qapp):
 def test_quick_add_category_creates_category(tmp_path, qtbot, qapp, monkeypatch):
     window, pm = make_window(tmp_path, qtbot, qapp)
     monkeypatch.setattr(
-        "myapps.ui.main_window.QInputDialog.getText", lambda *a, **k: ("Design", True)
+        "myapps.ui.main_window.prompt_text", lambda *a, **k: ("Design", True)
     )
 
     window._quick_add_category()
@@ -33,9 +34,7 @@ def test_quick_add_category_creates_category(tmp_path, qtbot, qapp, monkeypatch)
 
 def test_quick_add_category_cancelled_adds_nothing(tmp_path, qtbot, qapp, monkeypatch):
     window, pm = make_window(tmp_path, qtbot, qapp)
-    monkeypatch.setattr(
-        "myapps.ui.main_window.QInputDialog.getText", lambda *a, **k: ("", False)
-    )
+    monkeypatch.setattr("myapps.ui.main_window.prompt_text", lambda *a, **k: ("", False))
 
     window._quick_add_category()
 
@@ -44,9 +43,7 @@ def test_quick_add_category_cancelled_adds_nothing(tmp_path, qtbot, qapp, monkey
 
 def test_quick_add_category_blank_name_adds_nothing(tmp_path, qtbot, qapp, monkeypatch):
     window, pm = make_window(tmp_path, qtbot, qapp)
-    monkeypatch.setattr(
-        "myapps.ui.main_window.QInputDialog.getText", lambda *a, **k: ("   ", True)
-    )
+    monkeypatch.setattr("myapps.ui.main_window.prompt_text", lambda *a, **k: ("   ", True))
 
     window._quick_add_category()
 

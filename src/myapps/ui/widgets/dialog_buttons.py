@@ -1,17 +1,29 @@
-"""Dialog-button helpers that relabel Qt's own built-in button text through
-the app's own tr() catalog.
+"""Dialog helpers that relabel Qt's own built-in button text through the
+app's own tr() catalog, and a styled replacement for QInputDialog.getText().
 
-Both QDialogButtonBox's standard buttons (OK/Cancel/Close) and
-QMessageBox.question()'s default Yes/No come from Qt's own bundled
-translations (qtbase_<locale>.qm), loaded via QTranslator - this app never
-installs one (it has its own complete i18n system instead, see
+QDialogButtonBox's standard buttons (OK/Cancel/Close), QMessageBox.question()'s
+default Yes/No, and QInputDialog's own OK/Cancel all come from Qt's own
+bundled translations (qtbase_<locale>.qm), loaded via QTranslator - this app
+never installs one (it has its own complete i18n system instead, see
 i18n/translator.py), so those labels stay in English regardless of the
-active language unless explicitly relabeled, as this module does.
+active language unless explicitly relabeled/rebuilt, as this module does.
+QInputDialog's own bare, unstyled layout (a label butted directly against
+the field, default OS margins) also doesn't match the rest of the app's
+dialogs, which prompt_text() fixes at the same time.
 """
 
 from __future__ import annotations
 
-from PySide6.QtWidgets import QDialogButtonBox, QMessageBox, QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QDialog,
+    QDialogButtonBox,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QVBoxLayout,
+    QWidget,
+)
 
 from myapps.i18n import tr
 
@@ -51,3 +63,37 @@ def ask_yes_no(parent: QWidget | None, title: str, text: str) -> bool:
     box.setDefaultButton(yes_button)
     box.exec()
     return box.clickedButton() is yes_button
+
+
+def prompt_text(parent: QWidget | None, title: str, label: str, text: str = "") -> tuple[str, bool]:
+    """Drop-in replacement for `QInputDialog.getText(parent, title, label,
+    text=text)` - same (str, bool) return shape (the text, and whether OK
+    was pressed) - with this app's own translated OK/Cancel and a proper
+    label-above-field layout instead of QInputDialog's bare default one."""
+    dialog = QDialog(parent)
+    dialog.setWindowTitle(title)
+    dialog.setMinimumWidth(340)
+    layout = QVBoxLayout(dialog)
+    layout.setContentsMargins(20, 20, 20, 16)
+    layout.setSpacing(10)
+
+    label_widget = QLabel(label)
+    layout.addWidget(label_widget)
+
+    line_edit = QLineEdit(text)
+    line_edit.selectAll()
+    line_edit.returnPressed.connect(dialog.accept)  # Enter submits, like QInputDialog
+    layout.addWidget(line_edit)
+
+    buttons = standard_button_box(
+        QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel
+    )
+    ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
+    ok_button.setDefault(True)
+    buttons.accepted.connect(dialog.accept)
+    buttons.rejected.connect(dialog.reject)
+    layout.addWidget(buttons)
+
+    line_edit.setFocus(Qt.FocusReason.PopupFocusReason)
+    accepted = dialog.exec() == QDialog.DialogCode.Accepted
+    return line_edit.text(), accepted

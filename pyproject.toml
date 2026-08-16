@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "myapps"
-version = "0.11.0"
+version = "0.12.0"
 description = "MyAppsLibrary - a personal launcher/library for your developer projects"
 readme = "README.md"
 requires-python = ">=3.11"

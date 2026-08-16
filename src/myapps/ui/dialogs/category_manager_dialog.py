@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
     QListWidget,
     QListWidgetItem,
@@ -21,7 +20,7 @@ from myapps.core.models import Project
 from myapps.core.project_manager import ProjectManager
 from myapps.i18n import tr
 from myapps.ui.dialogs.icon_picker_dialog import IconPickerDialog
-from myapps.ui.widgets.dialog_buttons import ask_yes_no, standard_button_box
+from myapps.ui.widgets.dialog_buttons import ask_yes_no, prompt_text, standard_button_box
 
 
 class CategoryManagerDialog(QDialog):
@@ -87,7 +86,7 @@ class CategoryManagerDialog(QDialog):
             self._reload()
 
     def _add(self) -> None:
-        name, ok = QInputDialog.getText(
+        name, ok = prompt_text(
             self, tr("dialog.new_category.title"), tr("dialog.new_category.label")
         )
         if ok and name.strip():
@@ -98,7 +97,7 @@ class CategoryManagerDialog(QDialog):
         item = self._list.currentItem()
         if not item:
             return
-        new_name, ok = QInputDialog.getText(
+        new_name, ok = prompt_text(
             self,
             tr("dialog.rename_category.title"),
             tr("dialog.rename_category.label"),
