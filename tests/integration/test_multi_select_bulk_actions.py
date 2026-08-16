@@ -56,8 +56,6 @@ def test_bulk_pin_pins_every_selected_project(tmp_path, qtbot, qapp):
 
 
 def test_bulk_remove_removes_every_selected_project(tmp_path, qtbot, qapp, monkeypatch):
-    from PySide6.QtWidgets import QMessageBox
-
     window, pm = make_window(tmp_path, qtbot, qapp)
     ids = []
     for i in range(3):
@@ -65,15 +63,13 @@ def test_bulk_remove_removes_every_selected_project(tmp_path, qtbot, qapp, monke
         d.mkdir()
         ids.append(pm.add_project(str(d)).id)
 
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **kw: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr("myapps.ui.main_window.ask_yes_no", lambda *a, **kw: True)
     window._remove_bulk(ids)
 
     assert pm.list_projects() == []
 
 
 def test_bulk_remove_declined_keeps_projects(tmp_path, qtbot, qapp, monkeypatch):
-    from PySide6.QtWidgets import QMessageBox
-
     window, pm = make_window(tmp_path, qtbot, qapp)
     ids = []
     for i in range(2):
@@ -81,7 +77,7 @@ def test_bulk_remove_declined_keeps_projects(tmp_path, qtbot, qapp, monkeypatch)
         d.mkdir()
         ids.append(pm.add_project(str(d)).id)
 
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **kw: QMessageBox.StandardButton.No)
+    monkeypatch.setattr("myapps.ui.main_window.ask_yes_no", lambda *a, **kw: False)
     window._remove_bulk(ids)
 
     assert len(pm.list_projects()) == 2

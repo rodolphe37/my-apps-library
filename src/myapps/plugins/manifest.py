@@ -46,8 +46,25 @@ class PluginManifest:
     # value (same advisory relationship `permissions` already has to actual
     # behavior). Lets the UI show "Provides: German" without loading code.
     provides_locales: list[str] = field(default_factory=list)
+    # Optional path to a logo image (PNG/SVG/JPEG/WEBP), relative to the
+    # plugin's own folder - e.g. "icon.png". Not validated at parse time
+    # (the file may not exist, may be unreadable, or may fail to decode -
+    # none of that should ever block loading the plugin itself); see
+    # `icon_path` below for the fail-open resolution used at display time.
+    icon: str | None = None
     # Injected by the loader, not part of the TOML itself.
     source_dir: Path | None = None
+
+    @property
+    def icon_path(self) -> Path | None:
+        """Resolves `icon` against `source_dir` and returns it only if the
+        file actually exists - `None` in every other case (no `icon`
+        declared, no `source_dir` yet, or a dangling/typo'd path), so a
+        caller never needs its own existence check before using this."""
+        if not self.icon or self.source_dir is None:
+            return None
+        candidate = (self.source_dir / self.icon).resolve()
+        return candidate if candidate.is_file() else None
 
 
 def parse_manifest(toml_path: Path) -> PluginManifest:
@@ -82,6 +99,7 @@ def parse_manifest(toml_path: Path) -> PluginManifest:
         permissions=list(plugin_section.get("permissions", [])),
         tags=list(plugin_section.get("tags", [])),
         provides_locales=list(plugin_section.get("provides_locales", [])),
+        icon=plugin_section.get("icon") or None,
         source_dir=toml_path.parent,
     )
 
@@ -93,6 +111,10 @@ def _validate(section: dict) -> list[str]:
         value = section.get(field_name)
         if not isinstance(value, str) or not value.strip():
             errors.append(f"'{field_name}' is required and must be a non-empty string")
+
+    icon = section.get("icon")
+    if icon is not None and not isinstance(icon, str):
+        errors.append("'icon' must be a string (a path relative to the plugin's own folder)")
 
     plugin_id = section.get("id")
     if isinstance(plugin_id, str) and plugin_id and not PLUGIN_ID_PATTERN.match(plugin_id):

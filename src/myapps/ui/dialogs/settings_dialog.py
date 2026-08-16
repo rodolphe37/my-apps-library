@@ -16,6 +16,7 @@ from myapps.core.settings_manager import SettingsManager
 from myapps.editors.registry import EditorRegistry
 from myapps.i18n import LanguageManager, tr, translator
 from myapps.ui.theme.theme_manager import ThemeManager
+from myapps.ui.widgets.dialog_buttons import standard_button_box
 
 
 class SettingsDialog(QDialog):
@@ -36,7 +37,10 @@ class SettingsDialog(QDialog):
         self._theme_manager = theme_manager
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
         form = QFormLayout()
+        form.setVerticalSpacing(10)
         layout.addLayout(form)
 
         self._theme_combo = QComboBox()
@@ -78,8 +82,8 @@ class SettingsDialog(QDialog):
         self._editor_combo.setCurrentIndex(idx if idx >= 0 else 0)
         form.addRow(tr("dialog.settings.editor_label"), self._editor_combo)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        buttons = standard_button_box(
+            QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(self._on_accept)
         buttons.rejected.connect(self.reject)

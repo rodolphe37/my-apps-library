@@ -83,3 +83,31 @@ def test_parse_min_app_version():
     assert parse_min_app_version("1.2.3") == (1, 2, 3)
     assert parse_min_app_version("0.1.0") < parse_min_app_version("0.2.0")
     assert parse_min_app_version("1.0") < parse_min_app_version("1.0.1")
+
+
+def test_icon_defaults_to_none(tmp_path):
+    manifest = parse_manifest(write_manifest(tmp_path, VALID_TOML))
+    assert manifest.icon is None
+    assert manifest.icon_path is None
+
+
+def test_icon_path_resolves_when_file_exists(tmp_path):
+    (tmp_path / "icon.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    path = write_manifest(tmp_path, VALID_TOML + '\nicon = "icon.png"\n')
+    manifest = parse_manifest(path)
+    assert manifest.icon == "icon.png"
+    assert manifest.icon_path == (tmp_path / "icon.png").resolve()
+
+
+def test_icon_path_is_none_when_file_missing(tmp_path):
+    # Declared but never actually shipped - fails open (None), not an error.
+    path = write_manifest(tmp_path, VALID_TOML + '\nicon = "does-not-exist.png"\n')
+    manifest = parse_manifest(path)
+    assert manifest.icon == "does-not-exist.png"
+    assert manifest.icon_path is None
+
+
+def test_non_string_icon_raises(tmp_path):
+    path = write_manifest(tmp_path, VALID_TOML + "\nicon = 42\n")
+    with pytest.raises(ManifestError):
+        parse_manifest(path)

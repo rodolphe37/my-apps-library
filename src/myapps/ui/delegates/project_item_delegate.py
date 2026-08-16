@@ -15,8 +15,8 @@ when selected instead of being washed out.
 
 from __future__ import annotations
 
-from PySide6.QtCore import QPointF, QRect, QSize, Qt
-from PySide6.QtGui import QColor, QFontMetrics, QLinearGradient, QPainter, QPainterPath, QPen
+from PySide6.QtCore import QRect, QSize, Qt
+from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
 
 from myapps.core.project_manager import ProjectManager
@@ -27,6 +27,7 @@ from myapps.ui.models.project_list_model import (
     ProjectPathRole,
 )
 from myapps.ui.theme import brand
+from myapps.ui.theme.shapes import paint_folder_icon
 
 ROW_HEIGHT = 60
 ICON_SIZE = 34
@@ -41,15 +42,6 @@ PIN_COLOR = QColor(brand.PIN_COLOR)
 DEFAULT_CHIP_COLOR = QColor(brand.ACCENT_BLEND)
 SELECTION_BORDER_COLOR = QColor(brand.ACCENT_BLEND)
 SELECTION_BORDER_WIDTH = 2
-
-
-def _brand_gradient(rect: QRect) -> QLinearGradient:
-    """Diagonal blue -> purple gradient matching the app logo, used for the
-    folder icon glyph."""
-    gradient = QLinearGradient(QPointF(rect.topLeft()), QPointF(rect.bottomRight()))
-    gradient.setColorAt(0.0, QColor(brand.ACCENT_BLUE))
-    gradient.setColorAt(1.0, QColor(brand.ACCENT_PURPLE))
-    return gradient
 
 
 def _paint_selection_border(painter: QPainter, bg_path: QPainterPath) -> None:
@@ -254,30 +246,10 @@ class ProjectItemDelegate(QStyledItemDelegate):
 
     @staticmethod
     def _paint_folder_icon(painter: QPainter, rect: QRect, glyph: str | None = None) -> None:
-        painter.save()
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        icon_rect = rect.adjusted(0, 2, 0, 0)
-
-        # The folder shape is always drawn first - a picked icon (built-in
-        # or plugin-contributed) is overlaid centered on top of it, not a
-        # replacement for it, so a project always still reads as a folder.
-        path = QPainterPath()
-        path.addRoundedRect(icon_rect, 8, 8)
-        painter.fillPath(path, _brand_gradient(icon_rect))
-        # A thin lighter top edge to suggest a folder tab / subtle depth.
-        highlight = QPainterPath()
-        highlight.addRoundedRect(icon_rect.adjusted(0, 0, 0, -int(icon_rect.height() * 0.7)), 8, 8)
-        tab_color = QColor(255, 255, 255, 50)
-        painter.fillPath(highlight, tab_color)
-
-        if glyph:
-            # Smaller than the old glyph-only rendering (0.62) since it now
-            # sits inside the folder shape rather than filling the whole
-            # icon area - big enough to read, small enough to leave the
-            # folder's own outline/tab visible around it.
-            font = painter.font()
-            font.setPointSizeF(icon_rect.height() * 0.46)
-            painter.setFont(font)
-            painter.drawText(icon_rect, Qt.AlignmentFlag.AlignCenter, glyph)
-
-        painter.restore()
+        # A picked icon (built-in or plugin-contributed) is overlaid
+        # centered on top of the folder shape, not a replacement for it, so
+        # a project always still reads as a folder - see
+        # ui/theme/shapes.py::paint_folder_icon() for the actual silhouette
+        # (shared with PluginManagerDialog's generated fallback icon, so
+        # the app's one "folder" shape only ever exists in one place).
+        paint_folder_icon(painter, rect.adjusted(0, 2, 0, 0), glyph)

@@ -1,6 +1,12 @@
 {
   "meta.language_name": "English",
 
+  "action.ok": "OK",
+  "action.cancel": "Cancel",
+  "action.close": "Close",
+  "action.yes": "Yes",
+  "action.no": "No",
+
   "menu.file": "&File",
   "menu.file.add_project": "Add Project…",
   "menu.file.preferences": "Preferences…",
@@ -160,7 +166,7 @@
   "dialog.plugins.status.disabled": "disabled",
   "dialog.plugins.status.failed": "failed",
   "dialog.plugins.status.discovered": "discovered",
-  "dialog.plugins.row_format": "{name} ({version}) - {status}",
+  "dialog.plugins.subtitle": "Enable, install, or remove MyAppsLibrary plugins.",
   "dialog.plugins.failed_tooltip": "Failed to load: {error}",
   "dialog.plugins.enable_title": "Enable Plugin",
   "dialog.plugins.enable_confirm_suffix": "\n\nEnable this plugin?",
@@ -169,7 +175,9 @@
   "dialog.plugins.install_folder_title": "Select Plugin Folder",
   "dialog.plugins.install_error_title": "Couldn't Install Plugin",
   "dialog.plugins.details_title": "Plugin Details",
-  "dialog.plugins.details_body": "{name}  v{version}\nID: {id}\nAuthor: {author}\nLicense: {license}\n\n{description}\n\nPermissions:\n- {permissions}",
+  "dialog.plugins.details_author": "Author",
+  "dialog.plugins.details_license": "License",
+  "dialog.plugins.details_permissions": "Permissions",
   "dialog.plugins.unknown_author": "(unknown)",
   "dialog.plugins.unspecified_license": "(unspecified)",
   "dialog.plugins.no_permissions": "(none declared)",

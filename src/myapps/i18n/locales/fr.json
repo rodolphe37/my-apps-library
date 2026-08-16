@@ -1,6 +1,12 @@
 {
   "meta.language_name": "Français",
 
+  "action.ok": "OK",
+  "action.cancel": "Annuler",
+  "action.close": "Fermer",
+  "action.yes": "Oui",
+  "action.no": "Non",
+
   "menu.file": "&Fichier",
   "menu.file.add_project": "Ajouter un projet…",
   "menu.file.preferences": "Préférences…",
@@ -160,7 +166,7 @@
   "dialog.plugins.status.disabled": "désactivé",
   "dialog.plugins.status.failed": "échec",
   "dialog.plugins.status.discovered": "découvert",
-  "dialog.plugins.row_format": "{name} ({version}) - {status}",
+  "dialog.plugins.subtitle": "Activez, installez ou supprimez des plugins MyAppsLibrary.",
   "dialog.plugins.failed_tooltip": "Échec du chargement : {error}",
   "dialog.plugins.enable_title": "Activer le plugin",
   "dialog.plugins.enable_confirm_suffix": "\n\nActiver ce plugin ?",
@@ -169,7 +175,9 @@
   "dialog.plugins.install_folder_title": "Sélectionner le dossier du plugin",
   "dialog.plugins.install_error_title": "Impossible d'installer le plugin",
   "dialog.plugins.details_title": "Détails du plugin",
-  "dialog.plugins.details_body": "{name}  v{version}\nID : {id}\nAuteur : {author}\nLicence : {license}\n\n{description}\n\nPermissions :\n- {permissions}",
+  "dialog.plugins.details_author": "Auteur",
+  "dialog.plugins.details_license": "Licence",
+  "dialog.plugins.details_permissions": "Permissions",
   "dialog.plugins.unknown_author": "(inconnu)",
   "dialog.plugins.unspecified_license": "(non spécifiée)",
   "dialog.plugins.no_permissions": "(aucune déclarée)",

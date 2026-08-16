@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 from myapps.editors.catalog import CATALOG_BY_ID, SUGGESTED_OPEN_SOURCE_IDS
 from myapps.editors.registry import EditorRegistry
 from myapps.i18n import tr
+from myapps.ui.widgets.dialog_buttons import standard_button_box
 
 
 class EditorPickerDialog(QDialog):
@@ -35,6 +36,8 @@ class EditorPickerDialog(QDialog):
         self._registry = registry
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
         self._list = QListWidget()
         self._reload()
         layout.addWidget(self._list)
@@ -53,8 +56,8 @@ class EditorPickerDialog(QDialog):
             btn_row.addWidget(b)
         layout.addLayout(btn_row)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        buttons = standard_button_box(
+            QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -110,7 +113,7 @@ class EditorPickerDialog(QDialog):
                 lambda _, url=entry.download_url: QDesktopServices.openUrl(QUrl(url))
             )
             layout.addWidget(btn)
-        close_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        close_buttons = standard_button_box(QDialogButtonBox.StandardButton.Close)
         close_buttons.rejected.connect(dialog.reject)
         close_buttons.accepted.connect(dialog.accept)
         layout.addWidget(close_buttons)

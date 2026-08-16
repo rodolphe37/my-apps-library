@@ -12,7 +12,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QListWidget,
     QListWidgetItem,
-    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -22,6 +21,7 @@ from myapps.core.models import Project
 from myapps.core.project_manager import ProjectManager
 from myapps.i18n import tr
 from myapps.ui.dialogs.icon_picker_dialog import IconPickerDialog
+from myapps.ui.widgets.dialog_buttons import ask_yes_no, standard_button_box
 
 
 class CategoryManagerDialog(QDialog):
@@ -40,6 +40,8 @@ class CategoryManagerDialog(QDialog):
         self._plugins = plugin_manager
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
         self._list = QListWidget()
         layout.addWidget(self._list)
         self._reload()
@@ -57,7 +59,7 @@ class CategoryManagerDialog(QDialog):
             btn_row.addWidget(b)
         layout.addLayout(btn_row)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons = standard_button_box(QDialogButtonBox.StandardButton.Close)
         buttons.rejected.connect(self.accept)
         buttons.accepted.connect(self.accept)
         layout.addWidget(buttons)
@@ -110,12 +112,12 @@ class CategoryManagerDialog(QDialog):
         item = self._list.currentItem()
         if not item:
             return
-        confirm = QMessageBox.question(
+        confirmed = ask_yes_no(
             self,
             tr("dialog.delete_category.title"),
             tr("dialog.delete_category.body", name=item.text()),
         )
-        if confirm == QMessageBox.StandardButton.Yes:
+        if confirmed:
             self._pm.remove_category(item.data(Qt.ItemDataRole.UserRole))
             self._reload()
 
@@ -132,6 +134,8 @@ class ProjectCategoryPickerDialog(QDialog):
         self._project = project
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
         self._list = QListWidget()
         for category in self._pm.list_categories():
             item = QListWidgetItem(category.name)
@@ -142,8 +146,8 @@ class ProjectCategoryPickerDialog(QDialog):
             self._list.addItem(item)
         layout.addWidget(self._list)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        buttons = standard_button_box(
+            QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -187,6 +191,8 @@ class BulkCategoryPickerDialog(QDialog):
         self._projects = projects
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
         layout.addWidget(QLabel(tr("dialog.bulk_categories.hint")))
 
         self._list = QListWidget()
@@ -205,8 +211,8 @@ class BulkCategoryPickerDialog(QDialog):
             self._list.addItem(item)
         layout.addWidget(self._list)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        buttons = standard_button_box(
+            QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
