@@ -116,7 +116,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
             # A faint lift on hover/selected, same idea as the tile's card
             # shadow but subtler - rows are denser, so a heavy shadow per
             # row would be visual noise.
-            paint_soft_shadow(painter, rect, ROW_RADIUS, blur=12.0, y_offset=2.0, alpha=45)
+            paint_soft_shadow(painter, rect, ROW_RADIUS, blur=14.0, y_offset=2.0, alpha=24)
         if selected:
             _paint_selection_border(painter, bg_path)
         elif hovered:
@@ -227,13 +227,13 @@ class ProjectItemDelegate(QStyledItemDelegate):
         # active_token()'s own docstring.
         raised = selected or hovered
         if raised:
-            paint_soft_shadow(painter, rect, TILE_RADIUS, blur=20.0, y_offset=4.0, alpha=70)
+            paint_soft_shadow(painter, rect, TILE_RADIUS, blur=24.0, y_offset=4.0, alpha=36)
         painter.fillPath(bg_path, active_token("bg", brand.LIGHT_BG))
         if selected:
             _paint_selection_border(painter, bg_path)
         else:
             border_color = active_token("border", brand.LIGHT_BORDER)
-            border_color.setAlpha(200 if hovered else 140)
+            border_color.setAlpha(170 if hovered else 140)
             painter.setPen(QPen(border_color, 1))
             painter.drawPath(bg_path)
         text_color = option.palette.text().color()
