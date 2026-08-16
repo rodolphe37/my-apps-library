@@ -26,6 +26,7 @@ EditorIdRole = Qt.ItemDataRole.UserRole + 4
 PinnedRole = Qt.ItemDataRole.UserRole + 5
 DescriptionRole = Qt.ItemDataRole.UserRole + 6
 IconRole = Qt.ItemDataRole.UserRole + 7
+ModifiedAtRole = Qt.ItemDataRole.UserRole + 8
 
 # Drag payload: a single project id, utf-8 encoded. Used to drag a project
 # from the list/grid view onto a category in the sidebar (see
@@ -145,7 +146,20 @@ class ProjectListModel(QAbstractListModel):
             return project.description
         if role == IconRole:
             return project.icon
+        if role == ModifiedAtRole:
+            return self._modified_at(project)
         return None
+
+    @staticmethod
+    def _modified_at(project: Project) -> float | None:
+        """Filesystem mtime, same source as sort_key == "modified_at" (see
+        _sort_value) - None (not 0) on a missing/unreadable path, so the
+        delegate can skip drawing a date instead of showing a bogus 1970
+        one."""
+        try:
+            return os.stat(project.path).st_mtime
+        except OSError:
+            return None
 
     def roleNames(self) -> dict:  # noqa: N802
         return {
@@ -157,6 +171,7 @@ class ProjectListModel(QAbstractListModel):
             PinnedRole: b"pinned",
             IconRole: b"icon",
             DescriptionRole: b"description",
+            ModifiedAtRole: b"modifiedAt",
         }
 
     def project_at(self, row: int) -> Project | None:

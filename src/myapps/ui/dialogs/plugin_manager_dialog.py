@@ -48,7 +48,7 @@ from myapps.plugins.manager import (
 )
 from myapps.plugins.manifest import PluginManifest
 from myapps.plugins.sandbox import describe_permissions, trust_disclosure_text
-from myapps.ui.theme.shapes import badge_pixmap
+from myapps.ui.theme.shapes import apply_elevation, badge_pixmap
 from myapps.ui.widgets.dialog_buttons import ask_yes_no, standard_button_box
 from myapps.ui.widgets.toggle_switch import ToggleSwitch
 
@@ -134,6 +134,7 @@ class _PluginCard(QFrame):
         super().__init__(parent)
         self.setObjectName("PluginCard")
         self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)  # so QSS ':hover' actually fires
+        apply_elevation(self, blur=14, y_offset=2, alpha=22)
         self.plugin_id = loaded.manifest.id
 
         row = QHBoxLayout(self)

@@ -11,6 +11,93 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-08-16
+
+### Fixed
+
+- **Grid tile hover crash.** Hovering a project tile could bring down the
+  whole app - a native segfault, not a catchable exception. Root cause:
+  `shapes.paint_soft_shadow()`'s hand-painted shadow drew each "ring" as a
+  full overlapping rounded-rect fill rather than a proper annulus, and
+  separately, two riskier rewrites attempted along the way (a real
+  Gaussian blur via a throwaway `QGraphicsScene` + `QGraphicsDropShadowEffect`,
+  then a `functools.lru_cache`-held `QPixmap`) both segfaulted when painted
+  from inside `QStyledItemDelegate.paint()`. Reverted to the simplest
+  stable pattern: plain per-call `QPainterPath` fills, with each ring now
+  `.subtracted()` from the next so no pixel is ever double-painted - the
+  actual bug behind the shadow looking like a dark blob instead of a soft
+  gradient in the first place.
+- **Untranslated Cancel/OK on every text-prompt dialog** (rename project,
+  add/rename category, add a custom editor). These used `QInputDialog.
+  getText()` directly, which bypasses the app's own translated
+  `standard_button_box()`/`ask_yes_no()` and falls back to Qt's own
+  (never-installed) bundled translations - the same class of bug fixed
+  everywhere else already, just missed here. New `dialog_buttons.
+  prompt_text()` is a drop-in replacement with the app's own translated
+  buttons and a proper label-above-field layout.
+
+### Changed
+
+- **"Add Project" dialog redesigned**: the folder field and its "Browse…"
+  button now sit on one row instead of stacked; categories are chip
+  toggles (matching the chip look already used throughout list/grid
+  views) laid out with a new reusable `FlowLayout`, replacing a plain
+  checkbox list.
+- Grid tiles now match the page background at rest (previously a visibly
+  whiter "surface" fill) - only a hairline border defines a resting card,
+  with a real elevation (shadow + border change) appearing only on
+  hover/selected, not constantly.
+- Category chips (and other centered tile content) are now genuinely
+  centered - previously left-stuck within their row.
+- Sidebar's "Library" section label above "All" now matches "Categories"
+  in size/weight/color/indentation (a missing QSS rule left it unstyled -
+  large, dark, flush-left).
+
+## [0.11.0] - 2026-08-16
+
+### Changed
+
+- **Design pass to match the approved mockup exactly.**
+  - Toolbar: no more drop shadow, just a bottom border (matching the mockup).
+    The List/Grid (+ any plugin-contributed) switch and the sort button are
+    now hand-painted line icons instead of text/emoji glyphs - render
+    identically on Windows/macOS/Linux and pick up the active accent color
+    automatically, including a plugin-contributed one.
+  - Sidebar: a "Library" section label above "All", right-aligned counts
+    with no parentheses, and a "+" prefix on "Uncategorized" - all painted
+    by a new per-row delegate so label and count can be positioned
+    independently.
+  - Grid tiles are now always a card (white/surface fill, hairline border,
+    faint shadow) rather than only on hover - matches the mockup instead of
+    fading into the background at rest.
+  - List rows gained a trailing category chip, pin star, and a localized
+    short date ("Aug 8"/"8 août"), right-aligned - previously only shown in
+    grid view.
+  - Sidebar footer gained a quick "+ Add category" action (a fast prompt,
+    not the full Manage Categories dialog).
+- **Plugin theme-palette compatibility fix.** Several colors (the folder
+  icon gradient, sidebar selection, category chips, the pin star, and the
+  new tile card fill) previously either hardcoded the default brand colors
+  or read `option.palette`, which - once a global stylesheet is active, as
+  this app always has - can silently diverge from a plugin-contributed
+  `ThemePalette`'s own colors. All of these now read the *actual* active
+  token set (built-in or plugin-contributed) instead.
+
+## [0.10.0] - 2026-08-16
+
+### Changed
+
+- **Modernized main window design.** Search, the list/grid view switch, sort,
+  and "Add Project" now live in an always-visible toolbar instead of being
+  buried in the menu bar. The category sidebar groups categories under a
+  "Categories" header. Selected/hovered list rows and grid tiles get a
+  softer tinted fill plus a real elevation shadow (a hand-painted one for
+  delegate-painted rows/tiles, a genuine `QGraphicsDropShadowEffect` for
+  real widgets like the toolbar, the primary button, and Plugin Manager
+  cards). Corner radii were bumped slightly across rows, tiles, and sidebar
+  items for a softer, more modern feel. Same brand palette throughout - no
+  color changes.
+
 ## [0.9.0] - 2026-08-16
 
 ### Added

@@ -13,7 +13,6 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QFileDialog,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
     QListWidget,
     QListWidgetItem,
@@ -25,7 +24,7 @@ from PySide6.QtWidgets import (
 from myapps.editors.catalog import CATALOG_BY_ID, SUGGESTED_OPEN_SOURCE_IDS
 from myapps.editors.registry import EditorRegistry
 from myapps.i18n import tr
-from myapps.ui.widgets.dialog_buttons import standard_button_box
+from myapps.ui.widgets.dialog_buttons import prompt_text, standard_button_box
 
 
 class EditorPickerDialog(QDialog):
@@ -92,7 +91,7 @@ class EditorPickerDialog(QDialog):
         )
         if not exe_path:
             return
-        name, ok = QInputDialog.getText(
+        name, ok = prompt_text(
             self, tr("dialog.open_with.editor_name_title"), tr("dialog.open_with.editor_name_label")
         )
         if ok and name.strip():
