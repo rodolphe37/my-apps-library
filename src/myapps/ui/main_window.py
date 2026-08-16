@@ -242,8 +242,11 @@ class MainWindow(QMainWindow):
         so it's a plain QLabel outside CategorySidebar rather than a list
         row inside it. Stored on self so _on_language_changed() can
         retranslate it - it's the one piece of always-visible chrome this
-        method builds that isn't rebuilt wholesale on language change."""
-        self._sidebar_library_label = QLabel(text)
+        method builds that isn't rebuilt wholesale on language change.
+        Uppercased in Python (like the delegate's own header row does),
+        not via QSS `text-transform` - not worth relying on that property
+        actually applying to every QLabel everywhere this ships."""
+        self._sidebar_library_label = QLabel(text.upper())
         self._sidebar_library_label.setObjectName("SidebarSectionLabel")
         return self._sidebar_library_label
 
@@ -865,7 +868,7 @@ class MainWindow(QMainWindow):
         self._build_menu_bar()  # idempotent full rebuild, see its own docstring
         self._populate_view_toggle()  # re-translate the toolbar's List/Grid labels too
         self._sidebar._refresh()  # "All"/"Uncategorized" labels; category names are user data
-        self._sidebar_library_label.setText(tr("sidebar.library_header"))
+        self._sidebar_library_label.setText(tr("sidebar.library_header").upper())
         self._search_bar.retranslate()
         self._update_status_bar()
 

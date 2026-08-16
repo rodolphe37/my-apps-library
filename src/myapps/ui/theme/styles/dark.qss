@@ -56,6 +56,16 @@ QListView::item:selected {
     padding: 6px;
 }
 
+/* Matches _CategorySidebarDelegate's "Categories" header row as closely as
+   QSS can: same left inset (CategorySidebar's own 6px padding + the
+   delegate's 14px text inset = 20px), same muted/bold/small treatment. */
+#SidebarSectionLabel {
+    padding: 12px 8px 6px 20px;
+    font-size: 10px;
+    font-weight: 700;
+    color: $subtext;
+}
+
 #SidebarFooter {
     background-color: transparent;
     border-top: 1px solid $border;
