@@ -1,6 +1,8 @@
+import zipfile
 from pathlib import Path
 
 from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import QMessageBox
 
 from myapps.constants import MARKETPLACE_URL
 from myapps.core.project_manager import ProjectManager
@@ -9,6 +11,35 @@ from myapps.ui.dialogs.plugin_manager_dialog import PluginManagerDialog, _Plugin
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 OPEN_IN_TERMINAL_EXAMPLE = REPO_ROOT / "examples" / "plugins" / "open_in_terminal"
+
+
+def _make_update_zip(tmp_path: Path, version: str = "0.2.0") -> Path:
+    """A newer version of the open-in-terminal example: same id, bumped
+    version - what PluginMarketplaceClient.download_finished would have
+    handed to _on_download_finished after a real download. Written into
+    its own subfolder, not tmp_path directly - _on_download_finished
+    rmtree's the zip's parent dir once it's done with it (matching what
+    the real download-to-temp-dir flow does), which would otherwise wipe
+    out this whole test's fixture directory."""
+    download_dir = tmp_path / "update-download"
+    download_dir.mkdir(exist_ok=True)
+    zip_path = download_dir / f"open-in-terminal-{version}.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr(
+            "plugin.toml",
+            f"""[plugin]
+id = "open-in-terminal"
+name = "Open in Terminal"
+version = "{version}"
+entry_point = "plugin:OpenInTerminalPlugin"
+""",
+        )
+        zf.writestr(
+            "plugin.py",
+            "from myapps.plugins.api import PluginBase\n\n"
+            "class OpenInTerminalPlugin(PluginBase):\n    pass\n",
+        )
+    return zip_path
 
 
 def _card(dialog: PluginManagerDialog, row: int) -> _PluginCard:
@@ -89,3 +120,82 @@ def test_browse_marketplace_opens_marketplace_url(tmp_path, qtbot, monkeypatch):
     dialog._browse_marketplace()
 
     assert opened_urls == [MARKETPLACE_URL]
+
+
+def test_update_available_shows_badge_and_button(tmp_path, qtbot):
+    pm = ProjectManager(path=tmp_path / "library.json")
+    plugins = PluginManager(pm, plugins_dir=tmp_path / "plugins")
+    plugins.install_from_path(OPEN_IN_TERMINAL_EXAMPLE)
+
+    dialog = PluginManagerDialog(plugins, None)
+    qtbot.addWidget(dialog)
+    dialog.show()  # isVisible() below needs the whole ancestor chain shown
+
+    card = _card(dialog, 0)
+    assert card._update_row.isVisible() is False
+
+    dialog._on_update_available("open-in-terminal", "0.2.0")
+
+    assert card._update_row.isVisible() is True
+    assert "0.2.0" in card._update_label.text()
+    assert card._update_button.isEnabled() is True
+
+
+def test_clicking_update_button_disables_it_while_downloading(tmp_path, qtbot):
+    pm = ProjectManager(path=tmp_path / "library.json")
+    plugins = PluginManager(pm, plugins_dir=tmp_path / "plugins")
+    plugins.install_from_path(OPEN_IN_TERMINAL_EXAMPLE)
+
+    dialog = PluginManagerDialog(plugins, None)
+    qtbot.addWidget(dialog)
+    dialog._on_update_available("open-in-terminal", "0.2.0")
+
+    card = _card(dialog, 0)
+    card._update_button.click()
+
+    assert card._update_button.isEnabled() is False
+
+
+def test_successful_update_bumps_version_and_clears_badge(tmp_path, qtbot):
+    pm = ProjectManager(path=tmp_path / "library.json")
+    plugins = PluginManager(pm, plugins_dir=tmp_path / "plugins")
+    plugins.install_from_path(OPEN_IN_TERMINAL_EXAMPLE)
+
+    dialog = PluginManagerDialog(plugins, None)
+    qtbot.addWidget(dialog)
+    dialog.show()  # isVisible() below needs the whole ancestor chain shown
+    dialog._on_update_available("open-in-terminal", "0.2.0")
+
+    zip_path = _make_update_zip(tmp_path)
+    # What PluginMarketplaceClient.download_finished would emit after a
+    # real download - simulated directly, see conftest.py's docstring.
+    dialog._on_download_finished("open-in-terminal", str(zip_path))
+
+    assert plugins._installed["open-in-terminal"].version == "0.2.0"
+    # update_from_path()'s plugins_changed emit already triggered a
+    # _reload() - re-fetch, the old card object is gone.
+    assert _card(dialog, 0)._update_row.isVisible() is False
+
+
+def test_failed_download_shows_warning_and_resets_button(tmp_path, qtbot, monkeypatch):
+    pm = ProjectManager(path=tmp_path / "library.json")
+    plugins = PluginManager(pm, plugins_dir=tmp_path / "plugins")
+    plugins.install_from_path(OPEN_IN_TERMINAL_EXAMPLE)
+
+    dialog = PluginManagerDialog(plugins, None)
+    qtbot.addWidget(dialog)
+    dialog._on_update_available("open-in-terminal", "0.2.0")
+    card = _card(dialog, 0)
+    card.set_updating()
+
+    warnings = []
+    monkeypatch.setattr(
+        QMessageBox, "warning", lambda *a, **kw: warnings.append(a) or QMessageBox.StandardButton.Ok
+    )
+
+    dialog._on_download_failed("open-in-terminal", "network went away")
+
+    assert len(warnings) == 1
+    assert card._update_button.isEnabled() is True
+    # Still installed at the old version - a failed download never touched it.
+    assert plugins._installed["open-in-terminal"].version == "0.1.0"

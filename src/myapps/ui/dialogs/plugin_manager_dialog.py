@@ -14,6 +14,9 @@ the switch itself), a QListWidget + setItemWidget() is still what tracks
 
 from __future__ import annotations
 
+import shutil
+from pathlib import Path
+
 from PySide6.QtCore import QRectF, Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QPainter, QPainterPath, QPalette, QPixmap
 from PySide6.QtWidgets import (
@@ -35,6 +38,7 @@ from PySide6.QtWidgets import (
 
 from myapps.constants import MARKETPLACE_URL
 from myapps.core.events import event_bus
+from myapps.core.plugin_marketplace_client import PluginMarketplaceClient
 from myapps.i18n import tr
 from myapps.plugins.manager import (
     LoadedPlugin,
@@ -118,9 +122,13 @@ class _PluginCard(QFrame):
     """One installed plugin's row: logo/fallback icon, name + version +
     status, its short description, and a ToggleSwitch - everything but the
     switch is a `clicked` trigger for row selection (see the dialog's
-    `_reload()`, which wires that to `QListWidget.setCurrentItem()`)."""
+    `_reload()`, which wires that to `QListWidget.setCurrentItem()`).
+    An "Update available" row (hidden until the dialog's marketplace
+    check for this plugin comes back with a newer version - see
+    set_update_available()) sits below the description."""
 
     clicked = Signal()
+    update_requested = Signal(str)  # plugin_id
 
     def __init__(self, loaded: LoadedPlugin, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -163,6 +171,20 @@ class _PluginCard(QFrame):
             _style_muted(desc_label)
             text_col.addWidget(desc_label)
 
+        self._update_row = QWidget()
+        update_row_layout = QHBoxLayout(self._update_row)
+        update_row_layout.setContentsMargins(0, 4, 0, 0)
+        update_row_layout.setSpacing(8)
+        self._update_label = QLabel("")
+        self._update_label.setWordWrap(True)
+        update_row_layout.addWidget(self._update_label, 1)
+        self._update_button = QPushButton("")
+        self._update_button.setObjectName("PluginUpdateButton")
+        self._update_button.clicked.connect(lambda: self.update_requested.emit(self.plugin_id))
+        update_row_layout.addWidget(self._update_button)
+        self._update_row.setVisible(False)
+        text_col.addWidget(self._update_row)
+
         row.addLayout(text_col, 1)
 
         self.switch = ToggleSwitch()
@@ -191,6 +213,23 @@ class _PluginCard(QFrame):
         self.style().unpolish(self)
         self.style().polish(self)
 
+    def set_update_available(self, latest_version: str) -> None:
+        self._update_label.setText(tr("dialog.plugins.update_available", version=latest_version))
+        self._update_button.setText(tr("dialog.plugins.update_button"))
+        self._update_button.setEnabled(True)
+        self._update_row.setVisible(True)
+
+    def set_updating(self) -> None:
+        self._update_button.setEnabled(False)
+        self._update_button.setText(tr("dialog.plugins.updating"))
+
+    def reset_update_button(self) -> None:
+        """Re-enables the button after a failed update, so the user can
+        just try again - the row stays visible since the update genuinely
+        is still available."""
+        self._update_button.setEnabled(True)
+        self._update_button.setText(tr("dialog.plugins.update_button"))
+
 
 class PluginManagerDialog(QDialog):
     def __init__(self, plugin_manager: PluginManager, parent: QWidget | None = None) -> None:
@@ -199,6 +238,16 @@ class PluginManagerDialog(QDialog):
         self.setMinimumSize(520, 460)
         self.resize(600, 560)
         self._plugins = plugin_manager
+        self._marketplace = PluginMarketplaceClient(self)
+        self._marketplace.update_available.connect(self._on_update_available)
+        self._marketplace.download_finished.connect(self._on_download_finished)
+        self._marketplace.download_failed.connect(self._on_download_failed)
+        # plugin_id -> latest published version, populated by
+        # _check_for_updates() (run once, see its own docstring) and
+        # re-applied to each card on every _reload() so the badge survives
+        # unrelated reloads (an enable/disable toggle, say) without
+        # re-querying the marketplace for something already known.
+        self._update_available: dict[str, str] = {}
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 16)
@@ -256,6 +305,11 @@ class PluginManagerDialog(QDialog):
         event_bus.plugins_changed.connect(self._reload)
         self._list.currentItemChanged.connect(self._on_current_item_changed)
 
+        # Once, not on every _reload(): a plugin toggle/install/remove
+        # shouldn't re-hit the marketplace for every other plugin's update
+        # status all over again - see _update_available's own docstring.
+        self._check_for_updates()
+
     # -- list population -------------------------------------------------
 
     def _reload(self, *_args) -> None:
@@ -270,9 +324,75 @@ class PluginManagerDialog(QDialog):
                 )
             )
             card.clicked.connect(lambda it=item: self._list.setCurrentItem(it))
+            card.update_requested.connect(self._start_update)
+            latest_version = self._update_available.get(loaded.manifest.id)
+            if latest_version is not None:
+                card.set_update_available(latest_version)
             self._list.addItem(item)
             item.setSizeHint(card.sizeHint())
             self._list.setItemWidget(item, card)
+
+    def _item_and_card_for_plugin_id(
+        self, plugin_id: str
+    ) -> tuple[QListWidgetItem, _PluginCard] | tuple[None, None]:
+        for i in range(self._list.count()):
+            item = self._list.item(i)
+            card = self._list.itemWidget(item)
+            if isinstance(card, _PluginCard) and card.plugin_id == plugin_id:
+                return item, card
+        return None, None
+
+    def _card_for_plugin_id(self, plugin_id: str) -> _PluginCard | None:
+        return self._item_and_card_for_plugin_id(plugin_id)[1]
+
+    # -- marketplace updates -----------------------------------------------
+
+    def _check_for_updates(self) -> None:
+        for loaded in self._plugins.installed_plugins():
+            self._marketplace.check_for_update(loaded.manifest.id, loaded.manifest.version)
+
+    def _on_update_available(self, plugin_id: str, latest_version: str) -> None:
+        self._update_available[plugin_id] = latest_version
+        item, card = self._item_and_card_for_plugin_id(plugin_id)
+        if card is not None:
+            card.set_update_available(latest_version)
+            # The item's cell size was frozen at _reload() build time,
+            # when the (until now hidden) update row contributed no
+            # height - showing it just squeezed the card's real content
+            # into that now-too-small fixed cell (a visibly crushed
+            # update button) without this.
+            item.setSizeHint(card.sizeHint())
+
+    def _start_update(self, plugin_id: str) -> None:
+        card = self._card_for_plugin_id(plugin_id)
+        if card is not None:
+            card.set_updating()
+        self._marketplace.download_update(plugin_id)
+
+    def _on_download_finished(self, plugin_id: str, zip_path: str) -> None:
+        # Popped *before* calling update_from_path(), not after: it emits
+        # plugins_changed synchronously on success, which _reload() reacts
+        # to immediately (rebuilding every card, this one included) - by
+        # the time update_from_path() returns, a stale-badge card would
+        # already exist if this were popped afterward instead.
+        latest_version = self._update_available.pop(plugin_id, None)
+        try:
+            self._plugins.update_from_path(zip_path)
+        except PluginInstallError as exc:
+            if latest_version is not None:
+                self._update_available[plugin_id] = latest_version
+            QMessageBox.warning(self, tr("dialog.plugins.update_error_title"), str(exc))
+            card = self._card_for_plugin_id(plugin_id)
+            if card is not None:
+                card.reset_update_button()
+        finally:
+            shutil.rmtree(Path(zip_path).parent, ignore_errors=True)
+
+    def _on_download_failed(self, plugin_id: str, error: str) -> None:
+        QMessageBox.warning(self, tr("dialog.plugins.update_error_title"), error)
+        card = self._card_for_plugin_id(plugin_id)
+        if card is not None:
+            card.reset_update_button()
 
     def _on_current_item_changed(
         self, current: QListWidgetItem | None, previous: QListWidgetItem | None

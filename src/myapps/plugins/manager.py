@@ -279,35 +279,47 @@ class PluginManager:
 
     # -- install / uninstall -------------------------------------------
 
+    @staticmethod
+    def _extract_manifest(source_path: Path, scratch_path: Path) -> tuple[Path, PluginManifest]:
+        """Shared by install_from_path()/update_from_path(): extracts
+        `source_path` (a zip or a folder) into `scratch_path` if needed,
+        locates plugin.toml (root, or one wrapper folder down), and parses
+        it. Raises PluginInstallError for any problem - never returns a
+        partial result."""
+        if source_path.is_file() and source_path.suffix == ".zip":
+            try:
+                with zipfile.ZipFile(source_path) as zf:
+                    zf.extractall(scratch_path)
+            except zipfile.BadZipFile as exc:
+                raise PluginInstallError(f"{source_path} is not a valid zip file") from exc
+            extracted_root = _find_manifest_root(scratch_path)
+        elif source_path.is_dir():
+            extracted_root = source_path if (source_path / "plugin.toml").exists() else None
+        else:
+            raise PluginInstallError(f"{source_path} is not a .zip file or a folder")
+
+        if extracted_root is None:
+            raise PluginInstallError("No plugin.toml found in the provided source")
+
+        try:
+            manifest = parse_manifest(extracted_root / "plugin.toml")
+        except ManifestError as exc:
+            raise PluginInstallError(str(exc)) from exc
+
+        return extracted_root, manifest
+
     def install_from_path(self, source_path: Path) -> PluginManifest:
         """Local zip or folder only - no networking. This is exactly the
-        function Phase 3's marketplace client will call later after
-        resolving a URL to a local download."""
+        function the marketplace client (core/plugin_marketplace_client.py)
+        calls after resolving a URL to a local download - see
+        update_from_path() for the counterpart used when the plugin is
+        already installed."""
         source_path = Path(source_path)
         if not source_path.exists():
             raise PluginInstallError(f"{source_path} does not exist")
 
         with tempfile.TemporaryDirectory(prefix="myapps-plugin-extract-") as scratch:
-            scratch_path = Path(scratch)
-            if source_path.is_file() and source_path.suffix == ".zip":
-                try:
-                    with zipfile.ZipFile(source_path) as zf:
-                        zf.extractall(scratch_path)
-                except zipfile.BadZipFile as exc:
-                    raise PluginInstallError(f"{source_path} is not a valid zip file") from exc
-                extracted_root = _find_manifest_root(scratch_path)
-            elif source_path.is_dir():
-                extracted_root = source_path if (source_path / "plugin.toml").exists() else None
-            else:
-                raise PluginInstallError(f"{source_path} is not a .zip file or a folder")
-
-            if extracted_root is None:
-                raise PluginInstallError("No plugin.toml found in the provided source")
-
-            try:
-                manifest = parse_manifest(extracted_root / "plugin.toml")
-            except ManifestError as exc:
-                raise PluginInstallError(str(exc)) from exc
+            extracted_root, manifest = self._extract_manifest(source_path, Path(scratch))
 
             if manifest.id in self._installed:
                 raise PluginInstallError(f"Plugin {manifest.id!r} is already installed")
@@ -338,6 +350,68 @@ class PluginManager:
             installed_at=_now_iso(),
         )
         self._save_installed()
+        event_bus.plugins_changed.emit()
+        return manifest
+
+    def update_from_path(self, source_path: Path) -> PluginManifest:
+        """Replaces an already-installed plugin's files with a newer
+        version - the update counterpart to install_from_path() (which
+        deliberately refuses to touch an existing install; this one
+        requires one, and raises PluginInstallError if it's missing).
+
+        Preserves the existing InstalledPluginRecord's `enabled` state,
+        and reloads a currently-enabled plugin in place (disable() then
+        enable()) so the new code takes effect immediately - no app
+        restart needed, since the loader always imports under a fresh
+        module object keyed by a uuid-free but plugin-namespaced name
+        (see loader.py's _import_plugin_module docstring), not Python's
+        own sys.modules import cache, so re-running it after the files
+        change picks up the new source for real."""
+        source_path = Path(source_path)
+        if not source_path.exists():
+            raise PluginInstallError(f"{source_path} does not exist")
+
+        with tempfile.TemporaryDirectory(prefix="myapps-plugin-update-") as scratch:
+            extracted_root, manifest = self._extract_manifest(source_path, Path(scratch))
+
+            record = self._installed.get(manifest.id)
+            if record is None:
+                raise PluginInstallError(
+                    f"Plugin {manifest.id!r} is not installed - use install_from_path() instead"
+                )
+
+            min_version = parse_min_app_version(manifest.min_app_version)
+            if min_version > parse_min_app_version(VERSION):
+                raise PluginInstallError(
+                    f"Plugin {manifest.id!r} requires app version >= "
+                    f"{manifest.min_app_version}, running {VERSION}"
+                )
+
+            final_dest = self._plugins_dir / manifest.id
+            tmp_dest = self._plugins_dir / f".tmp-{manifest.id}-{uuid.uuid4().hex}"
+            shutil.copytree(extracted_root, tmp_dest)
+
+            was_enabled = record.enabled
+            if was_enabled:
+                self.disable(manifest.id)  # unloads the old code before its files disappear
+
+            old_dest = self._plugins_dir / f".old-{manifest.id}-{uuid.uuid4().hex}"
+            try:
+                final_dest.replace(old_dest)  # move the old files aside
+                tmp_dest.replace(final_dest)  # put the new ones in place
+            except OSError:
+                if old_dest.exists() and not final_dest.exists():
+                    old_dest.replace(final_dest)  # best-effort rollback
+                shutil.rmtree(tmp_dest, ignore_errors=True)
+                raise
+            finally:
+                shutil.rmtree(old_dest, ignore_errors=True)
+
+        record.version = manifest.version
+        record.installed_at = _now_iso()
+        self._save_installed()
+        if was_enabled:
+            self.enable(manifest.id)  # re-imports fresh from the just-updated files
         event_bus.plugins_changed.emit()
         return manifest
 

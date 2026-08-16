@@ -175,3 +175,14 @@ QFrame#PluginCard:hover {
 QFrame#PluginCard[selected="true"] {
     border: 2px solid $accent_blend;
 }
+
+QPushButton#PluginUpdateButton {
+    background-color: $accent_blend;
+    border-color: $accent_blend;
+    color: white;
+    font-weight: 600;
+}
+
+QPushButton#PluginUpdateButton:hover {
+    background-color: $accent_blend_hover;
+}
