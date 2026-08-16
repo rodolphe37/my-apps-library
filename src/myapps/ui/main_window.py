@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
             self._settings.settings.sort_key, self._settings.settings.sort_direction
         )
         self._selection_model = QItemSelectionModel(self._model, self)
-        register_builtin_views(view_registry, self._pm)
+        register_builtin_views(view_registry, self._pm, self._plugins)
         self._plugin_view_mode_ids: set[str] = set()
         self._register_plugin_views()
         self._views: dict[str, QWidget] = {}
@@ -864,7 +864,8 @@ class MainWindow(QMainWindow):
         translated text. Dialogs need no entry here - they're all freshly
         instantiated on each open, so a `tr()` call at construction time is
         always current (see i18n design notes)."""
-        register_builtin_views(view_registry, self._pm)  # retranslate "List"/"Grid" labels
+        # retranslate "List"/"Grid" labels
+        register_builtin_views(view_registry, self._pm, self._plugins)
         self._build_menu_bar()  # idempotent full rebuild, see its own docstring
         self._populate_view_toggle()  # re-translate the toolbar's List/Grid labels too
         self._sidebar._refresh()  # "All"/"Uncategorized" labels; category names are user data
