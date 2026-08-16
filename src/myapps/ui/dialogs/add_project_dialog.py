@@ -33,6 +33,8 @@ class AddProjectDialog(QDialog):
         self._selected_path: str | None = None
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
         form = QFormLayout()
         layout.addLayout(form)
 

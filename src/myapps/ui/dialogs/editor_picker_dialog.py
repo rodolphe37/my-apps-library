@@ -35,6 +35,8 @@ class EditorPickerDialog(QDialog):
         self._registry = registry
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
         self._list = QListWidget()
         self._reload()
         layout.addWidget(self._list)

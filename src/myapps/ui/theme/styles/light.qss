@@ -148,3 +148,26 @@ QSplitter::handle {
     background-color: $border;
     width: 1px;
 }
+
+/* -- Plugin Manager ---------------------------------------------------- */
+
+#PluginList {
+    background-color: transparent;
+    border: none;
+}
+
+#PluginList::item {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+}
+
+QFrame#PluginCard {
+    background-color: $surface;
+    border: 1px solid $border;
+    border-radius: 10px;
+}
+
+QFrame#PluginCard:hover {
+    border-color: $accent_blend;
+}

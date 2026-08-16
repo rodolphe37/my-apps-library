@@ -64,6 +64,8 @@ class UpdateAvailableDialog(QDialog):
         self._skipped = False
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
 
         header = QLabel(tr("dialog.update.header", latest=latest_version, current=current_version))
         header.setWordWrap(True)

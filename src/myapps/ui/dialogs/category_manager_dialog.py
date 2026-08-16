@@ -40,6 +40,8 @@ class CategoryManagerDialog(QDialog):
         self._plugins = plugin_manager
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
         self._list = QListWidget()
         layout.addWidget(self._list)
         self._reload()
@@ -132,6 +134,8 @@ class ProjectCategoryPickerDialog(QDialog):
         self._project = project
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
         self._list = QListWidget()
         for category in self._pm.list_categories():
             item = QListWidgetItem(category.name)
@@ -187,6 +191,8 @@ class BulkCategoryPickerDialog(QDialog):
         self._projects = projects
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
         layout.addWidget(QLabel(tr("dialog.bulk_categories.hint")))
 
         self._list = QListWidget()

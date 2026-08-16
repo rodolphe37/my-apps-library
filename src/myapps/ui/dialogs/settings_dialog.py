@@ -36,7 +36,10 @@ class SettingsDialog(QDialog):
         self._theme_manager = theme_manager
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
         form = QFormLayout()
+        form.setVerticalSpacing(10)
         layout.addLayout(form)
 
         self._theme_combo = QComboBox()

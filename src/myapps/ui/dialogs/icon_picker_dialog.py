@@ -35,6 +35,8 @@ class IconPickerDialog(QDialog):
         self._selected: str | None = current
 
         outer = QVBoxLayout(self)
+        outer.setContentsMargins(20, 20, 20, 16)
+        outer.setSpacing(12)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
