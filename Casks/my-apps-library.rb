@@ -34,9 +34,9 @@
 cask "my-apps-library" do
   arch arm: "ARM64", intel: "X64"
 
-  version "0.9.0"
-  sha256 arm:   "03492d9900e11acd119ccb6a2cd98039be691e4ab75563f271384cccf2e5081a",
-         intel: "144069475acfeff6f88e80fedaa173d15874908de5eac04c38efad7a77fffcbf"
+  version "0.12.0"
+  sha256 arm:   "f8eda1995f558d5c6155b4c8d92a5a727238d2081c43782bb2fb8c600c4f0d1e",
+         intel: "83c67465793740730fc7982f3621831a78b42910c58cd01f005561f6964d95b6"
 
   url "https://github.com/rodolphe37/my-apps-library/releases/download/v#{version}/MyAppsLibrary-macOS-#{arch}.zip",
       verified: "github.com/rodolphe37/my-apps-library/"
