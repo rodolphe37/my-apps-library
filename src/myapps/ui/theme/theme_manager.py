@@ -108,6 +108,13 @@ class ThemeManager(QObject):
         palette = dark_palette(tokens) if theme == "dark" else light_palette(tokens)
         self._app.setPalette(palette)
         self._app.setStyleSheet(self._load_qss(theme, tokens))
+        # A dynamic property, not a new Qt API - the one way a hand-painted
+        # gradient (ui/theme/shapes.py's brand_gradient(), used by any
+        # QStyledItemDelegate.paint() - a QSS `$accent_blue` token
+        # substitution can't reach there) can still pick up a plugin-
+        # contributed ThemePalette's own accent colors instead of always
+        # falling back to the hardcoded default brand.py ones.
+        self._app.setProperty("myapps_active_tokens", tokens)
         self.theme_changed.emit(theme)
 
     def _on_system_scheme_changed(self, _scheme) -> None:

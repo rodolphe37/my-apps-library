@@ -49,10 +49,12 @@ def test_search_placeholder_updates_live(tmp_path, qtbot, qapp):
 
 def test_sidebar_all_item_updates_live(tmp_path, qtbot, qapp):
     window, _pgm, lang = make_window(tmp_path, qtbot, qapp)
-    assert window._sidebar.item(0).text() == "All (0)"
+    assert window._sidebar.item(0).text() == "All"
+    assert window._sidebar_library_label.text() == "Library"
 
     lang.set_mode("fr")
-    assert window._sidebar.item(0).text() == "Tous (0)"
+    assert window._sidebar.item(0).text() == "Tous"
+    assert window._sidebar_library_label.text() == "Bibliothèque"
 
 
 def test_plugin_locale_appears_in_settings_dropdown_when_enabled(tmp_path, qtbot, qapp):

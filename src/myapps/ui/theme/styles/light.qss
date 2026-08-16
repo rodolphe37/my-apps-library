@@ -39,7 +39,7 @@ QListView::item:selected {
 }
 
 #BrandHeader {
-    background-color: $surface;
+    background-color: transparent;
     border-bottom: 1px solid $border;
 }
 
@@ -54,6 +54,26 @@ QListView::item:selected {
     background-color: transparent;
     border: none;
     padding: 6px;
+}
+
+#SidebarFooter {
+    background-color: transparent;
+    border-top: 1px solid $border;
+}
+
+QPushButton#SidebarAddProjectButton {
+    border: 1px dashed #b7c0dc;
+    border-radius: 9px;
+    padding: 8px 10px;
+    background-color: transparent;
+    color: $subtext;
+    font-weight: 600;
+}
+
+QPushButton#SidebarAddProjectButton:hover {
+    border-color: $accent_blend;
+    color: $accent_blend;
+    background-color: #dfe6fb;
 }
 
 #CategorySidebar::item {
@@ -103,7 +123,7 @@ QLineEdit#SearchBar:focus {
 #ViewToggle QToolButton {
     border: none;
     border-radius: 7px;
-    padding: 6px 12px;
+    padding: 7px 10px;
     background-color: transparent;
     color: $subtext;
     font-weight: 600;

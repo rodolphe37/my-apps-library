@@ -10,11 +10,13 @@ from PySide6.QtCore import QByteArray, QItemSelectionModel, QSize, Qt, QUrl
 from PySide6.QtGui import (
     QAction,
     QActionGroup,
+    QColor,
     QDesktopServices,
     QDragEnterEvent,
     QDropEvent,
     QIcon,
     QKeySequence,
+    QPalette,
     QPixmap,
 )
 from PySide6.QtWidgets import (
@@ -54,6 +56,7 @@ from myapps.ui.dialogs.plugin_manager_dialog import PluginManagerDialog
 from myapps.ui.dialogs.settings_dialog import SettingsDialog
 from myapps.ui.models.project_list_model import ProjectIdRole, ProjectListModel
 from myapps.ui.resources import app_icon_path
+from myapps.ui.theme import toolbar_icons
 from myapps.ui.theme.shapes import apply_elevation
 from myapps.ui.theme.theme_manager import ThemeManager
 from myapps.ui.views.builtin import register_builtin_views
@@ -111,6 +114,14 @@ class MainWindow(QMainWindow):
         # rebuild, and the slot always reads self._project_menu_actions
         # fresh, so a single long-lived connection is enough.
         self._selection_model.selectionChanged.connect(self._update_project_menu_enabled_state)
+        # Toolbar icons are baked pixmaps (see ui/theme/toolbar_icons.py's
+        # docstring for why), so - unlike QSS-driven colors - they need an
+        # explicit refresh whenever the resolved theme or active palette
+        # changes, including a plugin-contributed one. self._theme is only
+        # ever None in tests isolating other behavior (see __init__'s own
+        # parameter), never in the real app.
+        if self._theme is not None:
+            self._theme.theme_changed.connect(self._refresh_toolbar_icons)
 
         if self._plugins is not None:
             event_bus.plugins_changed.connect(self._on_plugins_changed)
@@ -142,11 +153,13 @@ class MainWindow(QMainWindow):
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(0)
         left_layout.addWidget(self._build_brand_header())
+        left_layout.addWidget(self._build_sidebar_section_label(tr("sidebar.library_header")))
 
         self._sidebar = CategorySidebar(self._pm)
         self._sidebar.filter_changed.connect(self._on_filter_changed)
         self._sidebar.project_recategorized.connect(self._on_project_recategorized)
         left_layout.addWidget(self._sidebar, stretch=1)
+        left_layout.addWidget(self._build_sidebar_footer())
 
         splitter.addWidget(self._left_panel)
 
@@ -222,6 +235,35 @@ class MainWindow(QMainWindow):
         layout.addStretch()
         return header
 
+    def _build_sidebar_section_label(self, text: str) -> QLabel:
+        """A static "Library" group label above the sidebar's "All" row -
+        unlike the "Categories" header (see category_sidebar.py's
+        _make_section_header), this one never appears/disappears with data,
+        so it's a plain QLabel outside CategorySidebar rather than a list
+        row inside it. Stored on self so _on_language_changed() can
+        retranslate it - it's the one piece of always-visible chrome this
+        method builds that isn't rebuilt wholesale on language change."""
+        self._sidebar_library_label = QLabel(text)
+        self._sidebar_library_label.setObjectName("SidebarSectionLabel")
+        return self._sidebar_library_label
+
+    def _build_sidebar_footer(self) -> QWidget:
+        """Pinned to the bottom of the sidebar - "Add category", not "Add
+        project" (that's already the toolbar's primary button; a second
+        add-project entry point here would just duplicate it). A quiet
+        ghost/dashed button, matching the sidebar's own content rather than
+        competing with the toolbar's filled gradient one."""
+        footer = QWidget()
+        footer.setObjectName("SidebarFooter")
+        layout = QVBoxLayout(footer)
+        layout.setContentsMargins(10, 8, 10, 10)
+
+        button = QPushButton(f"+ {tr('sidebar.add_category')}")
+        button.setObjectName("SidebarAddProjectButton")
+        button.clicked.connect(self._quick_add_category)
+        layout.addWidget(button)
+        return footer
+
     def _build_toolbar(self) -> QWidget:
         """The one place search, the view-mode switch, sort and "Add
         project" all live as direct, always-visible actions - previously
@@ -233,7 +275,6 @@ class MainWindow(QMainWindow):
         the single source of truth both paths call into."""
         bar = QWidget()
         bar.setObjectName("Toolbar")
-        apply_elevation(bar, blur=16, y_offset=2, alpha=26)
         layout = QHBoxLayout(bar)
         layout.setContentsMargins(14, 10, 14, 10)
         layout.setSpacing(10)
@@ -252,15 +293,15 @@ class MainWindow(QMainWindow):
         self._view_toggle_buttons: dict[str, QToolButton] = {}
         layout.addWidget(self._view_toggle_frame)
 
-        sort_button = QToolButton()
-        sort_button.setObjectName("SortButton")
-        sort_button.setText("⇅")
-        sort_button.setToolTip(tr("menu.view.sort"))
-        sort_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        sort_menu = QMenu(sort_button)
+        self._sort_button = QToolButton()
+        self._sort_button.setObjectName("SortButton")
+        self._sort_button.setToolTip(tr("menu.view.sort"))
+        self._sort_button.setIconSize(toolbar_icons.TOOLBAR_ICON_SIZE)
+        self._sort_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        sort_menu = QMenu(self._sort_button)
         self._populate_sort_menu(sort_menu)
-        sort_button.setMenu(sort_menu)
-        layout.addWidget(sort_button)
+        self._sort_button.setMenu(sort_menu)
+        layout.addWidget(self._sort_button)
 
         add_button = QPushButton(tr("menu.file.add_project"))
         add_button.setObjectName("PrimaryButton")
@@ -268,7 +309,40 @@ class MainWindow(QMainWindow):
         apply_elevation(add_button, blur=18, y_offset=4, alpha=70)
         layout.addWidget(add_button)
 
+        # _populate_view_toggle() (always called right after this method
+        # returns - see _build_ui()) does the first _refresh_toolbar_icons()
+        # once the view-toggle buttons actually exist; nothing to icon here
+        # yet besides the sort button, which that same call covers too.
         return bar
+
+    def _toolbar_icon_colors(self) -> tuple[QColor, QColor]:
+        """(off, on) colors for hand-painted toolbar icons (see
+        ui/theme/toolbar_icons.py) - read from this window's own QPalette,
+        which ThemeManager keeps in sync with the active theme *and* any
+        plugin-contributed ThemePalette (see palettes.py), so these icons
+        never hardcode a color a custom palette can't override."""
+        palette = self.palette()
+        return (
+            palette.color(QPalette.ColorRole.PlaceholderText),
+            palette.color(QPalette.ColorRole.Highlight),
+        )
+
+    def _refresh_toolbar_icons(self) -> None:
+        """Rebuilds every toolbar icon's pixmaps from the current palette -
+        called on initial build, and on a theme change (colors baked into a
+        pixmap can't just follow a QSS token the way text/background colors
+        do, so this is the explicit refresh QSS gets for free elsewhere)."""
+        off_color, on_color = self._toolbar_icon_colors()
+        self._sort_button.setIcon(
+            toolbar_icons.toolbar_icon("sort", toolbar_icons.TOOLBAR_ICON_SIZE.width(), off_color)
+        )
+        for mode_id, button in self._view_toggle_buttons.items():
+            kind = toolbar_icons.icon_kind_for_mode(mode_id)
+            button.setIcon(
+                toolbar_icons.toolbar_icon(
+                    kind, toolbar_icons.TOOLBAR_ICON_SIZE.width(), off_color, on_color
+                )
+            )
 
     def _populate_view_toggle(self) -> None:
         """(Re)builds the toolbar's segmented list/grid (+ any
@@ -290,13 +364,15 @@ class MainWindow(QMainWindow):
         layout = self._view_toggle_frame.layout()
         for info in view_registry.list_modes():
             button = QToolButton(self._view_toggle_frame)
-            button.setText(info.label)
+            button.setToolTip(info.label)  # icon-only button - label lives in the tooltip
+            button.setIconSize(toolbar_icons.TOOLBAR_ICON_SIZE)
             button.setCheckable(True)
             button.setChecked(info.mode_id == current_mode)
             button.clicked.connect(lambda _, mid=info.mode_id: self._set_active_view_mode(mid))
             self._view_toggle_group.addButton(button)
             layout.addWidget(button)
             self._view_toggle_buttons[info.mode_id] = button
+        self._refresh_toolbar_icons()
 
     def _populate_sort_menu(self, menu: QMenu) -> None:
         """Fills `menu` with the sort-key + direction actions - shared by
@@ -657,6 +733,19 @@ class MainWindow(QMainWindow):
     def _manage_categories(self) -> None:
         CategoryManagerDialog(self._pm, self, plugin_manager=self._plugins).exec()
 
+    def _quick_add_category(self) -> None:
+        """Wired to the sidebar footer's "Add category" button - a fast,
+        single-field prompt (mirrors _rename()'s own QInputDialog pattern),
+        not the full CategoryManagerDialog (Project > Manage Categories…
+        stays the place for renaming/deleting/re-icon-ing)."""
+        name, ok = QInputDialog.getText(
+            self,
+            tr("dialog.manage_categories.title"),
+            tr("sidebar.add_category"),
+        )
+        if ok and name.strip():
+            self._pm.add_category(name.strip())
+
     def _choose_icon(self, project_id: str | None) -> None:
         if not project_id:
             return
@@ -776,6 +865,7 @@ class MainWindow(QMainWindow):
         self._build_menu_bar()  # idempotent full rebuild, see its own docstring
         self._populate_view_toggle()  # re-translate the toolbar's List/Grid labels too
         self._sidebar._refresh()  # "All"/"Uncategorized" labels; category names are user data
+        self._sidebar_library_label.setText(tr("sidebar.library_header"))
         self._search_bar.retranslate()
         self._update_status_bar()
 

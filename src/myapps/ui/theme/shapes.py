@@ -1,7 +1,8 @@
 """Reusable painted shapes for the app's blue-to-purple brand gradient
 (see brand.py's ACCENT_BLUE/ACCENT_PURPLE) - kept separate from any single
 widget so the same silhouette renders identically everywhere it's used:
-`ui/delegates/project_item_delegate.py`'s list/grid rows, and
+`ui/delegates/project_item_delegate.py`'s list/grid rows,
+`ui/widgets/category_sidebar.py`'s selected-row gradient, and
 `ui/dialogs/plugin_manager_dialog.py`'s generated fallback icon for a
 plugin with no logo of its own.
 
@@ -19,16 +20,58 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRect, QRectF, Qt
 from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPainterPath, QPixmap
-from PySide6.QtWidgets import QGraphicsDropShadowEffect, QWidget
+from PySide6.QtWidgets import QApplication, QGraphicsDropShadowEffect, QWidget
 
 from myapps.ui.theme import brand
 
+# Key ThemeManager.apply() stashes the resolved token dict under on the
+# QApplication instance (a dynamic property, not a new Qt API) - see its
+# own docstring. Reading it back here is how a *painted* gradient (which
+# can't reference `$accent_blue`/`$accent_purple` QSS tokens the way a
+# stylesheet rule can) still honors a plugin-contributed ThemePalette
+# instead of always falling back to the hardcoded default brand colors.
+_ACTIVE_TOKENS_PROPERTY = "myapps_active_tokens"
+
+
+def _active_accent_colors() -> tuple[str, str]:
+    app = QApplication.instance()
+    tokens = app.property(_ACTIVE_TOKENS_PROPERTY) if app else None
+    if isinstance(tokens, dict):
+        blue = tokens.get("accent_blue")
+        purple = tokens.get("accent_purple")
+        if isinstance(blue, str) and isinstance(purple, str):
+            return blue, purple
+    return brand.ACCENT_BLUE, brand.ACCENT_PURPLE
+
+
+def active_token(key: str, fallback: str) -> QColor:
+    """Any single token (e.g. "surface", "subtext") from the currently
+    active palette - built-in or plugin-contributed - for delegate paint()
+    code that needs an exact theme color. Deliberately NOT `option.palette`:
+    once a global QSS is applied (this app always has one active), Qt's
+    style-sheet cascade can recompute a widget's effective QPalette roles
+    from the stylesheet rather than leaving them as the plain app palette
+    (e.g. QListView's own `background-color: transparent` rule bleeding
+    into `option.palette.base()`), so a delegate reading `option.palette`
+    for a *fill* color can silently get the wrong shade. Reading the same
+    token dict `brand_gradient()` uses sidesteps that entirely."""
+    app = QApplication.instance()
+    tokens = app.property(_ACTIVE_TOKENS_PROPERTY) if app else None
+    if isinstance(tokens, dict):
+        value = tokens.get(key)
+        if isinstance(value, str):
+            return QColor(value)
+    return QColor(fallback)
+
 
 def brand_gradient(rect: QRect | QRectF) -> QLinearGradient:
-    """Diagonal blue -> purple gradient matching the app logo."""
+    """Diagonal blue -> purple gradient matching the app logo - or a
+    plugin-contributed ThemePalette's own accent_blue/accent_purple, when
+    one is the active palette (see _active_accent_colors())."""
+    blue, purple = _active_accent_colors()
     gradient = QLinearGradient(QPointF(rect.topLeft()), QPointF(rect.bottomRight()))
-    gradient.setColorAt(0.0, QColor(brand.ACCENT_BLUE))
-    gradient.setColorAt(1.0, QColor(brand.ACCENT_PURPLE))
+    gradient.setColorAt(0.0, QColor(blue))
+    gradient.setColorAt(1.0, QColor(purple))
     return gradient
 
 

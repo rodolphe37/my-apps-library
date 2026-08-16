@@ -11,6 +11,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-08-16
+
+### Changed
+
+- **Design pass to match the approved mockup exactly.**
+  - Toolbar: no more drop shadow, just a bottom border (matching the mockup).
+    The List/Grid (+ any plugin-contributed) switch and the sort button are
+    now hand-painted line icons instead of text/emoji glyphs - render
+    identically on Windows/macOS/Linux and pick up the active accent color
+    automatically, including a plugin-contributed one.
+  - Sidebar: a "Library" section label above "All", right-aligned counts
+    with no parentheses, and a "+" prefix on "Uncategorized" - all painted
+    by a new per-row delegate so label and count can be positioned
+    independently.
+  - Grid tiles are now always a card (white/surface fill, hairline border,
+    faint shadow) rather than only on hover - matches the mockup instead of
+    fading into the background at rest.
+  - List rows gained a trailing category chip, pin star, and a localized
+    short date ("Aug 8"/"8 août"), right-aligned - previously only shown in
+    grid view.
+  - Sidebar footer gained a quick "+ Add category" action (a fast prompt,
+    not the full Manage Categories dialog).
+- **Plugin theme-palette compatibility fix.** Several colors (the folder
+  icon gradient, sidebar selection, category chips, the pin star, and the
+  new tile card fill) previously either hardcoded the default brand colors
+  or read `option.palette`, which - once a global stylesheet is active, as
+  this app always has - can silently diverge from a plugin-contributed
+  `ThemePalette`'s own colors. All of these now read the *actual* active
+  token set (built-in or plugin-contributed) instead.
+
 ## [0.10.0] - 2026-08-16
 
 ### Changed
