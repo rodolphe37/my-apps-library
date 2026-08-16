@@ -106,7 +106,24 @@ class ProjectItemDelegate(QStyledItemDelegate):
 
     def _paint_row(self, painter: QPainter, option: QStyleOptionViewItem, index) -> None:
         painter.save()
-        rect = option.rect.adjusted(4, 2, -4, -2)
+        # Hard-clip everything (including the shadow's own soft falloff) to
+        # this item's own cell - QStyledItemDelegate.paint() isn't clipped
+        # to option.rect by default, and paint_soft_shadow()'s blur/spread
+        # can reach past a row's few-px gutter into the *next* row's cell.
+        # Qt only repaints whichever items' hover state actually changed,
+        # not arbitrary neighbors, so any shadow bleed left behind in a
+        # neighboring cell from a previous hover would linger as a visible
+        # ghost until that cell happened to repaint for some other reason -
+        # exactly the bug this was reported as ("a square of leftover
+        # background that stays a bit" when moving the mouse to a new
+        # card).
+        painter.setClipRect(option.rect)
+        # Vertical inset (4, was 2) is the real budget for the shadow's own
+        # spread below - it has to fully fade out well inside this margin,
+        # or clipping at option.rect's edge (necessary - see above) would
+        # itself become visible as a hard-edged rectangle instead of a
+        # soft fade. blur/y_offset below are tuned to fit inside it.
+        rect = option.rect.adjusted(4, 4, -4, -4)
 
         selected = bool(option.state & QStyle.StateFlag.State_Selected)
         hovered = bool(option.state & QStyle.StateFlag.State_MouseOver)
@@ -116,7 +133,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
             # A faint lift on hover/selected, same idea as the tile's card
             # shadow but subtler - rows are denser, so a heavy shadow per
             # row would be visual noise.
-            paint_soft_shadow(painter, rect, ROW_RADIUS, blur=14.0, y_offset=2.0, alpha=24)
+            paint_soft_shadow(painter, rect, ROW_RADIUS, blur=6.0, y_offset=1.5, alpha=22)
         if selected:
             _paint_selection_border(painter, bg_path)
         elif hovered:
@@ -206,7 +223,17 @@ class ProjectItemDelegate(QStyledItemDelegate):
 
     def _paint_tile(self, painter: QPainter, option: QStyleOptionViewItem, index) -> None:
         painter.save()
-        rect = option.rect.adjusted(6, 6, -6, -6)
+        # See _paint_row's identical setClipRect() call for why this
+        # matters - a tile's shadow bleeding past its own cell into a
+        # neighbor's is exactly what caused visible shadow "ghosts" left
+        # behind after moving the mouse to a different card.
+        painter.setClipRect(option.rect)
+        # This inset (10, was 6) is the real budget the shadow's spread has
+        # to fully fade out inside, or clipping at option.rect's edge
+        # (necessary - see above) would itself become visible as a hard
+        # rectangle instead of a soft fade. blur/y_offset below are tuned
+        # to fit inside it.
+        rect = option.rect.adjusted(10, 10, -10, -10)
 
         selected = bool(option.state & QStyle.StateFlag.State_Selected)
         hovered = bool(option.state & QStyle.StateFlag.State_MouseOver)
@@ -227,7 +254,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
         # active_token()'s own docstring.
         raised = selected or hovered
         if raised:
-            paint_soft_shadow(painter, rect, TILE_RADIUS, blur=24.0, y_offset=4.0, alpha=36)
+            paint_soft_shadow(painter, rect, TILE_RADIUS, blur=14.0, y_offset=3.0, alpha=34)
         painter.fillPath(bg_path, active_token("bg", brand.LIGHT_BG))
         if selected:
             _paint_selection_border(painter, bg_path)
