@@ -206,7 +206,25 @@ jobs:
             exit 0
           fi
           git clone "https://x-access-token:${TAP_TOKEN}@github.com/rodolphe37/homebrew-my-apps-library.git" tap-repo
-          cp Casks/my-apps-library.rb tap-repo/Casks/my-apps-library.rb
+          # Regenerate the tap's own cask.rb directly from the version/sha256
+          # step outputs above - NOT a `cp` of this repo's own
+          # Casks/my-apps-library.rb. That used to be a plain copy, but
+          # peter-evans/create-pull-request (the previous step) checks the
+          # working tree back out to its pre-bump state after pushing its
+          # own separate branch, so by the time this step ran, the file
+          # being copied was silently back to the *old* version - `git diff
+          # --cached --quiet` below then saw no real change and skipped the
+          # push entirely, even though the step itself reported success
+          # (confirmed by hand after the v0.9.0 release: this step was
+          # green, but the tap stayed on v0.8.0). Running bump_cask.py again
+          # here, targeting the tap's own freshly-cloned file, makes this
+          # step correct independent of that - or any future - side effect
+          # of an earlier step.
+          python3 packaging/homebrew/bump_cask.py \
+            --version "${{ steps.sha.outputs.version }}" \
+            --arm-sha256 "${{ steps.sha.outputs.arm_sha }}" \
+            --intel-sha256 "${{ steps.sha.outputs.intel_sha }}" \
+            --cask-path tap-repo/Casks/my-apps-library.rb
           cd tap-repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
