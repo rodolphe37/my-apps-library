@@ -20,11 +20,13 @@ from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
 
 from myapps.core.project_manager import ProjectManager
+from myapps.plugins.manager import PluginManager
 from myapps.ui.models.project_list_model import (
     CategoriesRole,
     IconRole,
     ModifiedAtRole,
     PinnedRole,
+    ProjectIdRole,
     ProjectPathRole,
 )
 from myapps.ui.theme import brand
@@ -34,10 +36,12 @@ ROW_HEIGHT = 60
 ICON_SIZE = 34
 PADDING = 12
 ROW_RADIUS = 12
+ROW_BADGE_SIZE = 15
 
 TILE_SIZE = QSize(168, 164)
 TILE_RADIUS = 14
 TILE_MAX_CHIPS = 2
+TILE_BADGE_SIZE = 19
 
 SELECTION_BORDER_WIDTH = 2
 
@@ -87,9 +91,15 @@ def _paint_selection_border(painter: QPainter, bg_path: QPainterPath) -> None:
 
 
 class ProjectItemDelegate(QStyledItemDelegate):
-    def __init__(self, project_manager: ProjectManager, parent=None) -> None:
+    def __init__(
+        self,
+        project_manager: ProjectManager,
+        plugin_manager: PluginManager | None = None,
+        parent=None,
+    ) -> None:
         super().__init__(parent)
         self._pm = project_manager
+        self._plugins = plugin_manager
         self.display_mode = "row"  # "row" (list) | "tile" (grid)
 
     def sizeHint(self, option, index) -> QSize:  # noqa: N802
@@ -151,6 +161,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
             ICON_SIZE,
         )
         self._paint_folder_icon(painter, icon_rect, index.data(IconRole))
+        self._paint_project_badge(painter, icon_rect, index.data(ProjectIdRole), ROW_BADGE_SIZE)
 
         text_left = icon_rect.right() + PADDING
         name = index.data(Qt.ItemDataRole.DisplayRole) or ""
@@ -267,6 +278,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
 
         icon_rect = QRect(rect.center().x() - 24, rect.top() + 12, 48, 48)
         self._paint_folder_icon(painter, icon_rect, index.data(IconRole))
+        self._paint_project_badge(painter, icon_rect, index.data(ProjectIdRole), TILE_BADGE_SIZE)
 
         pinned = bool(index.data(PinnedRole))
         if pinned:
@@ -373,6 +385,42 @@ class ProjectItemDelegate(QStyledItemDelegate):
         painter.save()
         painter.setPen(_pin_color())
         painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "★")
+        painter.restore()
+
+    def _paint_project_badge(
+        self, painter: QPainter, icon_rect: QRect, project_id: str | None, size: int
+    ) -> None:
+        """A small circular medallion (e.g. a plugin-detected language logo)
+        clipped over the folder icon's bottom-right corner - see
+        api.ProjectBadge's docstring. No-op whenever there's no plugin
+        manager, no project, or no plugin actually contributes one for it -
+        the common case, so this stays cheap."""
+        if self._plugins is None or not project_id:
+            return
+        project = self._pm.get_project(project_id)
+        if project is None:
+            return
+        badge = self._plugins.collect_project_badge(project)
+        if badge is None or badge.pixmap.isNull():
+            return
+
+        badge_rect = QRect(
+            icon_rect.right() - size + 4, icon_rect.bottom() - size + 4, size, size
+        )
+        painter.save()
+        # A ring in the app's own surface color sits behind the badge so it
+        # reads as a coin clipped onto the folder icon rather than a
+        # jarring square - needed since the folder icon underneath can be
+        # any color (built-in gradient, a picked glyph, a plugin-contributed
+        # icon pack...).
+        ring_path = QPainterPath()
+        ring_path.addEllipse(QRect(badge_rect).adjusted(-2, -2, 2, 2))
+        painter.fillPath(ring_path, active_token("surface", brand.LIGHT_SURFACE))
+
+        clip_path = QPainterPath()
+        clip_path.addEllipse(badge_rect)
+        painter.setClipPath(clip_path, Qt.ClipOperation.IntersectClip)
+        painter.drawPixmap(badge_rect, badge.pixmap)
         painter.restore()
 
     @staticmethod
