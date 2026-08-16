@@ -213,25 +213,22 @@ class ProjectItemDelegate(QStyledItemDelegate):
         bg_path = QPainterPath()
         bg_path.addRoundedRect(rect, TILE_RADIUS, TILE_RADIUS)
 
-        # Every tile is a card at rest - filled surface, hairline border,
-        # faint shadow - not just on hover/selected (see shapes.
-        # paint_soft_shadow's docstring for why this is hand-painted rather
-        # than a QGraphicsDropShadowEffect). Hover/selected just raise it
-        # further: a stronger shadow, and either a darker neutral border
-        # (hover) or the accent tint+border (selected).
+        # A tile's fill matches the page background at rest - only a
+        # hairline border defines the card - and hover/selected add a real
+        # elevation (a shadow that isn't there at rest, plus a darker
+        # neutral border on hover or the accent tint+border on selected).
         #
         # active_token(), not option.palette.base()/placeholderText(): once
         # a global QSS is applied (this app always has one), Qt's style-
         # sheet cascade can recompute a widget's *effective* QPalette from
         # the stylesheet rather than leaving it as the plain app palette -
         # e.g. QListView's own `background-color: transparent` rule
-        # bleeding into option.palette.base() here, silently turning a
-        # white card gray. See shapes.active_token()'s own docstring.
+        # bleeding into option.palette.base() here. See shapes.
+        # active_token()'s own docstring.
         raised = selected or hovered
-        paint_soft_shadow(
-            painter, rect, TILE_RADIUS, layers=5 if raised else 3, y_offset=3 if raised else 2
-        )
-        painter.fillPath(bg_path, active_token("surface", brand.LIGHT_SURFACE))
+        if raised:
+            paint_soft_shadow(painter, rect, TILE_RADIUS, layers=5, y_offset=3)
+        painter.fillPath(bg_path, active_token("bg", brand.LIGHT_BG))
         if selected:
             _paint_selection_border(painter, bg_path)
         else:
