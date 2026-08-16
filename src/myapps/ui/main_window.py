@@ -57,6 +57,7 @@ from myapps.ui.widgets.context_menu import (
     build_bulk_project_context_menu,
     build_project_context_menu,
 )
+from myapps.ui.widgets.dialog_buttons import ask_yes_no
 from myapps.ui.widgets.search_bar import SearchBar
 from myapps.utils.fs_utils import reveal_in_file_manager
 
@@ -530,12 +531,12 @@ class MainWindow(QMainWindow):
         project = self._pm.get_project(project_id)
         if not project:
             return
-        confirm = QMessageBox.question(
+        confirmed = ask_yes_no(
             self,
             tr("dialog.remove_project.title"),
             tr("dialog.remove_project.body", name=project.name),
         )
-        if confirm == QMessageBox.StandardButton.Yes:
+        if confirmed:
             self._pm.remove_project(project_id)
 
     def _remove_for_selection(self) -> None:
@@ -553,8 +554,8 @@ class MainWindow(QMainWindow):
         body_key = (
             "dialog.remove_projects.body.one" if n == 1 else "dialog.remove_projects.body.other"
         )
-        confirm = QMessageBox.question(self, tr("dialog.remove_project.title"), tr(body_key, n=n))
-        if confirm == QMessageBox.StandardButton.Yes:
+        confirmed = ask_yes_no(self, tr("dialog.remove_project.title"), tr(body_key, n=n))
+        if confirmed:
             for project in projects:
                 self._pm.remove_project(project.id)
 
@@ -777,6 +778,7 @@ class MainWindow(QMainWindow):
                     Qt.TransformationMode.SmoothTransformation,
                 )
             )
+        box.addButton(tr("action.ok"), QMessageBox.ButtonRole.AcceptRole)
         box.exec()
 
     # -- drag & drop ---------------------------------------------------

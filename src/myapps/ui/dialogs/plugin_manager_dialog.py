@@ -45,6 +45,7 @@ from myapps.plugins.manager import (
 from myapps.plugins.manifest import PluginManifest
 from myapps.plugins.sandbox import describe_permissions, trust_disclosure_text
 from myapps.ui.theme.shapes import badge_pixmap
+from myapps.ui.widgets.dialog_buttons import ask_yes_no, standard_button_box
 from myapps.ui.widgets.toggle_switch import ToggleSwitch
 
 _CARD_ICON_SIZE = 40
@@ -179,6 +180,17 @@ class _PluginCard(QFrame):
         self.clicked.emit()
         super().mousePressEvent(event)
 
+    def set_selected(self, selected: bool) -> None:
+        """Toggles the QSS `[selected="true"]` attribute selector (see
+        theme/styles/*.qss's `QFrame#PluginCard[selected="true"]` rule) -
+        setItemWidget() means this card fully covers its QListWidgetItem's
+        cell, so Qt's own native item-selected highlight never shows
+        through; this is what actually indicates "this is the plugin
+        Details…/Remove will act on" instead."""
+        self.setProperty("selected", selected)
+        self.style().unpolish(self)
+        self.style().polish(self)
+
 
 class PluginManagerDialog(QDialog):
     def __init__(self, plugin_manager: PluginManager, parent: QWidget | None = None) -> None:
@@ -205,22 +217,25 @@ class PluginManagerDialog(QDialog):
         layout.addWidget(self._list, 1)
         self._reload()
 
-        # Two rows rather than one - five buttons (some with fairly long
-        # localized labels, e.g. French "Installer depuis un dossier…")
-        # never comfortably fit on a single row at a reasonable dialog
-        # width, and this split is meaningful anyway: "get more plugins"
-        # actions on top, actions on the *selected* plugin below.
-        install_row = QHBoxLayout()
-        install_row.setSpacing(8)
+        # A 2-column grid, not a 3-wide row: some localized labels are long
+        # (French "Installer depuis un dossier…") and even a single row
+        # split 3/2 still clipped them at a reasonable dialog width - a
+        # fixed 2-column grid stays readable at any dialog width the user
+        # resizes down to, not just the default. Also meaningful as a
+        # split: "get more plugins" actions here, actions on the
+        # *selected* plugin in their own row below.
+        install_grid = QGridLayout()
+        install_grid.setSpacing(8)
         browse_marketplace_btn = QPushButton(tr("dialog.plugins.browse_marketplace"))
         install_zip_btn = QPushButton(tr("dialog.plugins.install_zip"))
         install_folder_btn = QPushButton(tr("dialog.plugins.install_folder"))
         browse_marketplace_btn.clicked.connect(self._browse_marketplace)
         install_zip_btn.clicked.connect(self._install_zip)
         install_folder_btn.clicked.connect(self._install_folder)
-        for b in (browse_marketplace_btn, install_zip_btn, install_folder_btn):
-            install_row.addWidget(b)
-        layout.addLayout(install_row)
+        install_grid.addWidget(browse_marketplace_btn, 0, 0)
+        install_grid.addWidget(install_zip_btn, 0, 1)
+        install_grid.addWidget(install_folder_btn, 1, 0)
+        layout.addLayout(install_grid)
 
         selection_row = QHBoxLayout()
         selection_row.setSpacing(8)
@@ -233,12 +248,13 @@ class PluginManagerDialog(QDialog):
         selection_row.addStretch(1)
         layout.addLayout(selection_row)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons = standard_button_box(QDialogButtonBox.StandardButton.Close)
         buttons.rejected.connect(self.accept)
         buttons.accepted.connect(self.accept)
         layout.addWidget(buttons)
 
         event_bus.plugins_changed.connect(self._reload)
+        self._list.currentItemChanged.connect(self._on_current_item_changed)
 
     # -- list population -------------------------------------------------
 
@@ -258,6 +274,18 @@ class PluginManagerDialog(QDialog):
             item.setSizeHint(card.sizeHint())
             self._list.setItemWidget(item, card)
 
+    def _on_current_item_changed(
+        self, current: QListWidgetItem | None, previous: QListWidgetItem | None
+    ) -> None:
+        if previous is not None:
+            old_card = self._list.itemWidget(previous)
+            if old_card is not None:
+                old_card.set_selected(False)
+        if current is not None:
+            new_card = self._list.itemWidget(current)
+            if new_card is not None:
+                new_card.set_selected(True)
+
     def _selected_plugin_id(self) -> str | None:
         item = self._list.currentItem()
         return item.data(Qt.ItemDataRole.UserRole) if item else None
@@ -275,12 +303,12 @@ class PluginManagerDialog(QDialog):
 
     def _on_toggle(self, plugin_id: str, checked: bool, switch: ToggleSwitch) -> None:
         if checked:
-            confirm = QMessageBox.question(
+            confirmed = ask_yes_no(
                 self,
                 tr("dialog.plugins.enable_title"),
                 trust_disclosure_text() + tr("dialog.plugins.enable_confirm_suffix"),
             )
-            if confirm != QMessageBox.StandardButton.Yes:
+            if not confirmed:
                 switch.blockSignals(True)
                 switch.setChecked(False)
                 switch.blockSignals(False)
@@ -369,7 +397,7 @@ class PluginManagerDialog(QDialog):
             permission_label.setWordWrap(True)
             layout.addWidget(permission_label)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons = standard_button_box(QDialogButtonBox.StandardButton.Close)
         buttons.rejected.connect(dialog.reject)
         buttons.accepted.connect(dialog.accept)
         layout.addWidget(buttons)
@@ -379,10 +407,10 @@ class PluginManagerDialog(QDialog):
         plugin_id = self._selected_plugin_id()
         if not plugin_id:
             return
-        confirm = QMessageBox.question(
+        confirmed = ask_yes_no(
             self,
             tr("dialog.plugins.remove_confirm_title"),
             tr("dialog.plugins.remove_confirm_body", id=plugin_id),
         )
-        if confirm == QMessageBox.StandardButton.Yes:
+        if confirmed:
             self._plugins.uninstall(plugin_id)

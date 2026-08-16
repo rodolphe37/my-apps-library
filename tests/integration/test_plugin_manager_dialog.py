@@ -43,9 +43,9 @@ def test_toggle_switch_calls_enable_and_disable(tmp_path, qtbot, monkeypatch):
     qtbot.addWidget(dialog)
 
     # Auto-confirm the trust disclosure dialog that appears on enable.
-    from PySide6.QtWidgets import QMessageBox
-
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **kw: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(
+        "myapps.ui.dialogs.plugin_manager_dialog.ask_yes_no", lambda *a, **kw: True
+    )
 
     # Re-fetch the card after each toggle: enable()/disable() emit
     # plugins_changed, which the dialog reacts to by fully reloading its
@@ -65,9 +65,9 @@ def test_declining_enable_confirmation_reverts_switch(tmp_path, qtbot, monkeypat
     dialog = PluginManagerDialog(plugins, None)
     qtbot.addWidget(dialog)
 
-    from PySide6.QtWidgets import QMessageBox
-
-    monkeypatch.setattr(QMessageBox, "question", lambda *a, **kw: QMessageBox.StandardButton.No)
+    monkeypatch.setattr(
+        "myapps.ui.dialogs.plugin_manager_dialog.ask_yes_no", lambda *a, **kw: False
+    )
 
     card = _card(dialog, 0)
     card.switch.setChecked(True)

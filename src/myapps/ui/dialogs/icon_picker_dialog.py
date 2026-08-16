@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 from myapps.i18n import tr
 from myapps.plugins.api import IconPack
 from myapps.ui.theme.builtin_icons import BUILTIN_ICON_PACK
+from myapps.ui.widgets.dialog_buttons import standard_button_box
 
 _COLUMNS = 8
 
@@ -55,8 +56,8 @@ class IconPickerDialog(QDialog):
         clear_btn.clicked.connect(self._clear)
         outer.addWidget(clear_btn)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        buttons = standard_button_box(
+            QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)

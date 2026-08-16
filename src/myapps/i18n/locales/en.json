@@ -1,6 +1,12 @@
 {
   "meta.language_name": "English",
 
+  "action.ok": "OK",
+  "action.cancel": "Cancel",
+  "action.close": "Close",
+  "action.yes": "Yes",
+  "action.no": "No",
+
   "menu.file": "&File",
   "menu.file.add_project": "Add Project…",
   "menu.file.preferences": "Preferences…",

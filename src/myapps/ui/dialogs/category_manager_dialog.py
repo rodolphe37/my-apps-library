@@ -12,7 +12,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QListWidget,
     QListWidgetItem,
-    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -22,6 +21,7 @@ from myapps.core.models import Project
 from myapps.core.project_manager import ProjectManager
 from myapps.i18n import tr
 from myapps.ui.dialogs.icon_picker_dialog import IconPickerDialog
+from myapps.ui.widgets.dialog_buttons import ask_yes_no, standard_button_box
 
 
 class CategoryManagerDialog(QDialog):
@@ -59,7 +59,7 @@ class CategoryManagerDialog(QDialog):
             btn_row.addWidget(b)
         layout.addLayout(btn_row)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons = standard_button_box(QDialogButtonBox.StandardButton.Close)
         buttons.rejected.connect(self.accept)
         buttons.accepted.connect(self.accept)
         layout.addWidget(buttons)
@@ -112,12 +112,12 @@ class CategoryManagerDialog(QDialog):
         item = self._list.currentItem()
         if not item:
             return
-        confirm = QMessageBox.question(
+        confirmed = ask_yes_no(
             self,
             tr("dialog.delete_category.title"),
             tr("dialog.delete_category.body", name=item.text()),
         )
-        if confirm == QMessageBox.StandardButton.Yes:
+        if confirmed:
             self._pm.remove_category(item.data(Qt.ItemDataRole.UserRole))
             self._reload()
 
@@ -146,8 +146,8 @@ class ProjectCategoryPickerDialog(QDialog):
             self._list.addItem(item)
         layout.addWidget(self._list)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        buttons = standard_button_box(
+            QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -211,8 +211,8 @@ class BulkCategoryPickerDialog(QDialog):
             self._list.addItem(item)
         layout.addWidget(self._list)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        buttons = standard_button_box(
+            QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)

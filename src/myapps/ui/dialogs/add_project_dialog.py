@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 
 from myapps.core.project_manager import ProjectManager
 from myapps.i18n import tr
+from myapps.ui.widgets.dialog_buttons import standard_button_box
 
 
 class AddProjectDialog(QDialog):
@@ -67,8 +68,8 @@ class AddProjectDialog(QDialog):
             self._category_list.addItem(item)
         layout.addWidget(self._category_list)
 
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        buttons = standard_button_box(
+            QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)

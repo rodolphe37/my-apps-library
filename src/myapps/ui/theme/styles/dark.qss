@@ -175,3 +175,7 @@ QFrame#PluginCard {
 QFrame#PluginCard:hover {
     border-color: $accent_blend;
 }
+
+QFrame#PluginCard[selected="true"] {
+    border: 2px solid $accent_blend;
+}
