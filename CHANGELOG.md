@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-08-16
+
+### Added
+
+- **One-click plugin updates** - the Plugin Manager dialog now checks each
+  installed plugin against the marketplace on open, and shows an "Update
+  available" badge with an "Update" button right on its card when a newer
+  version is published. Clicking it downloads and installs the update in
+  place - no more "Plugin is already installed" dead end from trying to
+  reinstall over an existing one. A currently-enabled plugin is reloaded
+  immediately with the new code, no app restart needed; a disabled one
+  just gets its files updated for next time it's enabled.
+
 ## [0.8.0] - 2026-08-16
 
 ### Added
