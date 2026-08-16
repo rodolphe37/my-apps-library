@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-08-16
+
+### Added
+
+- **New plugin hook: `contribute_project_badge(project)`.** Lets a plugin
+  paint a small logo/overlay in the corner of a project's folder icon - in
+  the real built-in List and Grid views themselves, not just an opt-in
+  alternate view mode. Returns an optional `api.ProjectBadge(pixmap,
+  tooltip)`; `PluginManager.collect_project_badge()` takes the first
+  non-None contribution in plugin load order and `ProjectItemDelegate`
+  paints it as a small circular medallion clipped over the folder icon's
+  bottom-right corner, in both `_paint_row` (list) and `_paint_tile`
+  (grid). Called on every repaint, so a plugin is expected to cache its own
+  result and return quickly - see the hook's docstring in `plugins/api.py`
+  for the background-thread-plus-`event_bus.project_updated` pattern to use
+  for anything that needs real work (e.g. scanning a project's files).
+  `register_builtin_views()` now takes an optional `PluginManager` so the
+  two built-in view factories can wire it into their delegate.
+
 ## [0.12.0] - 2026-08-16
 
 ### Fixed

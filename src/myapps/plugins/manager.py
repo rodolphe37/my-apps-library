@@ -31,6 +31,7 @@ from myapps.plugins.api import (
     PluginMenuAction,
     PluginSettingsStore,
     PluginUIRegistrar,
+    ProjectBadge,
     ThemePalette,
 )
 from myapps.plugins.loader import discover_local
@@ -488,6 +489,25 @@ class PluginManager:
                 for factory in registrar.project_action_factories:
                     actions.append(factory(project))
         return actions
+
+    def collect_project_badge(self, project: Project) -> ProjectBadge | None:
+        """First non-None ProjectBadge wins, in plugin load order - see
+        contribute_project_badge()'s docstring on api.PluginBase. Called on
+        every repaint of `project`'s row/tile (ProjectItemDelegate.paint()),
+        so this stays a plain synchronous loop over already-loaded plugins -
+        no I/O of its own, same expectation it places on each plugin's own
+        contribute_project_badge()."""
+        for plugin_id, loaded in self._active_plugins():
+            badge = self._safe_call(
+                plugin_id, lambda inst=loaded.instance: inst.contribute_project_badge(project), None
+            )
+            if badge is None:
+                continue
+            if not isinstance(badge, ProjectBadge):
+                logger.warning("Plugin %r contributed a non-ProjectBadge badge", plugin_id)
+                continue
+            return badge
+        return None
 
     def collect_views(self) -> list[ViewModeInfo]:
         views: list[ViewModeInfo] = []

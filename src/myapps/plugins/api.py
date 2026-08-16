@@ -11,6 +11,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from PySide6.QtGui import QPixmap
+
 from myapps.core.models import Project
 from myapps.core.project_manager import ProjectManager
 from myapps.core.store import load_json, save_json
@@ -46,6 +48,25 @@ class IconPack:
     id: str
     label: str
     icons: list[IconDef] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ProjectBadge:
+    """A small overlay painted in the corner of a project's folder icon, in
+    BOTH the built-in List and Grid views (not an opt-in alternate view -
+    see contribute_views() for that) - e.g. a detected tech/language logo.
+
+    `pixmap` should be small and roughly square (a higher-res source stays
+    crisp on HiDPI - ProjectItemDelegate scales it down to the on-screen
+    badge size, never up). `tooltip`, if non-empty, is appended to the
+    folder icon's own tooltip text.
+
+    Contributing plugin is responsible for its own caching - see
+    contribute_project_badge()'s docstring: this is read on every repaint,
+    so it must return near-instantly."""
+
+    pixmap: QPixmap
+    tooltip: str = ""
 
 
 @dataclass(frozen=True)
@@ -87,6 +108,28 @@ class PluginBase:
 
     def contribute_project_context_actions(self, project: Project) -> list[PluginMenuAction]:
         return []
+
+    def contribute_project_badge(self, project: Project) -> ProjectBadge | None:
+        """Optional: a small logo/overlay painted on `project`'s folder icon
+        in the real built-in List and Grid views - see ProjectBadge's
+        docstring. Return None to contribute nothing for this project (the
+        default).
+
+        Called on every repaint of that project's row/tile, so it MUST
+        return quickly - do any expensive work (filesystem scanning,
+        network, ...) in a background thread the first time a project is
+        seen, cache the result, and return None until it's ready. Once
+        ready, emit `myapps.core.events.event_bus.project_updated(project.
+        id)` from the plugin so the view picks the badge up on its next
+        repaint - see finder-style-info's GetInfoDialog for the same
+        background-thread-plus-signal pattern applied to a dialog instead
+        of a delegate.
+
+        If more than one enabled plugin contributes a badge for the same
+        project, the first one (load order) wins - the rest are silently
+        dropped, same 'never crash, never stack unbounded UI' spirit as the
+        rest of this module."""
+        return None
 
     def contribute_views(self) -> list[ViewModeInfo]:
         return []
