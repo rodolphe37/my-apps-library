@@ -11,6 +11,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-16
+
+### Added
+
+- **Plugin logos** - `plugin.toml` gains an optional `icon` field (a PNG/SVG/etc.
+  path relative to the plugin's own folder). Shown in the Plugin Manager
+  dialog and its Details view; a plugin with none gets a generated
+  fallback badge in the app's own brand gradient.
+
+### Changed
+
+- **Plugin Manager dialog redesigned** - each installed plugin is now a
+  card (logo, name, version, status, description, an animated toggle
+  switch instead of a checkbox), with an accent-colored border marking
+  the selected plugin. The Details dialog got the same treatment.
+- **Folder icon** (list/grid view) - replaced the plain rounded-square
+  gradient with an actual folder silhouette (tab + body), same
+  blue-to-purple brand gradient.
+- Every dialog's OK/Cancel/Close/Yes/No button now shows the app's own
+  translation instead of Qt's built-in (always-English) label.
+- Consistent margin/spacing polish across several dialogs (Plugin
+  Manager, Category Manager, Add Project, Editor Picker, Icon Picker,
+  Update Available, Settings).
+
 ## [0.7.1] - 2026-08-15
 
 ### Fixed
