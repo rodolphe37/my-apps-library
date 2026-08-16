@@ -18,14 +18,19 @@ from PySide6.QtGui import (
     QPixmap,
 )
 from PySide6.QtWidgets import (
+    QButtonGroup,
+    QFrame,
     QHBoxLayout,
     QInputDialog,
     QLabel,
     QMainWindow,
+    QMenu,
     QMessageBox,
+    QPushButton,
     QSplitter,
     QStackedWidget,
     QStatusBar,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -49,6 +54,7 @@ from myapps.ui.dialogs.plugin_manager_dialog import PluginManagerDialog
 from myapps.ui.dialogs.settings_dialog import SettingsDialog
 from myapps.ui.models.project_list_model import ProjectIdRole, ProjectListModel
 from myapps.ui.resources import app_icon_path
+from myapps.ui.theme.shapes import apply_elevation
 from myapps.ui.theme.theme_manager import ThemeManager
 from myapps.ui.views.builtin import register_builtin_views
 from myapps.ui.views.registry import view_registry
@@ -146,12 +152,16 @@ class MainWindow(QMainWindow):
 
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
-        right_layout.setContentsMargins(8, 8, 8, 8)
-        right_layout.setSpacing(6)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(0)
 
-        self._search_bar = SearchBar()
-        self._search_bar.search_changed.connect(self._model.set_search_text)
-        right_layout.addWidget(self._search_bar)
+        right_layout.addWidget(self._build_toolbar())
+
+        content = QWidget()
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(12, 10, 12, 12)
+        content_layout.setSpacing(6)
+        right_layout.addWidget(content, stretch=1)
 
         self._view_stack = QStackedWidget()
         for info in view_registry.list_modes():
@@ -159,7 +169,7 @@ class MainWindow(QMainWindow):
             self._views[info.mode_id] = widget
             self._wire_view_signals(widget)
             self._view_stack.addWidget(widget)
-        right_layout.addWidget(self._view_stack)
+        content_layout.addWidget(self._view_stack)
         # The one and only place the persisted view_mode is validated
         # against the now-fully-populated self._views and restored (or
         # falls back to DEFAULT_VIEW_MODE). _wire_view_signals() must NOT
@@ -167,6 +177,7 @@ class MainWindow(QMainWindow):
         # incomplete for all but the last widget processed, so it used to
         # treat a legitimately-saved "grid" as unknown and silently reset +
         # persist it back to "list" on every single startup.
+        self._populate_view_toggle()
         self._set_active_view_mode(
             self._settings.settings.view_mode
             if self._settings.settings.view_mode in self._views
@@ -210,6 +221,108 @@ class MainWindow(QMainWindow):
         layout.addWidget(title_label)
         layout.addStretch()
         return header
+
+    def _build_toolbar(self) -> QWidget:
+        """The one place search, the view-mode switch, sort and "Add
+        project" all live as direct, always-visible actions - previously
+        view mode/sort/add were menu-bar-only, undiscoverable unless you
+        already knew View > Mode / View > Sort / File > Add Project
+        existed. The menu bar keeps its own copies (shortcuts, full command
+        discoverability), this is just a second, faster way to reach the
+        same actions - see _set_active_view_mode()/_set_sort_key() etc.,
+        the single source of truth both paths call into."""
+        bar = QWidget()
+        bar.setObjectName("Toolbar")
+        apply_elevation(bar, blur=16, y_offset=2, alpha=26)
+        layout = QHBoxLayout(bar)
+        layout.setContentsMargins(14, 10, 14, 10)
+        layout.setSpacing(10)
+
+        self._search_bar = SearchBar()
+        self._search_bar.search_changed.connect(self._model.set_search_text)
+        layout.addWidget(self._search_bar, stretch=1)
+
+        self._view_toggle_frame = QFrame()
+        self._view_toggle_frame.setObjectName("ViewToggle")
+        toggle_layout = QHBoxLayout(self._view_toggle_frame)
+        toggle_layout.setContentsMargins(3, 3, 3, 3)
+        toggle_layout.setSpacing(2)
+        self._view_toggle_group = QButtonGroup(self)
+        self._view_toggle_group.setExclusive(True)
+        self._view_toggle_buttons: dict[str, QToolButton] = {}
+        layout.addWidget(self._view_toggle_frame)
+
+        sort_button = QToolButton()
+        sort_button.setObjectName("SortButton")
+        sort_button.setText("⇅")
+        sort_button.setToolTip(tr("menu.view.sort"))
+        sort_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        sort_menu = QMenu(sort_button)
+        self._populate_sort_menu(sort_menu)
+        sort_button.setMenu(sort_menu)
+        layout.addWidget(sort_button)
+
+        add_button = QPushButton(tr("menu.file.add_project"))
+        add_button.setObjectName("PrimaryButton")
+        add_button.clicked.connect(self._add_project)
+        apply_elevation(add_button, blur=18, y_offset=4, alpha=70)
+        layout.addWidget(add_button)
+
+        return bar
+
+    def _populate_view_toggle(self) -> None:
+        """(Re)builds the toolbar's segmented list/grid (+ any
+        plugin-contributed mode) switch from the live view registry -
+        mirrors _populate_view_mode_menu()'s job for the View menu, and is
+        called from the same three places: initial build, a plugins_changed
+        view-registry change, and a language change (mode labels are
+        re-translated text, e.g. "List"/"Grid")."""
+        for button in list(self._view_toggle_buttons.values()):
+            self._view_toggle_group.removeButton(button)
+            button.deleteLater()
+        self._view_toggle_buttons.clear()
+
+        current_mode = (
+            self._settings.settings.view_mode
+            if self._settings.settings.view_mode in self._views
+            else DEFAULT_VIEW_MODE
+        )
+        layout = self._view_toggle_frame.layout()
+        for info in view_registry.list_modes():
+            button = QToolButton(self._view_toggle_frame)
+            button.setText(info.label)
+            button.setCheckable(True)
+            button.setChecked(info.mode_id == current_mode)
+            button.clicked.connect(lambda _, mid=info.mode_id: self._set_active_view_mode(mid))
+            self._view_toggle_group.addButton(button)
+            layout.addWidget(button)
+            self._view_toggle_buttons[info.mode_id] = button
+
+    def _populate_sort_menu(self, menu: QMenu) -> None:
+        """Fills `menu` with the sort-key + direction actions - shared by
+        the View > Sort submenu and the toolbar's sort button so the two
+        never drift apart. Builds fresh QActions each call (menus are cheap
+        to rebuild and this keeps it consistent with how the rest of the
+        menu bar re-reads current settings on every open)."""
+        sort_group = QActionGroup(menu)
+        sort_group.setExclusive(True)
+        sort_options = (
+            (tr("menu.view.sort.name"), "name"),
+            (tr("menu.view.sort.created"), "created_at"),
+            (tr("menu.view.sort.modified"), "modified_at"),
+            (tr("menu.view.sort.size"), "size"),
+        )
+        for label, key in sort_options:
+            action = QAction(label, menu, checkable=True)
+            action.setChecked(self._settings.settings.sort_key == key)
+            action.triggered.connect(lambda _, k=key: self._set_sort_key(k))
+            sort_group.addAction(action)
+            menu.addAction(action)
+        menu.addSeparator()
+        descending_action = QAction(tr("menu.view.sort.descending"), menu, checkable=True)
+        descending_action.setChecked(self._settings.settings.sort_direction == "desc")
+        descending_action.toggled.connect(self._set_sort_descending)
+        menu.addAction(descending_action)
 
     def _build_menu_bar(self) -> None:
         """Builds the whole menu bar from scratch. Safe to call again - the
@@ -305,25 +418,7 @@ class MainWindow(QMainWindow):
         view_menu.addSeparator()
 
         sort_menu = view_menu.addMenu(tr("menu.view.sort"))
-        sort_group = QActionGroup(self)
-        sort_group.setExclusive(True)
-        sort_options = (
-            (tr("menu.view.sort.name"), "name"),
-            (tr("menu.view.sort.created"), "created_at"),
-            (tr("menu.view.sort.modified"), "modified_at"),
-            (tr("menu.view.sort.size"), "size"),
-        )
-        for label, key in sort_options:
-            action = QAction(label, self, checkable=True)
-            action.setChecked(self._settings.settings.sort_key == key)
-            action.triggered.connect(lambda _, k=key: self._set_sort_key(k))
-            sort_group.addAction(action)
-            sort_menu.addAction(action)
-        sort_menu.addSeparator()
-        descending_action = QAction(tr("menu.view.sort.descending"), self, checkable=True)
-        descending_action.setChecked(self._settings.settings.sort_direction == "desc")
-        descending_action.toggled.connect(self._set_sort_descending)
-        sort_menu.addAction(descending_action)
+        self._populate_sort_menu(sort_menu)
 
         # Plugins - always present, even with zero plugins installed, so
         # "Manage Plugins…" is discoverable regardless.
@@ -668,6 +763,9 @@ class MainWindow(QMainWindow):
         if widget is not None:
             self._view_stack.setCurrentWidget(widget)
         self._settings.set(view_mode=mode_id)
+        toggle_button = self._view_toggle_buttons.get(mode_id)
+        if toggle_button is not None and not toggle_button.isChecked():
+            toggle_button.setChecked(True)
 
     def _on_language_changed(self, _locale: str) -> None:
         """Rebuilds every piece of persistent, always-visible UI that carries
@@ -676,6 +774,7 @@ class MainWindow(QMainWindow):
         always current (see i18n design notes)."""
         register_builtin_views(view_registry, self._pm)  # retranslate "List"/"Grid" labels
         self._build_menu_bar()  # idempotent full rebuild, see its own docstring
+        self._populate_view_toggle()  # re-translate the toolbar's List/Grid labels too
         self._sidebar._refresh()  # "All"/"Uncategorized" labels; category names are user data
         self._search_bar.retranslate()
         self._update_status_bar()
@@ -725,6 +824,7 @@ class MainWindow(QMainWindow):
             self._wire_view_signals(widget)
             self._view_stack.addWidget(widget)
 
+        self._populate_view_toggle()  # a plugin can add/remove a contributed view mode
         # Same validate-once-after-the-full-set-is-known pattern as the end
         # of _build_ui(), for the same reason: covers a plugin being
         # disabled while its contributed view was the active one.

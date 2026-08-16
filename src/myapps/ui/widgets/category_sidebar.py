@@ -56,7 +56,10 @@ class CategorySidebar(QListWidget):
         all_item.setData(Qt.ItemDataRole.UserRole, ALL_ITEM_ID)
         self.addItem(all_item)
 
-        for category in self._pm.list_categories():
+        categories = self._pm.list_categories()
+        if categories:
+            self.addItem(self._make_section_header(tr("sidebar.categories_header")))
+        for category in categories:
             # category.name is user data, never translated - only the
             # "{name} ({n})" template is.
             count = len(self._pm.projects_in_category(category.id))
@@ -75,6 +78,23 @@ class CategorySidebar(QListWidget):
         self.blockSignals(False)
         self._select_filter_id(previously_selected or ALL_ITEM_ID)
 
+    @staticmethod
+    def _make_section_header(label: str) -> QListWidgetItem:
+        """A purely visual group label ("Categories") sitting above the
+        category rows - not a real filter target. `Qt.ItemFlag.NoItemFlags`
+        makes it neither selectable nor enabled, so it can never become
+        `currentItem()` (click or keyboard) and _select_filter_id()/
+        _current_filter_id() never have to special-case it; the disabled
+        look this produces (muted, non-interactive) doubles as the header
+        styling with no extra QSS needed."""
+        item = QListWidgetItem(label.upper())
+        item.setFlags(Qt.ItemFlag.NoItemFlags)
+        font = item.font()
+        font.setPointSizeF(font.pointSizeF() * 0.82)
+        font.setBold(True)
+        item.setFont(font)
+        return item
+
     def _current_filter_id(self) -> str | None:
         item = self.currentItem()
         return item.data(Qt.ItemDataRole.UserRole) if item else None
@@ -88,9 +108,24 @@ class CategorySidebar(QListWidget):
         if self.count():
             self.setCurrentRow(0)
 
-    def _on_current_changed(self, current: QListWidgetItem, _previous) -> None:
-        if current:
-            self.filter_changed.emit(current.data(Qt.ItemDataRole.UserRole))
+    def _on_current_changed(self, current: QListWidgetItem, previous: QListWidgetItem) -> None:
+        if not current:
+            return
+        filter_id = current.data(Qt.ItemDataRole.UserRole)
+        if filter_id is None:
+            # The "Categories" section header (see _make_section_header) -
+            # NoItemFlags keeps it out of normal mouse/keyboard selection,
+            # but Qt's own setCurrentItem() API can still land here (e.g.
+            # restoring a previous selection mid-refresh), and that must
+            # never turn into "filter by category=None" (the Uncategorized
+            # semantic). Bounce back to wherever selection was, or "All" if
+            # there's nowhere to bounce back to.
+            if previous:
+                self.setCurrentItem(previous)
+            else:
+                self._select_filter_id(ALL_ITEM_ID)
+            return
+        self.filter_changed.emit(filter_id)
 
     # -- drag & drop (project -> category) --------------------------------
 

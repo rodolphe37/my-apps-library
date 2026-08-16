@@ -45,6 +45,7 @@
   "view_mode.grid": "Grille",
 
   "sidebar.all": "Tous ({n})",
+  "sidebar.categories_header": "Catégories",
   "sidebar.category_count": "{name} ({n})",
   "sidebar.uncategorized": "Sans catégorie",
   "sidebar.uncategorized_count": "Sans catégorie ({n})",

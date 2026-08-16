@@ -57,9 +57,9 @@ QListView::item:selected {
 }
 
 #CategorySidebar::item {
-    border-radius: 8px;
-    padding: 6px 10px;
-    margin: 1px 0;
+    border-radius: 9px;
+    padding: 7px 10px;
+    margin: 2px 0;
     color: #c7cde3;
 }
 
@@ -74,19 +74,86 @@ QListView::item:selected {
     font-weight: 600;
 }
 
-/* -- Search bar --------------------------------------------------------- */
+/* -- Toolbar (search + view toggle + sort + add project) --------------- */
+
+#Toolbar {
+    background-color: $surface;
+    border-bottom: 1px solid $border;
+}
 
 QLineEdit#SearchBar {
     border: 1px solid $border;
     border-radius: 9px;
     padding: 7px 12px;
-    background-color: $surface;
+    background-color: $surface_alt;
     color: $text;
     selection-background-color: $accent_blend;
 }
 
 QLineEdit#SearchBar:focus {
     border: 1px solid $accent_blend_hover;
+    background-color: $surface;
+}
+
+#ViewToggle {
+    background-color: $surface_alt;
+    border: 1px solid $border;
+    border-radius: 9px;
+}
+
+#ViewToggle QToolButton {
+    border: none;
+    border-radius: 7px;
+    padding: 6px 12px;
+    background-color: transparent;
+    color: $subtext;
+    font-weight: 600;
+}
+
+#ViewToggle QToolButton:checked {
+    background-color: #2a3350;
+    color: #ffffff;
+}
+
+#ViewToggle QToolButton:hover:!checked {
+    color: $text;
+}
+
+QToolButton#SortButton {
+    border: 1px solid $border;
+    border-radius: 9px;
+    padding: 6px 10px;
+    background-color: $surface;
+    color: $text;
+}
+
+QToolButton#SortButton::menu-indicator {
+    image: none;
+    width: 0;
+}
+
+QToolButton#SortButton:hover {
+    background-color: #232c46;
+    border-color: #37416a;
+}
+
+QPushButton#PrimaryButton {
+    border: none;
+    border-radius: 9px;
+    padding: 8px 18px;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 $accent_blue, stop:1 $accent_purple);
+    color: white;
+    font-weight: 600;
+}
+
+QPushButton#PrimaryButton:hover {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 $accent_blend_hover, stop:1 $accent_purple);
+}
+
+QPushButton#PrimaryButton:pressed {
+    background-color: $accent_blend;
 }
 
 /* -- Buttons -------------------------------------------------------- */

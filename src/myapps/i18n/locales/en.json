@@ -45,6 +45,7 @@
   "view_mode.grid": "Grid",
 
   "sidebar.all": "All ({n})",
+  "sidebar.categories_header": "Categories",
   "sidebar.category_count": "{name} ({n})",
   "sidebar.uncategorized": "Uncategorized",
   "sidebar.uncategorized_count": "Uncategorized ({n})",

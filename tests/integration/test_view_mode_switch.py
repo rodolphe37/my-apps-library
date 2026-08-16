@@ -70,3 +70,25 @@ def test_view_mode_survives_a_real_restart(tmp_path, qtbot, qapp):
     window2, _pm2 = make_window(tmp_path, qtbot, qapp)
     assert window2._settings.settings.view_mode == "grid"
     assert window2._view_stack.currentWidget() is window2._views["grid"]
+
+
+def test_toolbar_view_toggle_reflects_active_mode(tmp_path, qtbot, qapp):
+    """The toolbar's segmented List/Grid switch (see
+    MainWindow._build_toolbar/_populate_view_toggle) must always agree with
+    whatever _set_active_view_mode() last settled on, regardless of whether
+    that call came from the toolbar itself, the View menu, or a fallback
+    (e.g. an unknown persisted mode)."""
+    window, _pm = make_window(tmp_path, qtbot, qapp)
+    assert window._view_toggle_buttons["list"].isChecked() is True
+    assert window._view_toggle_buttons["grid"].isChecked() is False
+
+    window._set_active_view_mode("grid")
+    assert window._view_toggle_buttons["grid"].isChecked() is True
+    assert window._view_toggle_buttons["list"].isChecked() is False
+
+
+def test_clicking_toolbar_view_toggle_switches_the_active_view(tmp_path, qtbot, qapp):
+    window, _pm = make_window(tmp_path, qtbot, qapp)
+    window._view_toggle_buttons["grid"].click()
+    assert window._settings.settings.view_mode == "grid"
+    assert window._view_stack.currentWidget() is window._views["grid"]

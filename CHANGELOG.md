@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-08-16
+
+### Changed
+
+- **Modernized main window design.** Search, the list/grid view switch, sort,
+  and "Add Project" now live in an always-visible toolbar instead of being
+  buried in the menu bar. The category sidebar groups categories under a
+  "Categories" header. Selected/hovered list rows and grid tiles get a
+  softer tinted fill plus a real elevation shadow (a hand-painted one for
+  delegate-painted rows/tiles, a genuine `QGraphicsDropShadowEffect` for
+  real widgets like the toolbar, the primary button, and Plugin Manager
+  cards). Corner radii were bumped slightly across rows, tiles, and sidebar
+  items for a softer, more modern feel. Same brand palette throughout - no
+  color changes.
+
 ## [0.9.0] - 2026-08-16
 
 ### Added

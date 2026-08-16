@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRect, QRectF, Qt
 from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPainterPath, QPixmap
+from PySide6.QtWidgets import QGraphicsDropShadowEffect, QWidget
 
 from myapps.ui.theme import brand
 
@@ -120,3 +121,59 @@ def badge_pixmap(size: int, glyph: str | None = None) -> QPixmap:
     paint_badge(painter, QRect(0, 0, size, size), glyph)
     painter.end()
     return pixmap
+
+
+def apply_elevation(
+    widget: QWidget, *, blur: float = 24.0, y_offset: float = 6.0, alpha: int = 60
+) -> QGraphicsDropShadowEffect:
+    """Installs a real drop shadow on a QWidget via QGraphicsDropShadowEffect.
+
+    QSS has no `box-shadow` - Qt Style Sheets simply don't support it - so
+    any actual elevation on a real widget (a dialog card, a toolbar, a
+    button) has to go through this Python-side effect instead. It only
+    works on genuine QWidgets, never inside a QAbstractItemDelegate.paint()
+    call (list/grid rows are painted, not widgets) - see
+    `project_item_delegate.py`'s own hand-painted soft-shadow for that case.
+
+    One shared, low-key shadow color/alpha by default so elevation reads
+    consistently across the app rather than each call site inventing its
+    own; callers needing a stronger or colored glow (e.g. a primary
+    gradient button) can override `blur`/`y_offset`/`alpha` or restyle the
+    returned effect directly (e.g. `.setColor(...)`).
+    """
+    effect = QGraphicsDropShadowEffect(widget)
+    effect.setBlurRadius(blur)
+    effect.setXOffset(0)
+    effect.setYOffset(y_offset)
+    effect.setColor(QColor(10, 14, 30, alpha))
+    widget.setGraphicsEffect(effect)
+    return effect
+
+
+def paint_soft_shadow(
+    painter: QPainter,
+    rect: QRect | QRectF,
+    radius: float,
+    *,
+    layers: int = 5,
+    y_offset: float = 3.0,
+) -> None:
+    """Hand-paints a soft shadow behind `rect` for delegate-painted content
+    (QGraphicsDropShadowEffect only applies to real QWidgets - see
+    `apply_elevation()` - so a list/grid row painted inside
+    QStyledItemDelegate.paint() has to fake elevation this way instead:
+    several progressively larger, progressively fainter rounded rects,
+    offset slightly downward, drawn *before* the row/tile's own
+    background). Cheap enough for a handful of visible rows/tiles; not
+    meant for large lists painted every frame."""
+    painter.save()
+    painter.setPen(Qt.PenStyle.NoPen)
+    base_rect = QRectF(rect)
+    for i in range(layers, 0, -1):
+        spread = i * 1.6
+        alpha = int(9 * (layers - i + 1) / layers) + 2
+        layer_rect = base_rect.adjusted(-spread, -spread + y_offset, spread, spread + y_offset)
+        path = QPainterPath()
+        path.addRoundedRect(layer_rect, radius + spread, radius + spread)
+        painter.fillPath(path, QColor(10, 14, 30, alpha))
+    painter.restore()

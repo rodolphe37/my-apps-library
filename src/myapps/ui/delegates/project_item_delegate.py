@@ -27,15 +27,15 @@ from myapps.ui.models.project_list_model import (
     ProjectPathRole,
 )
 from myapps.ui.theme import brand
-from myapps.ui.theme.shapes import paint_folder_icon
+from myapps.ui.theme.shapes import paint_folder_icon, paint_soft_shadow
 
 ROW_HEIGHT = 60
 ICON_SIZE = 34
 PADDING = 12
-ROW_RADIUS = 10
+ROW_RADIUS = 12
 
 TILE_SIZE = QSize(168, 164)
-TILE_RADIUS = 12
+TILE_RADIUS = 14
 TILE_MAX_CHIPS = 2
 
 PIN_COLOR = QColor(brand.PIN_COLOR)
@@ -45,11 +45,14 @@ SELECTION_BORDER_WIDTH = 2
 
 
 def _paint_selection_border(painter: QPainter, bg_path: QPainterPath) -> None:
-    """Selected rows/tiles get an accent-colored outline, not a filled
-    background - keeps the row's own colors (icon gradient, category chip
-    tints) readable instead of being washed out by a solid fill behind
-    them."""
+    """Selected rows/tiles get a soft accent-tinted fill plus an
+    accent-colored outline - not an opaque fill - so the row's own colors
+    (icon gradient, category chip tints) stay readable instead of being
+    washed out by a solid background behind them."""
     painter.save()
+    tint = QColor(SELECTION_BORDER_COLOR)
+    tint.setAlpha(28)
+    painter.fillPath(bg_path, tint)
     pen = QPen(SELECTION_BORDER_COLOR, SELECTION_BORDER_WIDTH)
     painter.setPen(pen)
     painter.drawPath(bg_path)
@@ -142,11 +145,17 @@ class ProjectItemDelegate(QStyledItemDelegate):
         hovered = bool(option.state & QStyle.StateFlag.State_MouseOver)
         bg_path = QPainterPath()
         bg_path.addRoundedRect(rect, TILE_RADIUS, TILE_RADIUS)
+        if selected or hovered:
+            # Tiles read as raised cards, so a hovered/selected one gets a
+            # hand-painted soft shadow (see shapes.paint_soft_shadow's
+            # docstring for why this can't just be a QGraphicsDropShadowEffect
+            # - tiles are painted by this delegate, not real QWidgets).
+            paint_soft_shadow(painter, rect, TILE_RADIUS)
         if selected:
             _paint_selection_border(painter, bg_path)
             text_color = option.palette.text().color()
         elif hovered:
-            painter.fillPath(bg_path, option.palette.alternateBase())
+            painter.fillPath(bg_path, option.palette.base())
             text_color = option.palette.text().color()
         else:
             text_color = option.palette.text().color()
