@@ -37,11 +37,13 @@ ICON_SIZE = 34
 PADDING = 12
 ROW_RADIUS = 12
 ROW_BADGE_SIZE = 15
+ROW_ACTION_BUTTON_SIZE = 15
 
 TILE_SIZE = QSize(168, 164)
 TILE_RADIUS = 14
 TILE_MAX_CHIPS = 2
 TILE_BADGE_SIZE = 19
+TILE_ACTION_BUTTON_SIZE = 19
 
 SELECTION_BORDER_WIDTH = 2
 
@@ -107,6 +109,59 @@ class ProjectItemDelegate(QStyledItemDelegate):
             return TILE_SIZE
         return QSize(option.rect.width(), ROW_HEIGHT)
 
+    def _content_rect(self, view_rect: QRect) -> QRect:
+        """The item's own cell, inset the same way _paint_row/_paint_tile
+        inset it before painting anything - see their own comments on why
+        (shadow spread budget). Shared with action_button_rect() so a click
+        is tested against the exact same geometry paint() used, not a
+        second, potentially-drifting copy of it."""
+        if self.display_mode == "tile":
+            return view_rect.adjusted(10, 10, -10, -10)
+        return view_rect.adjusted(4, 4, -4, -4)
+
+    def _icon_rect(self, content_rect: QRect) -> QRect:
+        """Where the folder icon sits within an already-inset content rect -
+        same single-source-of-truth reasoning as _content_rect() above."""
+        if self.display_mode == "tile":
+            return QRect(content_rect.center().x() - 24, content_rect.top() + 12, 48, 48)
+        return QRect(
+            content_rect.left() + PADDING,
+            content_rect.top() + (content_rect.height() - ICON_SIZE) // 2,
+            ICON_SIZE,
+            ICON_SIZE,
+        )
+
+    def action_button_rect(self, option: QStyleOptionViewItem, index) -> QRect | None:
+        """The action button's clickable circle for `index`, in the same
+        view-relative coordinates as `option.rect` - or None if there's
+        nothing to hit (no plugin manager, no project, or no plugin
+        contributes a button for it). Used by ProjectListView.
+        mousePressEvent() to hit-test a click; paint() below computes the
+        identical rect for the button it actually draws, via the same
+        _content_rect()/_icon_rect() helpers, so the two can never drift
+        apart."""
+        if self._plugins is None:
+            return None
+        project_id = index.data(ProjectIdRole)
+        if not project_id:
+            return None
+        project = self._pm.get_project(project_id)
+        if project is None:
+            return None
+        button = self._plugins.collect_project_action_button(project)
+        if button is None:
+            return None
+        icon_rect = self._icon_rect(self._content_rect(option.rect))
+        size = TILE_ACTION_BUTTON_SIZE if self.display_mode == "tile" else ROW_ACTION_BUTTON_SIZE
+        return self._action_button_circle(icon_rect, size)
+
+    @staticmethod
+    def _action_button_circle(icon_rect: QRect, size: int) -> QRect:
+        """Clipped to the icon's top-left corner - the one corner
+        _paint_project_badge (bottom-right) and the tile's pin star
+        (top-right of the whole tile) don't already use."""
+        return QRect(icon_rect.left() - 4, icon_rect.top() - 4, size, size)
+
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index) -> None:
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         if self.display_mode == "tile":
@@ -133,7 +188,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
         # or clipping at option.rect's edge (necessary - see above) would
         # itself become visible as a hard-edged rectangle instead of a
         # soft fade. blur/y_offset below are tuned to fit inside it.
-        rect = option.rect.adjusted(4, 4, -4, -4)
+        rect = self._content_rect(option.rect)
 
         selected = bool(option.state & QStyle.StateFlag.State_Selected)
         hovered = bool(option.state & QStyle.StateFlag.State_MouseOver)
@@ -154,14 +209,12 @@ class ProjectItemDelegate(QStyledItemDelegate):
         text_color = option.palette.text().color()
         subtitle_color = option.palette.placeholderText().color()
 
-        icon_rect = QRect(
-            rect.left() + PADDING,
-            rect.top() + (rect.height() - ICON_SIZE) // 2,
-            ICON_SIZE,
-            ICON_SIZE,
-        )
+        icon_rect = self._icon_rect(rect)
         self._paint_folder_icon(painter, icon_rect, index.data(IconRole))
         self._paint_project_badge(painter, icon_rect, index.data(ProjectIdRole), ROW_BADGE_SIZE)
+        self._paint_action_button(
+            painter, icon_rect, index.data(ProjectIdRole), ROW_ACTION_BUTTON_SIZE
+        )
 
         text_left = icon_rect.right() + PADDING
         name = index.data(Qt.ItemDataRole.DisplayRole) or ""
@@ -244,7 +297,7 @@ class ProjectItemDelegate(QStyledItemDelegate):
         # (necessary - see above) would itself become visible as a hard
         # rectangle instead of a soft fade. blur/y_offset below are tuned
         # to fit inside it.
-        rect = option.rect.adjusted(10, 10, -10, -10)
+        rect = self._content_rect(option.rect)
 
         selected = bool(option.state & QStyle.StateFlag.State_Selected)
         hovered = bool(option.state & QStyle.StateFlag.State_MouseOver)
@@ -276,9 +329,12 @@ class ProjectItemDelegate(QStyledItemDelegate):
             painter.drawPath(bg_path)
         text_color = option.palette.text().color()
 
-        icon_rect = QRect(rect.center().x() - 24, rect.top() + 12, 48, 48)
+        icon_rect = self._icon_rect(rect)
         self._paint_folder_icon(painter, icon_rect, index.data(IconRole))
         self._paint_project_badge(painter, icon_rect, index.data(ProjectIdRole), TILE_BADGE_SIZE)
+        self._paint_action_button(
+            painter, icon_rect, index.data(ProjectIdRole), TILE_ACTION_BUTTON_SIZE
+        )
 
         pinned = bool(index.data(PinnedRole))
         if pinned:
@@ -421,6 +477,44 @@ class ProjectItemDelegate(QStyledItemDelegate):
         clip_path.addEllipse(badge_rect)
         painter.setClipPath(clip_path, Qt.ClipOperation.IntersectClip)
         painter.drawPixmap(badge_rect, badge.pixmap)
+        painter.restore()
+
+    def _paint_action_button(
+        self, painter: QPainter, icon_rect: QRect, project_id: str | None, size: int
+    ) -> None:
+        """A small accent-filled circle with a plugin's glyph, clipped over
+        the folder icon's top-left corner - the interactive counterpart to
+        _paint_project_badge (which owns the bottom-right corner). No-op
+        whenever there's no plugin manager, no project, or no plugin
+        actually contributes a button for it - the common case, so this
+        stays cheap. action_button_rect() (above) computes the identical
+        circle for ProjectListView's click hit-testing."""
+        if self._plugins is None or not project_id:
+            return
+        project = self._pm.get_project(project_id)
+        if project is None:
+            return
+        button = self._plugins.collect_project_action_button(project)
+        if button is None:
+            return
+
+        button_rect = self._action_button_circle(icon_rect, size)
+        painter.save()
+        # Same "coin clipped onto the folder icon" ring treatment as the
+        # badge, for the same reason - the icon underneath can be any color.
+        ring_path = QPainterPath()
+        ring_path.addEllipse(QRect(button_rect).adjusted(-2, -2, 2, 2))
+        painter.fillPath(ring_path, active_token("surface", brand.LIGHT_SURFACE))
+
+        circle_path = QPainterPath()
+        circle_path.addEllipse(button_rect)
+        painter.fillPath(circle_path, _chip_color())
+
+        font = painter.font()
+        font.setPointSizeF(max(6.0, size * 0.5))
+        painter.setFont(font)
+        painter.setPen(QColor("#ffffff"))
+        painter.drawText(button_rect, Qt.AlignmentFlag.AlignCenter, button.glyph)
         painter.restore()
 
     @staticmethod

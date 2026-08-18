@@ -811,6 +811,25 @@ class MainWindow(QMainWindow):
                     action.setEnabled(plugin_action.enabled)
         menu.exec(global_pos)
 
+    def _on_project_action_button(self, project_id: str) -> None:
+        """A plugin-contributed card button (api.ProjectActionButton) was
+        clicked - see ProjectListView.action_button_clicked. Re-resolves the
+        button from the plugin manager rather than trusting anything cached
+        by the view/delegate, same "ask the source of truth again" pattern
+        _show_context_menu() uses for plugin_actions."""
+        if self._plugins is None:
+            return
+        project = self._pm.get_project(project_id)
+        if project is None:
+            return
+        button = self._plugins.collect_project_action_button(project)
+        if button is None:
+            return
+        try:
+            button.on_click()
+        except Exception:
+            logger.exception("Plugin action button callback raised for project %s", project_id)
+
     def _show_bulk_context_menu(self, project_ids: list[str], global_pos) -> None:
         projects = [p for pid in project_ids if (p := self._pm.get_project(pid))]
         if not projects:
@@ -936,6 +955,8 @@ class MainWindow(QMainWindow):
         widget.context_menu_requested.connect(self._show_context_menu)
         if hasattr(widget, "external_folders_dropped"):
             widget.external_folders_dropped.connect(self._add_projects_from_paths)
+        if hasattr(widget, "action_button_clicked"):
+            widget.action_button_clicked.connect(self._on_project_action_button)
 
     def _set_theme_mode(self, mode: str) -> None:
         self._settings.set(theme_mode=mode)

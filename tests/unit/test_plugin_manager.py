@@ -2,8 +2,9 @@ import zipfile
 
 import pytest
 
+from myapps.core.models import Project
 from myapps.core.project_manager import ProjectManager
-from myapps.plugins.api import PluginBase, PluginMenuAction
+from myapps.plugins.api import PluginBase, PluginMenuAction, ProjectActionButton
 from myapps.plugins.manager import (
     LoadedPlugin,
     PluginInstallError,
@@ -310,3 +311,61 @@ def test_collect_menu_actions_only_returns_loaded_enabled_plugins(tmp_path):
 
     actions = manager.collect_menu_actions()
     assert [a.label for a in actions] == ["Loaded Action"]
+
+
+def test_collect_project_action_button_first_non_none_wins(tmp_path):
+    manager, _pm = make_manager(tmp_path)
+    project = Project(name="demo", path=str(tmp_path))
+
+    class SilentPlugin(PluginBase):
+        def contribute_project_action_button(self, project):
+            return None
+
+    class FirstPlugin(PluginBase):
+        def contribute_project_action_button(self, project):
+            return ProjectActionButton(glyph="▶", on_click=lambda: None, tooltip="Run")
+
+    class SecondPlugin(PluginBase):
+        def contribute_project_action_button(self, project):
+            return ProjectActionButton(glyph="X", on_click=lambda: None)
+
+    manifest_a = PluginManifest(id="silent", name="silent", version="1.0.0", entry_point="x:A")
+    manifest_b = PluginManifest(id="first", name="first", version="1.0.0", entry_point="x:B")
+    manifest_c = PluginManifest(id="second", name="second", version="1.0.0", entry_point="x:C")
+    manager._loaded["silent"] = LoadedPlugin(manifest_a, SilentPlugin(), PluginLoadState.LOADED)
+    manager._loaded["first"] = LoadedPlugin(manifest_b, FirstPlugin(), PluginLoadState.LOADED)
+    manager._loaded["second"] = LoadedPlugin(manifest_c, SecondPlugin(), PluginLoadState.LOADED)
+
+    button = manager.collect_project_action_button(project)
+
+    assert button is not None
+    assert button.glyph == "▶"
+    assert button.tooltip == "Run"
+
+
+def test_collect_project_action_button_raising_plugin_is_isolated(tmp_path):
+    manager, _pm = make_manager(tmp_path)
+    project = Project(name="demo", path=str(tmp_path))
+
+    class RaisingPlugin(PluginBase):
+        def contribute_project_action_button(self, project):
+            raise RuntimeError("boom")
+
+    manifest = PluginManifest(id="raising", name="raising", version="1.0.0", entry_point="x:A")
+    manager._loaded["raising"] = LoadedPlugin(manifest, RaisingPlugin(), PluginLoadState.LOADED)
+
+    assert manager.collect_project_action_button(project) is None
+
+
+def test_collect_project_action_button_wrong_type_is_skipped(tmp_path):
+    manager, _pm = make_manager(tmp_path)
+    project = Project(name="demo", path=str(tmp_path))
+
+    class WrongTypePlugin(PluginBase):
+        def contribute_project_action_button(self, project):
+            return "not-a-button"
+
+    manifest = PluginManifest(id="wrong", name="wrong", version="1.0.0", entry_point="x:A")
+    manager._loaded["wrong"] = LoadedPlugin(manifest, WrongTypePlugin(), PluginLoadState.LOADED)
+
+    assert manager.collect_project_action_button(project) is None
