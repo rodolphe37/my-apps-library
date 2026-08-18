@@ -11,6 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-08-18
+
+### Fixed
+
+- **`launch_detached()`/`run_capture()` no longer leak the packaged app's
+  own `DYLD_LIBRARY_PATH`/`LD_LIBRARY_PATH` into external processes.**
+  A PyInstaller-frozen build's bootloader points these at the bundle's own
+  private lib directory so the frozen interpreter finds its bundled shared
+  libraries first - correct for re-invoking the app itself, but poisonous
+  for an unrelated external binary (an editor, a terminal, a plugin's own
+  spawned tooling), which could end up loading the wrong libc/libssl/etc
+  from inside the bundle and fail or misbehave in ways easy to mistake for
+  "the command doesn't exist". New `utils/process_utils.external_process_env()`
+  restores whatever these variables were before the bootloader touched them
+  (saved under a `_ORIG` suffix), or drops them entirely if there was
+  nothing to restore (running unfrozen from source) - used by both helpers
+  now. Found via a plugin (run-project) whose spawned dev servers worked
+  fine from a `python -m myapps` checkout but silently failed to start
+  once the app was installed as a packaged `.app`.
+
 ## [0.14.0] - 2026-08-18
 
 ### Added
