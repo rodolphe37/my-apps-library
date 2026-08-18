@@ -11,6 +11,7 @@ import logging
 import shutil
 import sys
 import tempfile
+import types
 import uuid
 import zipfile
 from dataclasses import dataclass
@@ -31,6 +32,7 @@ from myapps.plugins.api import (
     PluginMenuAction,
     PluginSettingsStore,
     PluginUIRegistrar,
+    ProjectActionButton,
     ProjectBadge,
     ThemePalette,
 )
@@ -230,7 +232,24 @@ class PluginManager:
                 f"entry_point module {module_name!r} not found in {manifest.source_dir}"
             )
 
-        unique_name = f"myapps_plugin_{manifest.id}.{module_name}"
+        namespace_name = f"myapps_plugin_{manifest.id}"
+        unique_name = f"{namespace_name}.{module_name}"
+        # A plugin whose entry point is itself a package (pkg_candidate
+        # above - e.g. `plugin/__init__.py` plus sibling submodules) can use
+        # ordinary relative imports (`from . import helper`) between those
+        # submodules. That only works one level deep unless this synthetic
+        # top-level namespace is ALSO registered in sys.modules: CPython's
+        # import machinery, resolving a relative import from a submodule
+        # two levels down (`myapps_plugin_<id>.plugin.<submodule>`), walks
+        # every dotted ancestor - including this bare `myapps_plugin_<id>`
+        # prefix, even though the leaf's own immediate parent is already
+        # registered - and raises ModuleNotFoundError if any ancestor is
+        # missing. It's never imported from disk (nothing on this synthetic
+        # prefix ever needs its own __path__), so an empty placeholder
+        # module is enough - reused across an update's re-import too.
+        if namespace_name not in sys.modules:
+            sys.modules[namespace_name] = types.ModuleType(namespace_name)
+
         spec = importlib.util.spec_from_file_location(unique_name, source_file)
         if spec is None or spec.loader is None:
             raise ManifestError(f"could not load module {module_name!r} from {source_file}")
@@ -507,6 +526,27 @@ class PluginManager:
                 logger.warning("Plugin %r contributed a non-ProjectBadge badge", plugin_id)
                 continue
             return badge
+        return None
+
+    def collect_project_action_button(self, project: Project) -> ProjectActionButton | None:
+        """First non-None ProjectActionButton wins, in plugin load order -
+        see contribute_project_action_button()'s docstring on api.PluginBase.
+        Called on every repaint (ProjectItemDelegate.paint(), plus the
+        view's hit-testing on click), so this stays a plain synchronous loop
+        over already-loaded plugins, same expectation collect_project_badge()
+        places on itself."""
+        for plugin_id, loaded in self._active_plugins():
+            button = self._safe_call(
+                plugin_id,
+                lambda inst=loaded.instance: inst.contribute_project_action_button(project),
+                None,
+            )
+            if button is None:
+                continue
+            if not isinstance(button, ProjectActionButton):
+                logger.warning("Plugin %r contributed a non-ProjectActionButton button", plugin_id)
+                continue
+            return button
         return None
 
     def collect_views(self) -> list[ViewModeInfo]:

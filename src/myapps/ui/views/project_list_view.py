@@ -10,8 +10,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent
-from PySide6.QtWidgets import QAbstractItemView, QListView
+from PySide6.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QMouseEvent
+from PySide6.QtWidgets import QAbstractItemView, QListView, QStyleOptionViewItem
 
 from myapps.ui.delegates.project_item_delegate import ProjectItemDelegate
 from myapps.ui.models.project_list_model import ProjectIdRole
@@ -20,6 +20,10 @@ from myapps.ui.models.project_list_model import ProjectIdRole
 class ProjectListView(QListView):
     open_requested = Signal(str)  # project_id
     context_menu_requested = Signal(str, object)  # project_id, global QPoint
+    # A plugin-contributed card button (api.ProjectActionButton) was
+    # left-clicked - see mousePressEvent()'s hit-test against the delegate's
+    # own action_button_rect().
+    action_button_clicked = Signal(str)  # project_id
     # External folders dragged in from Finder/Explorer, dropped directly on
     # this view. Handled here (in both list and grid mode) rather than
     # relying on the drop bubbling up to MainWindow's own dragEnterEvent/
@@ -77,6 +81,34 @@ class ProjectListView(QListView):
         project_id = index.data(ProjectIdRole)
         if project_id:
             self.open_requested.emit(project_id)
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:  # noqa: N802
+        # A left click landing inside a plugin-contributed action button's
+        # circle (see ProjectItemDelegate.action_button_rect()) fires that
+        # instead of the normal QListView click handling (selection, drag
+        # start) - the button and the rest of the row/tile are mutually
+        # exclusive click targets.
+        if event.button() == Qt.MouseButton.LeftButton:
+            pos = event.position().toPoint()
+            index = self.indexAt(pos)
+            # itemDelegate() with no args, not itemDelegate(index) - the
+            # constructor always installs one shared delegate for every row
+            # (see __init__), and the no-arg overload isn't deprecated.
+            delegate = self.itemDelegate()
+            if index.isValid() and isinstance(delegate, ProjectItemDelegate):
+                # QAbstractItemView.viewOptions() was removed in Qt6 -
+                # initViewItemOption() is its replacement (fills an option
+                # in place rather than returning one).
+                option = QStyleOptionViewItem()
+                self.initViewItemOption(option)
+                option.rect = self.visualRect(index)
+                button_rect = delegate.action_button_rect(option, index)
+                if button_rect is not None and button_rect.contains(pos):
+                    project_id = index.data(ProjectIdRole)
+                    if project_id:
+                        self.action_button_clicked.emit(project_id)
+                    return
+        super().mousePressEvent(event)
 
     def _on_context_menu(self, pos) -> None:
         index = self.indexAt(pos)

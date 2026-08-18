@@ -70,6 +70,35 @@ class ProjectBadge:
 
 
 @dataclass(frozen=True)
+class ProjectActionButton:
+    """A small clickable button painted over a project's folder icon, in
+    BOTH the built-in List and Grid views - the interactive counterpart to
+    ProjectBadge (which is paint-only). Clipped to the icon's top-left
+    corner (ProjectBadge already owns the bottom-right corner, and the pin
+    star owns the tile's own top-right corner).
+
+    `glyph` is a short unicode string, same convention as IconDef.glyph -
+    typically one character/emoji, rendered centered inside the button.
+    `tooltip`, if non-empty, is shown on hover. `on_click` is called with no
+    arguments when the button is clicked - a plugin typically builds this as
+    a closure over the `project` passed to contribute_project_action_button
+    (e.g. `lambda: self._open_dialog(project)`).
+
+    Like ProjectBadge, this is read on every repaint of that project's row/
+    tile, so contribute_project_action_button() must return near-instantly -
+    do any real work (detecting what the button should do) lazily, inside
+    on_click, not while building this dataclass.
+
+    If more than one enabled plugin contributes a button for the same
+    project, the first one (load order) wins - same 'never crash, never
+    stack unbounded UI' rule ProjectBadge follows."""
+
+    glyph: str
+    on_click: Callable[[], None]
+    tooltip: str = ""
+
+
+@dataclass(frozen=True)
 class ThemePalette:
     """A named color scheme, selectable from Preferences → Theme alongside
     the built-in default. `light` and `dark` must each be a complete token
@@ -129,6 +158,18 @@ class PluginBase:
         project, the first one (load order) wins - the rest are silently
         dropped, same 'never crash, never stack unbounded UI' spirit as the
         rest of this module."""
+        return None
+
+    def contribute_project_action_button(self, project: Project) -> ProjectActionButton | None:
+        """Optional: a small clickable button painted on `project`'s folder
+        icon in the real built-in List and Grid views - see
+        ProjectActionButton's docstring. Return None to contribute nothing
+        for this project (the default).
+
+        Called on every repaint, same constraint as
+        contribute_project_badge() - return quickly, and do any real work
+        (e.g. detecting how to run this project) inside the button's
+        on_click callback instead, not here."""
         return None
 
     def contribute_views(self) -> list[ViewModeInfo]:

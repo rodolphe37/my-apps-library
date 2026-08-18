@@ -11,6 +11,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-08-18
+
+### Added
+
+- **New plugin hook: `contribute_project_action_button(project)`.** The
+  interactive counterpart to `contribute_project_badge`: lets a plugin paint
+  a small, clickable button directly on a project's folder icon - in the
+  real built-in List and Grid views themselves - rather than only a menu
+  entry. Returns an optional `api.ProjectActionButton(glyph, on_click,
+  tooltip)`; `PluginManager.collect_project_action_button()` takes the first
+  non-None contribution in plugin load order and `ProjectItemDelegate`
+  paints it as a small accent-filled circle clipped over the folder icon's
+  top-left corner (the one corner not already used by the badge or the tile
+  pin star), in both `_paint_row` (list) and `_paint_tile` (grid).
+  `ProjectListView` hit-tests left clicks against the delegate's own
+  `action_button_rect()` and emits a new `action_button_clicked` signal,
+  wired up in `main_window.py` to invoke the button's `on_click()`. Called
+  on every repaint, so a plugin is expected to return a cheap, static
+  button and do any real work lazily inside `on_click` - see the hook's
+  docstring in `plugins/api.py`.
+
 ## [0.13.0] - 2026-08-16
 
 ### Added
