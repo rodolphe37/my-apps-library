@@ -47,6 +47,34 @@ def _card(dialog: PluginManagerDialog, row: int) -> _PluginCard:
     return dialog._list.itemWidget(item)
 
 
+_LONG_DESCRIPTION = (
+    "This description is deliberately long enough that it must wrap onto "
+    "several lines inside a normal-sized dialog, instead of fitting on one - "
+    "exercising the exact case that used to make every card's text spill "
+    "past the list's right edge instead of wrapping into a taller row."
+)
+
+
+def _install_plugin_with_long_description(tmp_path: Path, plugins: PluginManager) -> None:
+    source = tmp_path / "verbose-plugin-source"
+    source.mkdir()
+    (source / "plugin.toml").write_text(
+        f"""[plugin]
+id = "verbose-plugin"
+name = "Verbose Plugin"
+version = "1.0.0"
+entry_point = "plugin:VerbosePlugin"
+description = "{_LONG_DESCRIPTION}"
+""",
+        encoding="utf-8",
+    )
+    (source / "plugin.py").write_text(
+        "from myapps.plugins.api import PluginBase\n\nclass VerbosePlugin(PluginBase):\n    pass\n",
+        encoding="utf-8",
+    )
+    plugins.install_from_path(source)
+
+
 def test_dialog_opens_and_lists_installed_plugin(tmp_path, qtbot):
     pm = ProjectManager(path=tmp_path / "library.json")
     plugins = PluginManager(pm, plugins_dir=tmp_path / "plugins")
@@ -199,3 +227,48 @@ def test_failed_download_shows_warning_and_resets_button(tmp_path, qtbot, monkey
     assert card._update_button.isEnabled() is True
     # Still installed at the old version - a failed download never touched it.
     assert plugins._installed["open-in-terminal"].version == "0.1.0"
+
+
+def test_card_width_never_exceeds_viewport_even_with_long_description(tmp_path, qtbot):
+    """Regression test: a long word-wrapped description used to leave a
+    card's setItemWidget() sizeHint frozen at whatever (too-wide) size it
+    happened to compute before the dialog had settled into its real
+    on-screen width - clipping every card's text at the list's actual
+    (narrower) viewport edge instead of wrapping it into a taller row."""
+    pm = ProjectManager(path=tmp_path / "library.json")
+    plugins = PluginManager(pm, plugins_dir=tmp_path / "plugins")
+    _install_plugin_with_long_description(tmp_path, plugins)
+
+    dialog = PluginManagerDialog(plugins, None)
+    qtbot.addWidget(dialog)
+    dialog.resize(600, 560)
+    dialog.show()
+    qtbot.wait(50)
+
+    card = _card(dialog, 0)
+    viewport_width = dialog._list.viewport().width()
+    item = dialog._list.item(0)
+
+    assert card.width() == viewport_width
+    assert item.sizeHint().width() == viewport_width
+    # A long description wrapped across several lines needs real height -
+    # taller than a single name+status+one-line-description row would be.
+    assert item.sizeHint().height() > 90
+
+
+def test_resizing_dialog_resyncs_card_width(tmp_path, qtbot):
+    pm = ProjectManager(path=tmp_path / "library.json")
+    plugins = PluginManager(pm, plugins_dir=tmp_path / "plugins")
+    plugins.install_from_path(OPEN_IN_TERMINAL_EXAMPLE)
+
+    dialog = PluginManagerDialog(plugins, None)
+    qtbot.addWidget(dialog)
+    dialog.resize(600, 560)
+    dialog.show()
+    qtbot.wait(50)
+
+    dialog.resize(420, 560)
+    qtbot.wait(50)
+
+    card = _card(dialog, 0)
+    assert card.width() == dialog._list.viewport().width()

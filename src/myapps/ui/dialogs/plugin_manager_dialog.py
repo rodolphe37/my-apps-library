@@ -17,7 +17,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QRectF, Qt, QUrl, Signal
+from PySide6.QtCore import QEvent, QObject, QRectF, QSize, Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QPainter, QPainterPath, QPalette, QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -264,7 +264,19 @@ class PluginManagerDialog(QDialog):
         self._list.setFrameShape(QFrame.Shape.NoFrame)
         self._list.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self._list.setSpacing(6)
+        # Cards are always sized to exactly match the viewport (see
+        # _sync_card_widths()), so a horizontal scrollbar would only ever
+        # appear from a stray 1-2px rounding mismatch, never real overflow -
+        # off entirely, rather than risk clipping cards behind a hairline
+        # scrollbar the user would have to notice and use.
+        self._list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         layout.addWidget(self._list, 1)
+        # A setItemWidget() card's sizeHint is a snapshot frozen at the
+        # moment it's set - QListWidget never recomputes it on its own, so
+        # a card with a long word-wrapped description (or the dialog being
+        # resized) needs an explicit nudge, or its text gets clipped
+        # instead of wrapping into a taller row. See _sync_card_widths().
+        self._list.viewport().installEventFilter(self)
         self._reload()
 
         # A 2-column grid, not a 3-wide row: some localized labels are long
@@ -330,8 +342,49 @@ class PluginManagerDialog(QDialog):
             if latest_version is not None:
                 card.set_update_available(latest_version)
             self._list.addItem(item)
-            item.setSizeHint(card.sizeHint())
             self._list.setItemWidget(item, card)
+        self._sync_card_widths()
+
+    def eventFilter(self, obj: QObject, event) -> bool:  # noqa: N802
+        if obj is self._list.viewport() and event.type() == QEvent.Type.Resize:
+            self._sync_card_widths()
+        return super().eventFilter(obj, event)
+
+    def _sync_card_widths(self) -> None:
+        """Fixes every card's width to the list's actual viewport width, then
+        re-derives its sizeHint from that - a setItemWidget() item's
+        sizeHint is otherwise a one-time snapshot taken whenever it's set
+        (see _reload()), which QListWidget never revisits on its own. Without
+        this, a card's word-wrapped description (`_PluginCard`'s desc_label)
+        keeps whatever width it happened to compute at that moment - usually
+        too wide, since _reload() can run before the dialog has settled into
+        its final on-screen size - and the text gets clipped by the list's
+        actual (narrower) viewport instead of wrapping into a taller row.
+        Called after every _reload() and on every viewport resize (the
+        eventFilter above), so cards stay correctly wrapped/sized whether the
+        list just changed contents or the user resized the dialog itself."""
+        width = self._list.viewport().width()
+        if width <= 0:
+            return
+        for i in range(self._list.count()):
+            item = self._list.item(i)
+            card = self._list.itemWidget(item)
+            if card is None:
+                continue
+            card.setFixedWidth(width)
+            card_layout = card.layout()
+            # sizeHint() alone doesn't reliably reflect a word-wrapped
+            # label's height for a width just set this same instant (Qt's
+            # layout system needs a real geometry pass, or an explicit
+            # heightForWidth() query, to account for it) - heightForWidth()
+            # is the direct, synchronous way to ask "how tall at exactly
+            # this width", which is exactly what a QSize for setSizeHint()
+            # needs to be correct on the very first try.
+            if card_layout is not None and card_layout.hasHeightForWidth():
+                height = card_layout.heightForWidth(width)
+            else:
+                height = card.sizeHint().height()
+            item.setSizeHint(QSize(width, height))
 
     def _item_and_card_for_plugin_id(
         self, plugin_id: str
@@ -354,15 +407,15 @@ class PluginManagerDialog(QDialog):
 
     def _on_update_available(self, plugin_id: str, latest_version: str) -> None:
         self._update_available[plugin_id] = latest_version
-        item, card = self._item_and_card_for_plugin_id(plugin_id)
+        _item, card = self._item_and_card_for_plugin_id(plugin_id)
         if card is not None:
             card.set_update_available(latest_version)
-            # The item's cell size was frozen at _reload() build time,
-            # when the (until now hidden) update row contributed no
-            # height - showing it just squeezed the card's real content
-            # into that now-too-small fixed cell (a visibly crushed
-            # update button) without this.
-            item.setSizeHint(card.sizeHint())
+            # The item's cell size was frozen at _reload() build time (via
+            # _sync_card_widths()), when the (until now hidden) update row
+            # contributed no height - showing it just squeezed the card's
+            # real content into that now-too-small fixed cell (a visibly
+            # crushed update button) without recomputing it here too.
+            self._sync_card_widths()
 
     def _start_update(self, plugin_id: str) -> None:
         card = self._card_for_plugin_id(plugin_id)
