@@ -55,12 +55,14 @@ _LONG_DESCRIPTION = (
 )
 
 
-def _install_plugin_with_long_description(tmp_path: Path, plugins: PluginManager) -> None:
-    source = tmp_path / "verbose-plugin-source"
+def _install_plugin_with_long_description(
+    tmp_path: Path, plugins: PluginManager, plugin_id: str = "verbose-plugin"
+) -> None:
+    source = tmp_path / f"{plugin_id}-source"
     source.mkdir()
     (source / "plugin.toml").write_text(
         f"""[plugin]
-id = "verbose-plugin"
+id = "{plugin_id}"
 name = "Verbose Plugin"
 version = "1.0.0"
 entry_point = "plugin:VerbosePlugin"
@@ -249,8 +251,12 @@ def test_card_width_never_exceeds_viewport_even_with_long_description(tmp_path, 
     viewport_width = dialog._list.viewport().width()
     item = dialog._list.item(0)
 
-    assert card.width() == viewport_width
-    assert item.sizeHint().width() == viewport_width
+    # The card's own right edge - not just its width - is what must stay
+    # inside the viewport: QListWidget insets every item by setSpacing()'s
+    # value from the viewport's left edge too, so a card exactly as wide as
+    # the viewport is actually a few pixels too wide once positioned.
+    assert card.geometry().right() <= viewport_width - 1
+    assert item.sizeHint().width() <= viewport_width
     # A long description wrapped across several lines needs real height -
     # taller than a single name+status+one-line-description row would be.
     assert item.sizeHint().height() > 90
@@ -271,4 +277,51 @@ def test_resizing_dialog_resyncs_card_width(tmp_path, qtbot):
     qtbot.wait(50)
 
     card = _card(dialog, 0)
-    assert card.width() == dialog._list.viewport().width()
+    assert card.geometry().right() <= dialog._list.viewport().width() - 1
+
+
+def test_cards_fill_width_without_a_gap_when_nothing_needs_to_scroll(tmp_path, qtbot):
+    """A too-cautious fix for the clipping bug above (always reserving the
+    vertical scrollbar's width, whether or not one is actually needed)
+    traded clipped cards for a permanent, pointless empty strip on the
+    right of every card - just as wrong, in the opposite direction."""
+    pm = ProjectManager(path=tmp_path / "library.json")
+    plugins = PluginManager(pm, plugins_dir=tmp_path / "plugins")
+    plugins.install_from_path(OPEN_IN_TERMINAL_EXAMPLE)
+
+    dialog = PluginManagerDialog(plugins, None)
+    qtbot.addWidget(dialog)
+    dialog.resize(600, 560)
+    dialog.show()
+    qtbot.wait(50)
+
+    assert dialog._list.verticalScrollBar().isVisible() is False
+    card = _card(dialog, 0)
+    viewport_width = dialog._list.viewport().width()
+    # Allowed to be a couple of px narrower than the viewport (the item's
+    # own left inset, see _sync_card_widths()'s docstring) but not reserve
+    # a whole scrollbar's worth of unused space on top of that.
+    assert card.geometry().right() >= viewport_width - dialog._list.spacing() - 2
+
+
+def test_cards_fit_next_to_scrollbar_when_content_needs_to_scroll(tmp_path, qtbot):
+    """The mirror image of the test above: once there IS enough content to
+    need scrolling, cards must actually make room for the scrollbar rather
+    than running underneath it."""
+    pm = ProjectManager(path=tmp_path / "library.json")
+    plugins = PluginManager(pm, plugins_dir=tmp_path / "plugins")
+    plugins.install_from_path(OPEN_IN_TERMINAL_EXAMPLE)
+    for i in range(6):
+        _install_plugin_with_long_description(tmp_path, plugins, plugin_id=f"extra-{i}")
+
+    dialog = PluginManagerDialog(plugins, None)
+    qtbot.addWidget(dialog)
+    dialog.resize(600, 560)
+    dialog.show()
+    qtbot.wait(50)
+
+    assert dialog._list.verticalScrollBar().isVisible() is True
+    viewport_width = dialog._list.viewport().width()
+    for i in range(dialog._list.count()):
+        card = _card(dialog, i)
+        assert card.geometry().right() <= viewport_width - 1

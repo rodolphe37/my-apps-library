@@ -350,41 +350,76 @@ class PluginManagerDialog(QDialog):
             self._sync_card_widths()
         return super().eventFilter(obj, event)
 
+    @staticmethod
+    def _card_height_for_width(card: _PluginCard, width: int) -> int:
+        """How tall `card` needs to be at exactly `width` - a pure query,
+        independent of the card's current actual size (Qt layouts support
+        this directly), which is what makes the two-pass calculation in
+        _sync_card_widths() below possible without ever having to commit a
+        width, measure, and redo it."""
+        card_layout = card.layout()
+        if card_layout is not None and card_layout.hasHeightForWidth():
+            return card_layout.heightForWidth(width)
+        return card.sizeHint().height()
+
     def _sync_card_widths(self) -> None:
-        """Fixes every card's width to the list's actual viewport width, then
-        re-derives its sizeHint from that - a setItemWidget() item's
-        sizeHint is otherwise a one-time snapshot taken whenever it's set
-        (see _reload()), which QListWidget never revisits on its own. Without
-        this, a card's word-wrapped description (`_PluginCard`'s desc_label)
-        keeps whatever width it happened to compute at that moment - usually
-        too wide, since _reload() can run before the dialog has settled into
-        its final on-screen size - and the text gets clipped by the list's
-        actual (narrower) viewport instead of wrapping into a taller row.
-        Called after every _reload() and on every viewport resize (the
-        eventFilter above), so cards stay correctly wrapped/sized whether the
-        list just changed contents or the user resized the dialog itself."""
-        width = self._list.viewport().width()
-        if width <= 0:
+        """Fixes every card's width to the list's actual available width,
+        then re-derives its sizeHint's height from that - a setItemWidget()
+        item's sizeHint is otherwise a one-time snapshot taken whenever it's
+        set (see _reload()), which QListWidget never revisits on its own.
+        Without this, a card's word-wrapped description (`_PluginCard`'s
+        desc_label) keeps whatever width it happened to compute at that
+        moment - usually wrong, since _reload() can run before the dialog
+        has settled into its final on-screen size - and the text either
+        gets clipped by the list's actual (narrower) viewport, or leaves an
+        unused gap if the guess was too narrow. Called after every
+        _reload() and on every viewport resize (the eventFilter above), so
+        cards stay correctly wrapped/sized whether the list just changed
+        contents or the user resized the dialog itself.
+
+        `self._list.viewport().width()` is Qt's own ground truth for
+        "available width right now" - but applying it can itself change
+        whether the vertical scrollbar is needed (taller wrapped rows), and
+        the scrollbar appearing/disappearing changes the viewport's width
+        again, invalidating the very value just applied. Rather than
+        predicting that in advance (a previous version of this method tried
+        exactly that and got the prediction wrong on a real screen, even
+        though it matched in an offscreen test), this re-reads the
+        viewport's width after every pass and repeats until it stops
+        moving - it can only flip between two states (scrollbar shown or
+        not), so this always converges within a couple of iterations."""
+        cards = [self._list.itemWidget(self._list.item(i)) for i in range(self._list.count())]
+        cards = [c for c in cards if c is not None]
+        if not cards:
             return
-        for i in range(self._list.count()):
-            item = self._list.item(i)
-            card = self._list.itemWidget(item)
-            if card is None:
-                continue
-            card.setFixedWidth(width)
-            card_layout = card.layout()
-            # sizeHint() alone doesn't reliably reflect a word-wrapped
-            # label's height for a width just set this same instant (Qt's
-            # layout system needs a real geometry pass, or an explicit
-            # heightForWidth() query, to account for it) - heightForWidth()
-            # is the direct, synchronous way to ask "how tall at exactly
-            # this width", which is exactly what a QSize for setSizeHint()
-            # needs to be correct on the very first try.
-            if card_layout is not None and card_layout.hasHeightForWidth():
-                height = card_layout.heightForWidth(width)
-            else:
-                height = card.sizeHint().height()
-            item.setSizeHint(QSize(width, height))
+
+        viewport_width = self._list.viewport().width()
+        if viewport_width <= 0:
+            return
+
+        for _ in range(4):  # always converges in 2 passes; extra headroom is cheap insurance
+            # QListWidget insets every item by setSpacing()'s value from the
+            # viewport's left edge too, not just between items vertically -
+            # a card fixed to the full viewport width therefore ends up
+            # exactly that many pixels wider than what's actually visible,
+            # its right edge (and the selection border drawn on it) clipped
+            # by the viewport. Confirmed by inspecting a real card's
+            # geometry() after setItemWidget(): x == spacing, not 0.
+            item_width = viewport_width - self._list.spacing()
+            for i, card in enumerate(cards):
+                card.setFixedWidth(item_width)
+                item = self._list.item(i)
+                item.setSizeHint(QSize(item_width, self._card_height_for_width(card, item_width)))
+            # Forces QListView to immediately recompute item layout and
+            # scrollbar visibility/range from the sizeHints just set,
+            # instead of leaving that for whenever Qt next happens to
+            # process it - viewport().width() below needs that to already
+            # be current, not stale from before this pass.
+            self._list.doItemsLayout()
+            new_viewport_width = self._list.viewport().width()
+            if new_viewport_width == viewport_width:
+                break
+            viewport_width = new_viewport_width
 
     def _item_and_card_for_plugin_id(
         self, plugin_id: str
