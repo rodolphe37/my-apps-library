@@ -897,6 +897,13 @@ class MainWindow(QMainWindow):
         Full rebuild rather than diffing - view-mode churn only happens via
         the Plugin Manager dialog (rare), so correctness-over-cleverness is
         the right tradeoff here."""
+        if self._language is not None and self._plugins is not None:
+            # A plugin enable/disable can add or remove a translation-plugin
+            # contributed locale, or patch keys in an existing one. Merged
+            # first, before anything below asks a plugin for its labels - a
+            # just-enabled plugin's own keys would otherwise be missing from
+            # the catalog for that first round of tr() calls.
+            self._language.set_plugin_translations(self._plugins.collect_translations())
         for mode_id in self._plugin_view_mode_ids:
             view_registry.unregister(mode_id)
         self._plugin_view_mode_ids.clear()
@@ -904,10 +911,6 @@ class MainWindow(QMainWindow):
         self._sync_view_stack()
         self._populate_view_mode_menu()
         self._populate_plugins_menu()
-        if self._language is not None and self._plugins is not None:
-            # A plugin enable/disable can add or remove a translation-plugin
-            # contributed locale, or patch keys in an existing one.
-            self._language.set_plugin_translations(self._plugins.collect_translations())
         if self._plugins is not None and self._theme is not None:
             # A plugin enable/disable can add or remove a theme palette (the
             # Preferences dialog's combo is only rebuilt on next open, but it

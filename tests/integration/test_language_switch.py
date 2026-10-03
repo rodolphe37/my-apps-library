@@ -92,3 +92,44 @@ def test_plugin_locale_disappears_from_settings_dropdown_when_disabled(tmp_path,
     qtbot.addWidget(dialog)
     labels = [dialog._language_combo.itemText(i) for i in range(dialog._language_combo.count())]
     assert "Deutsch" not in labels
+
+
+TRANSLATED_MENU_PLUGIN_PY = '''
+from myapps.i18n import tr
+from myapps.plugins.api import PluginBase, PluginMenuAction
+
+
+class TranslatedMenuPlugin(PluginBase):
+    def contribute_translations(self):
+        return {"en": {"translated_menu.refresh": "Refresh Everything"}}
+
+    def contribute_menu_actions(self):
+        return [PluginMenuAction(tr("translated_menu.refresh"), lambda: None)]
+'''
+
+
+def test_enabling_plugin_merges_its_translations_before_building_its_menu(
+    tmp_path, qtbot, qapp, caplog
+):
+    window, pgm, _lang = make_window(tmp_path, qtbot, qapp, with_plugins=True)
+    source = tmp_path / "translated-menu-source"
+    source.mkdir()
+    (source / "plugin.toml").write_text(
+        '[plugin]\nid = "translated-menu"\nname = "Translated Menu"\nversion = "1.0.0"\n'
+        'entry_point = "plugin:TranslatedMenuPlugin"\n',
+        encoding="utf-8",
+    )
+    (source / "plugin.py").write_text(TRANSLATED_MENU_PLUGIN_PY, encoding="utf-8")
+    pgm.install_from_path(source)
+
+    with caplog.at_level("WARNING", logger="myapps.i18n.translator"):
+        pgm.enable("translated-menu")
+
+    assert "translated_menu.refresh" not in caplog.text
+    labels = [
+        action.text()
+        for top in window.menuBar().actions()
+        if top.menu() is not None
+        for action in top.menu().actions()
+    ]
+    assert "Refresh Everything" in labels

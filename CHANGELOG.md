@@ -11,6 +11,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-03
+
+### Changed
+
+- **Several plugins can now badge the same project.** Until now only the
+  first plugin (load order) returning a `ProjectBadge` from
+  `contribute_project_badge` was shown, so two badge plugins (e.g. Language
+  Badges and Git Status) silently hid each other. The folder icon now shows
+  up to 3 badges side by side, overlapping slightly like stacked coins and
+  growing leftward from the bottom-right corner, the first plugin keeping
+  the corner. New `PluginManager.collect_project_badges()`;
+  `collect_project_badge()` stays as a thin wrapper returning the first one.
+
+### Fixed
+
+- **A badge's `tooltip` is now actually shown.** `ProjectBadge.tooltip` was
+  documented as being appended to the item's tooltip but never was; hovering
+  a project now shows its path followed by one line per badge.
+- **No more "Missing translation key" warning when enabling a plugin.**
+  `MainWindow` rebuilt the Plugins menu before merging the just-enabled
+  plugin's own translations, so that plugin's first `tr()` calls for its
+  menu labels missed (the menu bar was then rebuilt correctly right after,
+  so only the log and a wasted rebuild showed it). Translations are now
+  merged first.
+
 ## [0.14.1] - 2026-08-18
 
 ### Fixed
