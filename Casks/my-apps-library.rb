@@ -38,14 +38,13 @@ cask "my-apps-library" do
   sha256 arm:   "3d4de605b41449e5dee52b61f088c82bcacb6815c747798d65408e7ced163c0c",
          intel: "da13aab80c53340952171459c3c7af9a894034233453dffdaae05f341b31beea"
 
-  url "https://github.com/rodolphe37/my-apps-library/releases/download/v#{version}/MyAppsLibrary-macOS-#{arch}.zip",
-      verified: "github.com/rodolphe37/my-apps-library/"
+  url "https://github.com/rodolphe37/my-apps-library/releases/download/v#{version}/MyAppsLibrary-macOS-#{arch}.zip"
   name "MyAppsLibrary"
   desc "Plugin-extensible launcher for organizing and opening your coding projects"
   homepage "https://github.com/rodolphe37/my-apps-library"
 
   auto_updates false
-  depends_on macos: :big_sur
+  depends_on :macos
 
   app "MyAppsLibrary.app"
 
