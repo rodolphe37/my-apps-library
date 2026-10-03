@@ -49,6 +49,9 @@ from myapps.ui.views.registry import ViewModeInfo
 logger = logging.getLogger(__name__)
 
 INSTALLED_FILE_NAME = "installed.json"
+# How many plugin badges one project's folder icon shows at most - beyond
+# that they'd cover the icon itself; see collect_project_badges().
+MAX_PROJECT_BADGES = 3
 
 
 class PluginLoadState(Enum):
@@ -509,13 +512,17 @@ class PluginManager:
                     actions.append(factory(project))
         return actions
 
-    def collect_project_badge(self, project: Project) -> ProjectBadge | None:
-        """First non-None ProjectBadge wins, in plugin load order - see
-        contribute_project_badge()'s docstring on api.PluginBase. Called on
-        every repaint of `project`'s row/tile (ProjectItemDelegate.paint()),
-        so this stays a plain synchronous loop over already-loaded plugins -
-        no I/O of its own, same expectation it places on each plugin's own
-        contribute_project_badge()."""
+    def collect_project_badges(self, project: Project) -> list[ProjectBadge]:
+        """Every enabled plugin's ProjectBadge for `project`, in plugin load
+        order, capped at MAX_PROJECT_BADGES - see contribute_project_badge()'s
+        docstring on api.PluginBase. Several plugins can each badge the same
+        project (e.g. a language logo next to a git-status dot); the delegate
+        lays them out side by side from the folder icon's bottom-right
+        corner. Called on every repaint of `project`'s row/tile
+        (ProjectItemDelegate.paint()), so this stays a plain synchronous loop
+        over already-loaded plugins - no I/O of its own, same expectation it
+        places on each plugin's own contribute_project_badge()."""
+        badges: list[ProjectBadge] = []
         for plugin_id, loaded in self._active_plugins():
             badge = self._safe_call(
                 plugin_id, lambda inst=loaded.instance: inst.contribute_project_badge(project), None
@@ -525,8 +532,16 @@ class PluginManager:
             if not isinstance(badge, ProjectBadge):
                 logger.warning("Plugin %r contributed a non-ProjectBadge badge", plugin_id)
                 continue
-            return badge
-        return None
+            badges.append(badge)
+            if len(badges) >= MAX_PROJECT_BADGES:
+                break
+        return badges
+
+    def collect_project_badge(self, project: Project) -> ProjectBadge | None:
+        """The first badge collect_project_badges() would return, or None -
+        kept for callers that only ever had room for one."""
+        badges = self.collect_project_badges(project)
+        return badges[0] if badges else None
 
     def collect_project_action_button(self, project: Project) -> ProjectActionButton | None:
         """First non-None ProjectActionButton wins, in plugin load order -

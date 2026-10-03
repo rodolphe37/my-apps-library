@@ -15,11 +15,12 @@ when selected instead of being washed out.
 
 from __future__ import annotations
 
-from PySide6.QtCore import QDateTime, QLocale, QRect, QSize, Qt
+from PySide6.QtCore import QDateTime, QEvent, QLocale, QRect, QSize, Qt
 from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
+from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem, QToolTip
 
 from myapps.core.project_manager import ProjectManager
+from myapps.plugins.api import ProjectBadge
 from myapps.plugins.manager import PluginManager
 from myapps.ui.models.project_list_model import (
     CategoriesRole,
@@ -446,38 +447,67 @@ class ProjectItemDelegate(QStyledItemDelegate):
     def _paint_project_badge(
         self, painter: QPainter, icon_rect: QRect, project_id: str | None, size: int
     ) -> None:
-        """A small circular medallion (e.g. a plugin-detected language logo)
-        clipped over the folder icon's bottom-right corner - see
-        api.ProjectBadge's docstring. No-op whenever there's no plugin
+        """Small circular medallions (e.g. a plugin-detected language logo,
+        a git-status dot) clipped over the folder icon's bottom-right corner
+        - see api.ProjectBadge's docstring. Several plugins' badges sit side
+        by side, overlapping slightly like stacked coins, growing leftward
+        from that corner: the first one (plugin load order) keeps the corner
+        itself and is painted last, on top. No-op whenever there's no plugin
         manager, no project, or no plugin actually contributes one for it -
         the common case, so this stays cheap."""
-        if self._plugins is None or not project_id:
+        badges = self._badges_for(project_id)
+        if not badges:
             return
+
+        step = size - 2
+        for slot in reversed(range(len(badges))):
+            badge = badges[slot]
+            if badge.pixmap.isNull():
+                continue
+            badge_rect = QRect(
+                icon_rect.right() - size + 4 - slot * step,
+                icon_rect.bottom() - size + 4,
+                size,
+                size,
+            )
+            painter.save()
+            # A ring in the app's own surface color sits behind each badge
+            # so it reads as a coin clipped onto the folder icon rather than
+            # a jarring square - needed since the folder icon underneath can
+            # be any color (built-in gradient, a picked glyph, a plugin-
+            # contributed icon pack...) - and so two overlapping badges stay
+            # visually separate.
+            ring_path = QPainterPath()
+            ring_path.addEllipse(QRect(badge_rect).adjusted(-2, -2, 2, 2))
+            painter.fillPath(ring_path, active_token("surface", brand.LIGHT_SURFACE))
+
+            clip_path = QPainterPath()
+            clip_path.addEllipse(badge_rect)
+            painter.setClipPath(clip_path, Qt.ClipOperation.IntersectClip)
+            painter.drawPixmap(badge_rect, badge.pixmap)
+            painter.restore()
+
+    def _badges_for(self, project_id: str | None) -> list[ProjectBadge]:
+        if self._plugins is None or not project_id:
+            return []
         project = self._pm.get_project(project_id)
         if project is None:
-            return
-        badge = self._plugins.collect_project_badge(project)
-        if badge is None or badge.pixmap.isNull():
-            return
+            return []
+        return self._plugins.collect_project_badges(project)
 
-        badge_rect = QRect(
-            icon_rect.right() - size + 4, icon_rect.bottom() - size + 4, size, size
-        )
-        painter.save()
-        # A ring in the app's own surface color sits behind the badge so it
-        # reads as a coin clipped onto the folder icon rather than a
-        # jarring square - needed since the folder icon underneath can be
-        # any color (built-in gradient, a picked glyph, a plugin-contributed
-        # icon pack...).
-        ring_path = QPainterPath()
-        ring_path.addEllipse(QRect(badge_rect).adjusted(-2, -2, 2, 2))
-        painter.fillPath(ring_path, active_token("surface", brand.LIGHT_SURFACE))
-
-        clip_path = QPainterPath()
-        clip_path.addEllipse(badge_rect)
-        painter.setClipPath(clip_path, Qt.ClipOperation.IntersectClip)
-        painter.drawPixmap(badge_rect, badge.pixmap)
-        painter.restore()
+    def helpEvent(self, event, view, option, index) -> bool:  # noqa: N802
+        """Appends each badge's own `tooltip` to the item's tooltip (the
+        project path, from the model's ToolTipRole) - see api.ProjectBadge:
+        a badge is paint-only, so its tooltip is the only way to say what a
+        small colored dot actually means."""
+        if event is not None and event.type() == QEvent.Type.ToolTip and index.isValid():
+            lines = [index.data(Qt.ItemDataRole.ToolTipRole) or ""]
+            lines += [b.tooltip for b in self._badges_for(index.data(ProjectIdRole)) if b.tooltip]
+            text = "\n".join(line for line in lines if line)
+            if text:
+                QToolTip.showText(event.globalPos(), text, view)
+                return True
+        return super().helpEvent(event, view, option, index)
 
     def _paint_action_button(
         self, painter: QPainter, icon_rect: QRect, project_id: str | None, size: int

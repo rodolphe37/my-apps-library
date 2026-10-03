@@ -59,7 +59,7 @@ class ProjectBadge:
     `pixmap` should be small and roughly square (a higher-res source stays
     crisp on HiDPI - ProjectItemDelegate scales it down to the on-screen
     badge size, never up). `tooltip`, if non-empty, is appended to the
-    folder icon's own tooltip text.
+    item's own tooltip text (the project path), one line per badge.
 
     Contributing plugin is responsible for its own caching - see
     contribute_project_badge()'s docstring: this is read on every repaint,
@@ -155,9 +155,11 @@ class PluginBase:
         of a delegate.
 
         If more than one enabled plugin contributes a badge for the same
-        project, the first one (load order) wins - the rest are silently
-        dropped, same 'never crash, never stack unbounded UI' spirit as the
-        rest of this module."""
+        project, they're shown side by side (load order, the first one
+        keeping the bottom-right corner), up to manager.MAX_PROJECT_BADGES -
+        any beyond that are silently dropped, same 'never crash, never stack
+        unbounded UI' spirit as the rest of this module. Since 0.15.0;
+        before that only the first badge was ever shown."""
         return None
 
     def contribute_project_action_button(self, project: Project) -> ProjectActionButton | None:

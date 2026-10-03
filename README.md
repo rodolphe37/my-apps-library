@@ -170,7 +170,7 @@ MyAppsLibrary ships with a small, VS Code-style plugin API so the community can 
 - **One-click updates**: if an installed plugin is also published on the marketplace, the dialog checks for a newer version each time it opens and shows an **Update** button right on its card - no need to manually download and reinstall over it. A currently-enabled plugin reloads its new code immediately, no app restart needed.
 - A plugin can contribute:
   - **Context-menu actions** on projects (`contribute_project_context_actions`)
-  - A **badge** painted on a project's folder icon, in List and Grid alike (`contribute_project_badge`)
+  - A **badge** painted on a project's folder icon, in List and Grid alike (`contribute_project_badge`) - several plugins' badges sit side by side (up to 3), each with its own tooltip line
   - A **clickable button** painted on a project's folder icon, in List and Grid alike (`contribute_project_action_button`)
   - **Menu-bar actions** (`contribute_menu_actions`)
   - **New view modes** (`contribute_views`)

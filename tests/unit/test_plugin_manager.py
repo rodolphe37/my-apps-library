@@ -4,8 +4,9 @@ import pytest
 
 from myapps.core.models import Project
 from myapps.core.project_manager import ProjectManager
-from myapps.plugins.api import PluginBase, PluginMenuAction, ProjectActionButton
+from myapps.plugins.api import PluginBase, PluginMenuAction, ProjectActionButton, ProjectBadge
 from myapps.plugins.manager import (
+    MAX_PROJECT_BADGES,
     LoadedPlugin,
     PluginInstallError,
     PluginLoadState,
@@ -369,3 +370,73 @@ def test_collect_project_action_button_wrong_type_is_skipped(tmp_path):
     manager._loaded["wrong"] = LoadedPlugin(manifest, WrongTypePlugin(), PluginLoadState.LOADED)
 
     assert manager.collect_project_action_button(project) is None
+
+
+def _badge_plugin(tooltip):
+    class BadgePlugin(PluginBase):
+        def contribute_project_badge(self, project):
+            from PySide6.QtGui import QPixmap
+
+            return ProjectBadge(pixmap=QPixmap(8, 8), tooltip=tooltip)
+
+    return BadgePlugin()
+
+
+def test_collect_project_badges_returns_every_badge_in_load_order(tmp_path, qapp):
+    manager, _pm = make_manager(tmp_path)
+    project = Project(name="demo", path=str(tmp_path))
+
+    class SilentPlugin(PluginBase):
+        def contribute_project_badge(self, project):
+            return None
+
+    for plugin_id, instance in (
+        ("lang", _badge_plugin("Python")),
+        ("silent", SilentPlugin()),
+        ("git", _badge_plugin("main")),
+    ):
+        manifest = PluginManifest(id=plugin_id, name=plugin_id, version="1.0.0", entry_point="x:A")
+        manager._loaded[plugin_id] = LoadedPlugin(manifest, instance, PluginLoadState.LOADED)
+
+    badges = manager.collect_project_badges(project)
+
+    assert [b.tooltip for b in badges] == ["Python", "main"]
+    assert manager.collect_project_badge(project).tooltip == "Python"
+
+
+def test_collect_project_badges_is_capped(tmp_path, qapp):
+    manager, _pm = make_manager(tmp_path)
+    project = Project(name="demo", path=str(tmp_path))
+
+    for i in range(MAX_PROJECT_BADGES + 2):
+        manifest = PluginManifest(id=f"p{i}", name=f"p{i}", version="1.0.0", entry_point="x:A")
+        manager._loaded[f"p{i}"] = LoadedPlugin(
+            manifest, _badge_plugin(str(i)), PluginLoadState.LOADED
+        )
+
+    badges = manager.collect_project_badges(project)
+
+    assert [b.tooltip for b in badges] == [str(i) for i in range(MAX_PROJECT_BADGES)]
+
+
+def test_collect_project_badges_skips_raising_and_wrong_type(tmp_path, qapp):
+    manager, _pm = make_manager(tmp_path)
+    project = Project(name="demo", path=str(tmp_path))
+
+    class RaisingPlugin(PluginBase):
+        def contribute_project_badge(self, project):
+            raise RuntimeError("boom")
+
+    class WrongTypePlugin(PluginBase):
+        def contribute_project_badge(self, project):
+            return "not-a-badge"
+
+    for plugin_id, instance in (
+        ("raising", RaisingPlugin()),
+        ("wrong", WrongTypePlugin()),
+        ("good", _badge_plugin("ok")),
+    ):
+        manifest = PluginManifest(id=plugin_id, name=plugin_id, version="1.0.0", entry_point="x:A")
+        manager._loaded[plugin_id] = LoadedPlugin(manifest, instance, PluginLoadState.LOADED)
+
+    assert [b.tooltip for b in manager.collect_project_badges(project)] == ["ok"]
