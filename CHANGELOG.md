@@ -11,6 +11,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-10-03
+
+### Added
+
+- **Plugins can import the whole Python standard library in the installed
+  app.** Plugins are loaded at runtime from an external folder, so
+  PyInstaller never saw their imports: a packaged build only contained the
+  stdlib modules MyAppsLibrary itself imports, and a plugin importing any
+  other one failed with `ModuleNotFoundError` in the installed app while
+  working from source (the Git Status plugin hit it with `html`, Language
+  Badges had already worked around a missing `concurrent.futures`). The
+  PyInstaller spec now bundles every stdlib module and submodule available
+  on the build's platform (new `packaging/pyinstaller/stdlib_modules.py`),
+  minus Tk/IDLE, CPython's test suite, `ensurepip`/`venv`, `pydoc_data` and
+  the easter-egg modules. About +4 MB on the macOS bundle (103 to 107 MB).
+- **CI check that it stays that way.** `package.yml` and `release.yml` now
+  run `packaging/pyinstaller/check_stdlib_bundle.py` after each build: it
+  makes the frozen executable itself import all ~640 stdlib modules (via a
+  new `--check-imports` mode in `myapps/__main__.py`, which never starts
+  the GUI) and fails if any module that imports from source doesn't import
+  frozen. Verified to fail (235 modules missing) on a build without this
+  change.
+
+### Fixed
+
+- **The macOS app's version in Finder/Get Info was stuck at 0.5.2.** The
+  spec hardcoded `CFBundleShortVersionString`; it's now read from
+  `constants.py` (and `CFBundleVersion` set too).
+
 ## [0.15.0] - 2026-10-03
 
 ### Changed

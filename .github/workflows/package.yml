@@ -62,6 +62,13 @@ jobs:
       - name: Build with PyInstaller
         run: pyinstaller packaging/pyinstaller/myapps.spec --noconfirm
 
+      - name: Check the bundle ships the full standard library
+        # Plugins are loaded at runtime, so PyInstaller can't see their
+        # imports - the spec bundles the whole stdlib (stdlib_modules.py) and
+        # this proves the frozen app imports every stdlib module a source
+        # run can (see check_stdlib_bundle.py).
+        run: python packaging/pyinstaller/check_stdlib_bundle.py
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:

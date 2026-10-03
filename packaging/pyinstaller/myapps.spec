@@ -7,6 +7,7 @@
 # not cross-compile, so macOS/Windows/Linux builds must each run on that OS
 # (e.g. via a CI matrix).
 
+import re
 import sys
 from pathlib import Path
 
@@ -20,6 +21,19 @@ SPEC_DIR = Path(SPECPATH).resolve()  # noqa: F821 -- SPECPATH is injected by PyI
 REPO_ROOT = SPEC_DIR.parents[1]  # SPEC_DIR is packaging/pyinstaller/, so up two levels
 SRC = REPO_ROOT / "src"
 ICONS = REPO_ROOT / "packaging" / "icons"
+
+# The whole standard library, not just what MyAppsLibrary's own imports
+# pull in - plugins are loaded at runtime from an external folder, so
+# PyInstaller never sees what *they* import. See stdlib_modules.py (and
+# check_stdlib_bundle.py, the CI check that it actually worked).
+sys.path.insert(0, str(SPEC_DIR))
+from stdlib_modules import stdlib_hiddenimports  # noqa: E402
+
+# Single source of truth for the version shown in Finder's Get Info /
+# About - read from the app's own constants.py instead of hardcoding it here.
+APP_VERSION = re.search(
+    r'^VERSION = "([^"]+)"', (SRC / "myapps" / "constants.py").read_text(encoding="utf-8"), re.M
+).group(1)
 
 # Non-Python files aren't picked up by PyInstaller's import analysis, so
 # each needs an explicit --add-data entry to end up in the frozen bundle,
@@ -47,7 +61,7 @@ a = Analysis(
     pathex=[str(SRC)],
     binaries=[],
     datas=datas,
-    hiddenimports=[],
+    hiddenimports=stdlib_hiddenimports(),
     hookspath=[str(SPEC_DIR / "hooks")],
     hooksconfig={},
     runtime_hooks=[],
@@ -87,7 +101,8 @@ if sys.platform == "darwin":
         icon=icon_file,
         bundle_identifier="com.myappslibrary.app",
         info_plist={
-            "CFBundleShortVersionString": "0.5.2",
+            "CFBundleShortVersionString": APP_VERSION,
+            "CFBundleVersion": APP_VERSION,
             "NSHighResolutionCapable": True,
         },
     )
