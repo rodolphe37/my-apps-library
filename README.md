@@ -179,6 +179,7 @@ MyAppsLibrary ships with a small, VS Code-style plugin API so the community can 
   - **Translations**, new locales or overrides of existing ones (`contribute_translations`)
   - Lifecycle hooks: `on_load`, `on_unload`, `on_project_added`, `on_project_removed`, `on_project_opened`
 - Every plugin receives a single `PluginContext` object (never raw app internals), see [`src/myapps/plugins/api.py`](src/myapps/plugins/api.py) for the full contract.
+- Plugins can import **anything from the Python standard library** (since 0.16.0), in the installed app too, not just when run from source: the packaged build ships the whole stdlib, minus Tk/IDLE, CPython's test suite and environment tooling (`ensurepip`, `venv`) - see [`packaging/pyinstaller/stdlib_modules.py`](packaging/pyinstaller/stdlib_modules.py). Third-party packages beyond what the app itself depends on (PySide6, platformdirs, darkdetect) are not available.
 - Plugins currently run with full app privileges and are **not sandboxed**; the app shows a one-time trust disclosure before enabling a new plugin. Real sandboxing is tracked on the [Roadmap](#roadmap).
 
 Three working, minimal examples are included:

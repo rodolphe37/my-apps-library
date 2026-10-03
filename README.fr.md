@@ -181,6 +181,7 @@ MyAppsLibrary embarque une petite API de plugins façon VS Code, pour que la com
   - Des **traductions**, nouvelles langues ou surcharges de langues existantes (`contribute_translations`)
   - Des hooks de cycle de vie : `on_load`, `on_unload`, `on_project_added`, `on_project_removed`, `on_project_opened`
 - Chaque plugin reçoit un unique objet `PluginContext` (jamais les objets internes de l'application), voir [`src/myapps/plugins/api.py`](src/myapps/plugins/api.py) pour le contrat complet.
+- Les plugins peuvent importer **tout module de la bibliothèque standard Python** (depuis la 0.16.0), y compris dans l'application installée et pas seulement depuis les sources : le build packagé embarque la bibliothèque standard complète, hormis Tk/IDLE, la suite de tests de CPython et les outils d'environnement (`ensurepip`, `venv`) - voir [`packaging/pyinstaller/stdlib_modules.py`](packaging/pyinstaller/stdlib_modules.py). Les paquets tiers autres que ceux dont l'application dépend elle-même (PySide6, platformdirs, darkdetect) ne sont pas disponibles.
 - Les plugins tournent actuellement avec tous les privilèges de l'application et **ne sont pas isolés (sandbox)** ; l'application affiche un avertissement de confiance la première fois qu'on active un nouveau plugin. Une véritable isolation est prévue dans la [feuille de route](#feuille-de-route).
 
 Trois exemples minimaux et fonctionnels sont inclus :
